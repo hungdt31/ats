@@ -1,0 +1,9 @@
+# MySQL (Prisma)
+DATABASE_URL="mysql://USER:PASSWORD@localhost:3306/ats"
+
+# Auth — JWT HS256 ký cookie session (bắt buộc >= 32 ký tự production)
+AUTH_SECRET="thay-bang-chuoi-ngau-nhien-dai-tren-32-ky-tu"
+# Appwrite Storage configuration
+NEXT_PUBLIC_APPWRITE_ENDPOINT="....."
+NEXT_PUBLIC_APPWRITE_PROJECT="....."
+NEXT_PUBLIC_APPWRITE_BUCKET_ID="....."
