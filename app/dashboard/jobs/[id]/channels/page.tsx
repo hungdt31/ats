@@ -208,7 +208,7 @@ export default function JobChannelsPage(props: { params: Params }) {
                 Tổng: {channels.length}
               </Badge>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent>
               <Table>
                 <TableHeader className="bg-secondary">
                   <TableRow>

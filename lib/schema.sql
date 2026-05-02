@@ -282,38 +282,6 @@ CREATE TABLE email_logs (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Audit trail email tự động trong hệ thống';
-
-
--- ============================================================
--- TRIGGERS – Tự động ghi lịch sử khi status applications thay đổi
--- ============================================================
-DELIMITER $$
-
-CREATE TRIGGER trg_applications_status_history
-AFTER UPDATE ON applications
-FOR EACH ROW
-BEGIN
-    IF OLD.status <> NEW.status THEN
-        INSERT INTO application_status_history
-            (id, application_id, changed_by, from_status, to_status, changed_at)
-        VALUES
-            (UUID(), NEW.id, NEW.candidate_id, OLD.status, NEW.status, NOW());
-    END IF;
-END$$
-
-DELIMITER ;
-
--- ============================================================
--- NOTES
--- ============================================================
--- 1. UUID():  MySQL 8.0+ hỗ trợ DEFAULT (UUID()) trực tiếp.
---             Nếu dùng MySQL 5.7, thay bằng trigger BEFORE INSERT.
--- 2. JSON:    skills, education, required_skills dùng kiểu JSON
---             thay cho TEXT[]/JSONB của PostgreSQL.
--- 3. CHECK:   MySQL 8.0.16+ mới thực thi CHECK constraint.
---             Nếu dùng phiên bản cũ hơn, kiểm tra ở application layer.
--- 4. TRIGGER: trg_applications_status_history tự động insert history.
---             changed_by mặc định là candidate_id – nên update thành
---             current_user khi có session context.
+ 
 
 SET FOREIGN_KEY_CHECKS = 1;

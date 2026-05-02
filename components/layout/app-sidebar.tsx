@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { LogoMark } from "@/components/layout/logo";
 import {
   Sidebar,
   SidebarContent,
@@ -61,9 +62,7 @@ export function AppSidebar() {
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader className="border-b h-16 flex justify-center p-2">
         <Link href="/dashboard" className="flex items-center gap-2 px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center font-heading text-lg font-bold tracking-tight text-foreground select-none">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold">
-            A
-          </span>
+          <LogoMark />
           <span className="truncate group-data-[collapsible=icon]:hidden">ATS Portal</span>
         </Link>
       </SidebarHeader>

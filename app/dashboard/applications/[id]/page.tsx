@@ -6,6 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatusForm } from "./status-form";
+import { SendEmailForm } from "./send-email-form";
+import { CreateInterviewForm } from "./create-interview-form";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Mail01Icon, Calendar01Icon, CheckmarkCircle01Icon, Notification01Icon, CancelCircleIcon } from "@hugeicons/core-free-icons";
 
 const STATUS_OPTIONS = [
   { value: "applied", label: "Đã ứng tuyển", variant: "outline" as const },
@@ -62,6 +75,17 @@ export default async function ApplicationDetailPage(props: {
   if (!application) {
     notFound();
   }
+
+  const interviewers = await prisma.user.findMany({
+    where: {
+      role: { in: ["admin", "hr", "interviewer"] }
+    },
+    select: {
+      id: true,
+      fullName: true,
+      email: true
+    }
+  });
 
   const currentStatusConfig = STATUS_OPTIONS.find((s) => s.value === application.status) || STATUS_OPTIONS[0];
 
@@ -150,7 +174,7 @@ export default async function ApplicationDetailPage(props: {
 
             {/* Tab 1: Cập nhật Trạng thái */}
             <TabsContent value="status-update" className="space-y-4">
-              <Card className="border-border/80">
+              <Card className="max-w-xl">
                 <CardHeader>
                   <CardTitle className="text-lg">Cập nhật trạng thái đơn</CardTitle>
                   <CardDescription>Chọn trạng thái mới và đính kèm ghi chú audit.</CardDescription>
@@ -167,7 +191,7 @@ export default async function ApplicationDetailPage(props: {
 
             {/* Tab 2: Lịch sử trạng thái */}
             <TabsContent value="audit-history" className="space-y-4">
-              <Card className="border-border/80">
+              <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Lịch sử thay đổi trạng thái</CardTitle>
                   <CardDescription>Nhật ký chi tiết các lần cập nhật đơn ứng tuyển.</CardDescription>
@@ -182,7 +206,7 @@ export default async function ApplicationDetailPage(props: {
                         const toLabel = STATUS_OPTIONS.find((o) => o.value === history.to_status)?.label || history.to_status;
                         return (
                           <div key={history.id} className="relative space-y-1">
-                            <span className="absolute -left-[31px] top-1.5 flex size-2 items-center justify-center rounded-full bg-primary" />
+                            <span className="absolute -left-[28px] top-1.5 flex size-2 items-center justify-center rounded-full bg-primary" />
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                               <span className="text-sm font-semibold text-foreground">
                                 Chuyển từ <Badge variant="outline" className="px-1.5 py-0.5">{fromLabel}</Badge> sang{" "}
@@ -211,10 +235,32 @@ export default async function ApplicationDetailPage(props: {
 
             {/* Tab 3: Phỏng vấn & Đánh giá */}
             <TabsContent value="interviews" className="space-y-4">
-              <Card className="border-border/80">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Chi tiết các lịch phỏng vấn</CardTitle>
-                  <CardDescription>Theo dõi danh sách các buổi phỏng vấn đã lên lịch hoặc hoàn thành.</CardDescription>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-4 gap-2">
+                    <div>
+                      <CardTitle className="text-lg">Chi tiết các lịch phỏng vấn</CardTitle>
+                      <CardDescription>Theo dõi danh sách các buổi phỏng vấn đã lên lịch hoặc hoàn thành.</CardDescription>
+                    </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="sm" className="rounded-xl shrink-0">
+                          Lên lịch phỏng vấn
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-xl">
+                        <DialogHeader>
+                          <DialogTitle>Lên lịch phỏng vấn</DialogTitle>
+                          <DialogDescription>
+                            Tạo buổi phỏng vấn mới cho ứng viên và tự động gửi email thông báo.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="pt-2">
+                          <CreateInterviewForm applicationId={application.id} interviewers={interviewers} />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {application.interviews.length === 0 ? (
@@ -336,10 +382,32 @@ export default async function ApplicationDetailPage(props: {
 
             {/* Tab 4: Nhật ký Email */}
             <TabsContent value="emails" className="space-y-4">
-              <Card className="border-border/80">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Nhật ký gửi Email</CardTitle>
-                  <CardDescription>Danh sách các email hệ thống đã gửi cho ứng viên.</CardDescription>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-4 gap-2">
+                    <div>
+                      <CardTitle className="text-lg">Nhật ký gửi Email</CardTitle>
+                      <CardDescription>Danh sách các email hệ thống đã gửi cho ứng viên.</CardDescription>
+                    </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="sm" className="rounded-xl shrink-0">
+                          Gửi Email mới
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-xl">
+                        <DialogHeader>
+                          <DialogTitle>Gửi Email mới</DialogTitle>
+                          <DialogDescription>
+                            Soạn nội dung và gửi trực tiếp cho ứng viên qua Resend.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="pt-2">
+                          <SendEmailForm applicationId={application.id} />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {application.email_logs.length === 0 ? (
@@ -347,17 +415,24 @@ export default async function ApplicationDetailPage(props: {
                   ) : (
                     <div className="grid gap-4 text-xs">
                       {application.email_logs.map((log) => {
+                        let Icon = Mail01Icon;
+                        if (log.type === "invite") Icon = Calendar01Icon;
+                        if (log.type === "result") Icon = CheckmarkCircle01Icon;
+                        if (log.type === "reminder") Icon = Notification01Icon;
+                        if (log.type === "rejection") Icon = CancelCircleIcon;
+
                         return (
-                          <Card key={log.id} className="border-border/80 p-3 bg-muted/20">
+                          <Card key={log.id} className="p-3 bg-muted/20">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-4 mb-1">
-                              <span className="font-semibold text-sm text-foreground">
+                              <span className="font-semibold text-sm text-foreground flex items-center gap-2">
+                                <HugeiconsIcon icon={Icon} className="size-4 text-muted-foreground shrink-0" />
                                 {log.subject}
                               </span>
                               <span className="text-muted-foreground">
                                 {log.sent_at ? new Date(log.sent_at).toLocaleString("vi-VN") : "—"}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 text-xs">
                               <span className="text-muted-foreground">Loại email:</span>
                               <Badge variant="outline">{log.type}</Badge>
                               <span className="text-muted-foreground">Trạng thái:</span>
