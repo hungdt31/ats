@@ -10,9 +10,15 @@ import { PrismaClient } from "@prisma/client";
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 
 function createPrismaClient(): PrismaClient {
-  const url = process.env.DATABASE_URL;
+  let url = process.env.DATABASE_URL;
   if (!url) {
     throw new Error("Thiếu DATABASE_URL trong môi trường (.env)");
+  }
+
+  // Tối ưu hóa connectionLimit và poolTimeout cho môi trường serverless (Vercel)
+  if (!url.includes("connectionLimit") && !url.includes("connection_limit")) {
+    const separator = url.includes("?") ? "&" : "?";
+    url += `${separator}connectionLimit=3&connection_limit=3&poolTimeout=15&pool_timeout=15`;
   }
 
   const adapter = new PrismaMariaDb(url);
@@ -24,6 +30,5 @@ function createPrismaClient(): PrismaClient {
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
+// Cache client trên toàn bộ các môi trường (kể cả Production trên Vercel) để tránh tràn kết nối
+globalForPrisma.prisma = prisma;
