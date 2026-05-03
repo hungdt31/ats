@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const STATUS_OPTIONS = [
@@ -13,6 +14,84 @@ const STATUS_OPTIONS = [
   { value: "draft", label: "Bản nháp (Draft)", variant: "secondary" as const },
   { value: "closed", label: "Đã đóng (Closed)", variant: "outline" as const },
   { value: "archived", label: "Lưu trữ (Archived)", variant: "destructive" as const },
+];
+
+type Job = {
+  id: string;
+  title: string;
+  department: string | null;
+  status: string;
+  expires_at: string | null;
+  headcount: number;
+  _count?: { applications: number };
+};
+
+const columns: ColumnDef<Job>[] = [
+  {
+    accessorKey: "title",
+    header: "Vị trí / Title",
+    cell: ({ row }) => (
+      <div className="flex flex-col">
+        <span className="font-bold text-foreground">{row.original.title}</span>
+        <span className="text-xs text-muted-foreground">
+          Đã nộp: {row.original._count?.applications || 0} đơn
+        </span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "department",
+    header: "Bộ phận",
+    cell: ({ row }) => (
+      <span className="text-sm font-medium">{row.original.department || "—"}</span>
+    ),
+  },
+  {
+    accessorKey: "status",
+    header: "Trạng thái",
+    cell: ({ row }) => {
+      const cfg = STATUS_OPTIONS.find((s) => s.value === row.original.status) || STATUS_OPTIONS[0];
+      return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+    },
+  },
+  {
+    accessorKey: "expires_at",
+    header: "Hạn ứng tuyển",
+    cell: ({ row }) => (
+      <span className="text-xs text-muted-foreground">
+        {row.original.expires_at
+          ? new Date(row.original.expires_at).toLocaleDateString("vi-VN")
+          : "Không giới hạn"}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "headcount",
+    header: "Headcount",
+    cell: ({ row }) => (
+      <span className="text-sm font-semibold">{row.original.headcount || 1}</span>
+    ),
+  },
+  {
+    id: "actions",
+    header: () => <span className="block text-center">Hành động</span>,
+    cell: ({ row }) => (
+      <div className="flex items-center justify-center gap-2">
+        <Link
+          href={`/dashboard/jobs/${row.original.id}/edit`}
+          className="inline-flex h-8 items-center justify-center rounded-2xl border border-input/60 bg-background px-3 text-xs font-medium text-foreground hover:bg-muted transition-all"
+        >
+          Chỉnh sửa
+        </Link>
+        <Link
+          href={`/dashboard/jobs/${row.original.id}/channels`}
+          className="inline-flex h-8 items-center justify-center rounded-2xl border border-input/60 bg-background px-3 text-xs font-medium text-foreground hover:bg-muted transition-all"
+        >
+          Channels
+        </Link>
+      </div>
+    ),
+  },
 ];
 
 export default function JobsDashboardPage() {
@@ -26,7 +105,7 @@ export default function JobsDashboardPage() {
       const res = await fetch(`/api/dashboard/jobs?${sp.toString()}`);
       if (!res.ok) throw new Error("Không thể tải tin tuyển dụng.");
       const json = await res.json();
-      return json.data as any[];
+      return json.data as Job[];
     },
     staleTime: 5000,
   });
@@ -48,22 +127,20 @@ export default function JobsDashboardPage() {
         </Link>
       </div>
 
-      {/* Status Filter Toolbar */}
+      {/* Status Filter */}
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1 w-full max-w-[200px]">
               <span className="text-xs font-semibold text-muted-foreground mb-1">Trạng thái tin</span>
-              <Select value={status} onValueChange={(val) => setStatus(val)}>
+              <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Tất cả trạng thái" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl">
                   <SelectItem value="all">Tất cả trạng thái</SelectItem>
                   {STATUS_OPTIONS.map((st) => (
-                    <SelectItem key={st.value} value={st.value}>
-                      {st.label}
-                    </SelectItem>
+                    <SelectItem key={st.value} value={st.value}>{st.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -81,7 +158,7 @@ export default function JobsDashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Jobs List Table */}
+      {/* Data Table */}
       <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <div className="space-y-1">
@@ -93,82 +170,16 @@ export default function JobsDashboardPage() {
           </Badge>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader className="bg-secondary">
-              <TableRow>
-                <TableHead>Vị trí / Title</TableHead>
-                <TableHead>Bộ phận</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Hạn ứng tuyển</TableHead>
-                <TableHead>Headcount</TableHead>
-                <TableHead className="text-center">Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    Đang tải danh sách tin tuyển dụng...
-                  </TableCell>
-                </TableRow>
-              ) : jobs.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    Không tìm thấy tin tuyển dụng nào.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                jobs.map((job: any) => {
-                  const statusConfig =
-                    STATUS_OPTIONS.find((s) => s.value === job.status) || STATUS_OPTIONS[0];
-                  return (
-                    <TableRow key={job.id}>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-bold text-foreground">{job.title}</span>
-                          <span className="text-xs text-muted-foreground">
-                            Đã nộp: {job._count?.applications || 0} đơn
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm font-medium">{job.department || "—"}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-xs text-muted-foreground">
-                          {job.expires_at
-                            ? new Date(job.expires_at).toLocaleDateString("vi-VN")
-                            : "Không giới hạn"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm font-semibold">{job.headcount || 1}</span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Link
-                            href={`/dashboard/jobs/${job.id}/edit`}
-                            className="inline-flex h-8 items-center justify-center rounded-2xl border border-input/60 bg-background px-3 text-xs font-medium text-foreground hover:bg-muted transition-all"
-                          >
-                            Chỉnh sửa
-                          </Link>
-                          <Link
-                            href={`/dashboard/jobs/${job.id}/channels`}
-                            className="inline-flex h-8 items-center justify-center rounded-2xl border border-input/60 bg-background px-3 text-xs font-medium text-foreground hover:bg-muted transition-all"
-                          >
-                            Channels
-                          </Link>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+          {isLoading ? (
+            <p className="text-center py-8 text-muted-foreground text-sm">Đang tải danh sách tin tuyển dụng...</p>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={jobs}
+              searchKey="title"
+              searchPlaceholder="Tìm theo tên vị trí tuyển dụng..."
+            />
+          )}
         </CardContent>
       </Card>
     </div>
