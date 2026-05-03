@@ -14,6 +14,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { employmentTypeLabel } from "@/lib/data/jobs-utils";
+import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+const PAGE_SIZE = 9;
 
 export default function JobsPage() {
   const { data: user } = useMe();
@@ -24,12 +36,14 @@ export default function JobsPage() {
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [selectedEmpType, setSelectedEmpType] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const resetFilters = () => {
     setSearchTitle("");
     setSelectedLocation("all");
     setSelectedDepartment("all");
     setSelectedEmpType("all");
+    setCurrentPage(1);
   };
 
   // Extract unique filter options dynamically from existing jobs
@@ -68,6 +82,25 @@ export default function JobsPage() {
 
   const isFiltered = searchTitle || selectedLocation !== "all" || selectedDepartment !== "all" || selectedEmpType !== "all";
 
+  // Pagination logic
+  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const pagedJobs = filteredJobs.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  // Reset to page 1 when filters change
+  const handleFilterChange = (setter: (v: string) => void) => (value: string) => {
+    setter(value);
+    setCurrentPage(1);
+  };
+
+  // Build page numbers with ellipsis
+  const getPageNumbers = () => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    if (safePage <= 4) return [1, 2, 3, 4, 5, "...", totalPages];
+    if (safePage >= totalPages - 3) return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    return [1, "...", safePage - 1, safePage, safePage + 1, "...", totalPages];
+  };
+
   return (
     <div className="min-h-svh flex flex-col bg-muted/30">
       <SiteHeader user={user} />
@@ -83,55 +116,48 @@ export default function JobsPage() {
         {/* Filter bar */}
         {!isLoading && !isError && jobs && jobs.length > 0 && (
           <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <input
+            <Input
               type="text"
               placeholder="Tìm kiếm theo tiêu đề..."
               value={searchTitle}
-              onChange={(e) => setSearchTitle(e.target.value)}
-              className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 data-placeholder:text-muted-foreground dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
+              onChange={(e) => { setSearchTitle(e.target.value); setCurrentPage(1); }}
             />
 
             {/* Location Select */}
-            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+            <Select value={selectedLocation} onValueChange={handleFilterChange(setSelectedLocation)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Địa điểm" />
               </SelectTrigger>
               <SelectContent position="popper" className="w-full">
                 <SelectItem value="all">Tất cả địa điểm</SelectItem>
                 {locations.map((loc) => (
-                  <SelectItem key={loc} value={loc}>
-                    {loc}
-                  </SelectItem>
+                  <SelectItem key={loc} value={loc}>{loc}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             {/* Department Select */}
-            <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+            <Select value={selectedDepartment} onValueChange={handleFilterChange(setSelectedDepartment)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Phòng ban" />
               </SelectTrigger>
               <SelectContent position="popper" className="w-full">
                 <SelectItem value="all">Tất cả phòng ban</SelectItem>
                 {departments.map((dept) => (
-                  <SelectItem key={dept} value={dept}>
-                    {dept}
-                  </SelectItem>
+                  <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             {/* Employment Type Select */}
-            <Select value={selectedEmpType} onValueChange={setSelectedEmpType}>
+            <Select value={selectedEmpType} onValueChange={handleFilterChange(setSelectedEmpType)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Loại công việc" />
               </SelectTrigger>
               <SelectContent position="popper" className="w-full">
                 <SelectItem value="all">Tất cả hình thức</SelectItem>
                 {employmentTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {employmentTypeLabel(type)}
-                  </SelectItem>
+                  <SelectItem key={type} value={type}>{employmentTypeLabel(type)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -178,13 +204,67 @@ export default function JobsPage() {
             Không tìm thấy việc làm phù hợp với bộ lọc.
           </p>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredJobs.map((job) => (
-              <li key={job.id}>
-                <JobCardPreview {...job} />
-              </li>
-            ))}
-          </ul>
+          <>
+            {/* Job count info */}
+            <p className="mb-4 text-sm text-muted-foreground">
+              Hiển thị {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filteredJobs.length)} / {filteredJobs.length} vị trí
+            </p>
+
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {pagedJobs.map((job) => (
+                <li key={job.id}>
+                  <JobCardPreview {...job} />
+                </li>
+              ))}
+            </ul>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-10">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        text="Trước"
+                        onClick={(e) => { e.preventDefault(); if (safePage > 1) setCurrentPage(safePage - 1); }}
+                        aria-disabled={safePage === 1}
+                        className={safePage === 1 ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+
+                    {getPageNumbers().map((page, i) =>
+                      page === "..." ? (
+                        <PaginationItem key={`ellipsis-${i}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      ) : (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            href="#"
+                            isActive={safePage === page}
+                            onClick={(e) => { e.preventDefault(); setCurrentPage(page as number); }}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    )}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        text="Tiếp"
+                        onClick={(e) => { e.preventDefault(); if (safePage < totalPages) setCurrentPage(safePage + 1); }}
+                        aria-disabled={safePage === totalPages}
+                        className={safePage === totalPages ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
