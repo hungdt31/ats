@@ -11,8 +11,21 @@ function createPrismaClient(): PrismaClient {
     throw new Error("Thiếu DATABASE_URL trong môi trường (.env)");
   }
 
-  // Dùng URL string trực tiếp — mariadb driver tự xử lý ssl-mode=REQUIRED
-  const adapter = new PrismaMariaDb(url);
+  // Parse URL để kiểm soát từng tham số kết nối
+  const parsed = new URL(url);
+  const adapter = new PrismaMariaDb({
+    host: parsed.hostname,
+    port: parseInt(parsed.port, 10),
+    user: parsed.username,
+    password: parsed.password,
+    database: parsed.pathname.replace(/^\//, ""),
+    // Aiven dùng CA cert riêng → bỏ qua verify để tránh SSL handshake timeout
+    ssl: { rejectUnauthorized: false },
+    connectionLimit: 3,
+    connectTimeout: 10000,
+    acquireTimeout: 15000,
+    idleTimeout: 60,
+  });
 
   return new PrismaClient({
     adapter,
