@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01FreeIcons } from "@hugeicons/core-free-icons";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -108,9 +110,9 @@ export default function JobChannelsPage(props: { params: Params }) {
       <div className="flex items-center gap-2">
         <Link
           href="/dashboard/jobs"
-          className="inline-flex h-9 items-center justify-center rounded-2xl border border-input/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-muted transition-all"
+          className="inline-flex h-9 items-center justify-center rounded-2xl border border-input/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-muted transition-all gap-1.5 cursor-pointer"
         >
-          ← Quay lại danh sách
+          <HugeiconsIcon icon={ArrowLeft01FreeIcons} className="size-3.5" /> Quay lại danh sách
         </Link>
       </div>
 

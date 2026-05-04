@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
+import { signSessionToken } from "@/lib/auth/token";
+import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
+import { sessionCookieBase } from "@/lib/auth/cookie-options";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/http/json-response";
 
@@ -53,6 +56,7 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     const {
+      email,
       fullName,
       phone,
       title,
@@ -64,9 +68,10 @@ export async function POST(req: Request) {
     } = body;
 
     // Update the core user table
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: candidateId },
       data: {
+        email: email || undefined,
         fullName: fullName || undefined,
         phone: phone || null,
       },
@@ -94,10 +99,21 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       data: { profile },
     });
+
+    // Cập nhật lại JWT Session Cookie với thông tin mới nhất
+    const newToken = await signSessionToken({
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      fullName: updatedUser.fullName,
+      role: updatedUser.role,
+    });
+    res.cookies.set(SESSION_COOKIE_NAME, newToken, sessionCookieBase());
+
+    return res;
   } catch (error) {
     console.error("[POST /api/candidate/profile] Error:", error);
     return jsonError(500, "Không thể cập nhật hồ sơ cá nhân.");

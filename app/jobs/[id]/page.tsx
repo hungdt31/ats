@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, notFound, useRouter } from "next/navigation";
+import { HugeiconsIcon } from '@hugeicons/react';
+import { ArrowLeft01FreeIcons } from "@hugeicons/core-free-icons";
 
 import { SiteHeader } from "@/components/layout/site-header";
 import { Button } from "@/components/ui/button";
@@ -113,8 +115,10 @@ export default function JobDetailPage() {
       <SiteHeader user={user} />
 
       <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-        <Button variant="ghost" size="sm" className="mb-6 -ml-2" asChild>
-          <Link href="/jobs">← Danh sách việc làm</Link>
+        <Button variant="ghost" size="sm" className="mb-6 -ml-2 text-muted-foreground hover:text-foreground gap-2" asChild>
+          <Link href="/jobs">
+            <HugeiconsIcon icon={ArrowLeft01FreeIcons} /> Danh sách việc làm
+          </Link>
         </Button>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -235,7 +239,7 @@ export default function JobDetailPage() {
           <div className="space-y-6">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold">Thông tin tóm tắt</CardTitle>
+                <CardTitle className="text-base font-semibold">Thông tin chung</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="flex justify-between py-1 border-b border-border/40">
@@ -254,12 +258,12 @@ export default function JobDetailPage() {
                     <span className="font-medium text-foreground">{job.department}</span>
                   </div>
                 )}
-                {job.category && (
-                  <div className="flex justify-between py-1">
-                    <span className="text-muted-foreground">Ngành nghề:</span>
-                    <span className="font-medium text-foreground">{job.category}</span>
-                  </div>
-                )}
+                <div className="flex justify-between py-1">
+                  <span className="text-muted-foreground">Ngày hết hạn:</span>
+                  <span className="font-medium text-foreground">
+                    {job.expires_at ? new Date(job.expires_at).toLocaleDateString("vi-VN") : "Không giới hạn"}
+                  </span>
+                </div>
               </CardContent>
             </Card>
 
@@ -267,7 +271,14 @@ export default function JobDetailPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold">Kỹ năng yêu cầu</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {job.category && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Ngành nghề</span>
+                    <span className="text-sm font-medium text-foreground">{job.category}</span>
+                  </div>
+                )}
+                <Separator />
                 {job.required_skills && job.required_skills.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {job.required_skills.map((skill: string, index: number) => (

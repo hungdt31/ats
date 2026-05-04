@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { UserNav } from "@/components/auth/user-nav";
+import { ClientSiteHeader } from "@/components/layout/client-site-header";
 import { JobCardPreview } from "@/components/landing/job-card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -19,65 +19,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-svh flex flex-col bg-muted/30">
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="256"
-              height="256"
-              viewBox="0 0 256 256"
-              fill="none"
-              className="size-5"
-            >
-              <rect width="256" height="256" fill="none"></rect>
-
-              <line
-                x1="208"
-                y1="128"
-                x2="128"
-                y2="208"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="32"
-              ></line>
-
-              <line
-                x1="192"
-                y1="40"
-                x2="40"
-                y2="192"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="32"
-              ></line>
-            </svg>
-            <Link href="/" className="font-heading text-lg font-semibold tracking-tight">
-              ATS
-            </Link>
-          </div>
-          <nav className="flex flex-wrap items-center gap-2">
-            {session ? (
-              <UserNav
-                email={session.user.email}
-                fullName={session.user.fullName}
-                role={session.user.role}
-              />
-            ) : (
-              <>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/login">Đăng nhập</Link>
-                </Button>
-                <Button size="sm" asChild>
-                  <Link href="/register">Đăng ký</Link>
-                </Button>
-              </>
-            )}
-          </nav>
-        </div>
-      </header>
+      <ClientSiteHeader />
 
       <main className="flex flex-1 flex-col">
         <section className="border-b bg-gradient-to-br from-primary/10 via-muted/40 to-background px-4 py-16 md:py-24">

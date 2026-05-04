@@ -18,6 +18,7 @@ type Props = {
 export function CandidateProfile({ profileData, isLoading, updateProfileMutation }: Props) {
   // Profile form state
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [title, setTitle] = useState("");
   const [bio, setBio] = useState("");
@@ -66,6 +67,7 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
   const handleEditInit = () => {
     if (profileData) {
       setFullName(profileData.fullName || "");
+      setEmail(profileData.email || "");
       setPhone(profileData.phone || "");
       setTitle(profileData.profile?.title || "");
       setBio(profileData.profile?.bio || "");
@@ -82,6 +84,7 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
     try {
       await updateProfileMutation.mutateAsync({
         fullName,
+        email,
         phone: phone || null,
         title: title || null,
         bio: bio || null,
@@ -142,7 +145,7 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                 <CardTitle className="text-xl font-bold">
                   {profileData?.fullName || "Chưa cập nhật"}
                 </CardTitle>
-                <CardDescription>{profileData?.email}</CardDescription>
+                <span className="font-medium text-foreground">{profileData?.profile?.title || "—"}</span>
               </div>
               <Button variant="outline" onClick={handleEditInit}>
                 Chỉnh sửa hồ sơ
@@ -155,9 +158,9 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                   <span className="font-medium text-foreground">{profileData?.phone || "—"}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground block text-xs">Vị trí ứng tuyển</span>
+                  <span className="text-muted-foreground block text-xs">Email</span>
                   <span className="font-medium text-foreground">
-                    {profileData?.profile?.title || "—"}
+                    {profileData?.email || "—"}
                   </span>
                 </div>
                 <div>
@@ -440,6 +443,19 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                     />
                   </Field>
                   <Field className="space-y-1.5">
+                    <FieldLabel className="text-xs font-medium">Email</FieldLabel>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
+                      required
+                    />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Field className="space-y-1.5">
                     <FieldLabel className="text-xs font-medium">Điện thoại</FieldLabel>
                     <input
                       type="tel"
@@ -448,9 +464,6 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                       className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                     />
                   </Field>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <Field className="space-y-1.5">
                     <FieldLabel className="text-xs font-medium">Tiêu đề (Vị trí công việc)</FieldLabel>
                     <input
@@ -471,18 +484,17 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                       className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                     />
                   </Field>
+                  <Field className="space-y-1.5">
+                    <FieldLabel className="text-xs font-medium">Địa điểm</FieldLabel>
+                    <input
+                      type="text"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="Hà Nội, TP. Hồ Chí Minh, ..."
+                      className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
+                    />
+                  </Field>
                 </div>
-
-                <Field className="space-y-1.5">
-                  <FieldLabel className="text-xs font-medium">Địa điểm</FieldLabel>
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Hà Nội, TP. Hồ Chí Minh, ..."
-                    className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
-                  />
-                </Field>
 
                 <Field className="space-y-1.5">
                   <FieldLabel className="text-xs font-medium">Giới thiệu bản thân (Bio)</FieldLabel>

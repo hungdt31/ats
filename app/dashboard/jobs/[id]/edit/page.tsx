@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01FreeIcons } from "@hugeicons/core-free-icons";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -73,8 +75,8 @@ export default function EditJobPage(props: { params: Params }) {
 
       if (data.required_skills) {
         try {
-          const parsed = typeof data.required_skills === "string" 
-            ? JSON.parse(data.required_skills) 
+          const parsed = typeof data.required_skills === "string"
+            ? JSON.parse(data.required_skills)
             : data.required_skills;
           if (Array.isArray(parsed)) {
             setRequiredSkills(parsed.join(", "));
@@ -156,9 +158,9 @@ export default function EditJobPage(props: { params: Params }) {
       <div className="flex items-center gap-2">
         <Link
           href="/dashboard/jobs"
-          className="inline-flex h-9 items-center justify-center rounded-2xl border border-input/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-muted transition-all"
+          className="inline-flex h-9 items-center justify-center rounded-2xl border border-input/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-muted transition-all gap-1.5 cursor-pointer"
         >
-          ← Quay lại danh sách
+          <HugeiconsIcon icon={ArrowLeft01FreeIcons} className="size-3.5" /> Quay lại danh sách
         </Link>
       </div>
 
@@ -177,7 +179,7 @@ export default function EditJobPage(props: { params: Params }) {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                className="rounded-2xl h-10 px-3"
                 required
               />
             </div>
@@ -189,7 +191,7 @@ export default function EditJobPage(props: { params: Params }) {
                   type="text"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="rounded-2xl h-10 px-3"
                 />
               </div>
 
@@ -199,7 +201,7 @@ export default function EditJobPage(props: { params: Params }) {
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="rounded-2xl h-10 px-3"
                 />
               </div>
             </div>
@@ -212,7 +214,7 @@ export default function EditJobPage(props: { params: Params }) {
                   min={1}
                   value={headcount}
                   onChange={(e) => setHeadcount(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="rounded-2xl h-10 px-3"
                   required
                 />
               </div>
@@ -223,7 +225,7 @@ export default function EditJobPage(props: { params: Params }) {
                   type="date"
                   value={expiresAt}
                   onChange={(e) => setExpiresAt(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="rounded-2xl h-10 px-3"
                 />
               </div>
             </div>
@@ -235,7 +237,7 @@ export default function EditJobPage(props: { params: Params }) {
                   type="number"
                   value={salaryMin}
                   onChange={(e) => setSalaryMin(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="rounded-2xl h-10 px-3"
                 />
               </div>
 
@@ -245,7 +247,7 @@ export default function EditJobPage(props: { params: Params }) {
                   type="number"
                   value={salaryMax}
                   onChange={(e) => setSalaryMax(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="rounded-2xl h-10 px-3"
                 />
               </div>
             </div>
@@ -291,7 +293,7 @@ export default function EditJobPage(props: { params: Params }) {
                 placeholder="Ví dụ: React, Node.js, TypeScript..."
                 value={requiredSkills}
                 onChange={(e) => setRequiredSkills(e.target.value)}
-                className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                className="rounded-2xl h-10 px-3"
               />
             </div>
 
@@ -301,7 +303,7 @@ export default function EditJobPage(props: { params: Params }) {
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="rounded-2xl p-3 border border-input/60 bg-background"
+                className="rounded-2xl p-3"
                 required
               />
             </div>
@@ -312,7 +314,7 @@ export default function EditJobPage(props: { params: Params }) {
                 rows={4}
                 value={requirements}
                 onChange={(e) => setRequirements(e.target.value)}
-                className="rounded-2xl p-3 border border-input/60 bg-background"
+                className="rounded-2xl p-3"
               />
             </div>
 
@@ -322,7 +324,7 @@ export default function EditJobPage(props: { params: Params }) {
                 rows={4}
                 value={benefits}
                 onChange={(e) => setBenefits(e.target.value)}
-                className="rounded-2xl p-3 border border-input/60 bg-background"
+                className="rounded-2xl p-3"
               />
             </div>
 

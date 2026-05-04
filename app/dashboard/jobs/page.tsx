@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Add01FreeIcons } from "@hugeicons/core-free-icons";
 
 const STATUS_OPTIONS = [
   { value: "active", label: "Đang tuyển (Active)", variant: "default" as const },
@@ -121,9 +123,9 @@ export default function JobsDashboardPage() {
         </div>
         <Link
           href="/dashboard/jobs/new"
-          className="inline-flex h-10 items-center justify-center rounded-2xl bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
+          className="inline-flex h-10 items-center justify-center rounded-2xl bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer gap-1.5"
         >
-          + Đăng tin tuyển dụng
+          <HugeiconsIcon icon={Add01FreeIcons} className="size-3.5" /> Đăng tin tuyển dụng
         </Link>
       </div>
 

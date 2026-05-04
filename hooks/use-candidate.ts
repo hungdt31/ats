@@ -67,6 +67,7 @@ export function useUpdateCandidateProfile() {
 
   return useMutation({
     mutationFn: async (data: {
+      email?: string;
       fullName?: string;
       phone?: string | null;
       title?: string | null;
@@ -81,6 +82,7 @@ export function useUpdateCandidateProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.candidate.profile() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
     },
   });
 }

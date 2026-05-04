@@ -19,6 +19,7 @@ export type JobDetail = {
   salary_min: number | null;
   salary_max: number | null;
   published_at: string | null;
+  expires_at: string | null;
   created_at: string;
   required_skills: string[];
   headcount?: number;
@@ -73,6 +74,7 @@ export async function GET(_req: Request, { params }: Params) {
       salary_min: job.salary_min,
       salary_max: job.salary_max,
       published_at: job.published_at?.toISOString() ?? null,
+      expires_at: job.expires_at?.toISOString() ?? null,
       created_at: job.created_at.toISOString(),
       required_skills: job.required_skills as string[] ?? [],
       headcount: job.headcount,
