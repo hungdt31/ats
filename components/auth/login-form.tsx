@@ -14,7 +14,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { getPostLoginPath } from "@/lib/auth/redirects";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
-import type { MeResponse } from "@/types/api";
+import { useLogin } from "@/hooks/use-auth";
+import { ApiError } from "@/lib/api-client";
 
 function isSafeRelativePath(path: string | null): path is string {
   return Boolean(path && path.startsWith("/") && !path.startsWith("//"));
@@ -24,7 +25,7 @@ function LoginFormFields() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const loginMutation = useLogin();
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -33,23 +34,8 @@ function LoginFormFields() {
 
   async function onSubmit(values: LoginInput) {
     setServerError(null);
-    setSubmitting(true);
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-        credentials: "include",
-      });
-      const data: unknown = await res.json().catch(() => null);
-      if (!res.ok) {
-        const msg =
-          typeof data === "object" && data !== null && "error" in data && typeof (data as { error: unknown }).error === "string"
-            ? (data as { error: string }).error
-            : "Đăng nhập thất bại";
-        setServerError(msg);
-        return;
-      }
+      const { me } = await loginMutation.mutateAsync(values);
 
       toast.success("Đăng nhập thành công");
 
@@ -60,16 +46,18 @@ function LoginFormFields() {
         return;
       }
 
-      const meRes = await fetch("/api/auth/me", { credentials: "include" });
-      const meJson = (await meRes.json()) as MeResponse | { success: false };
-      if (meRes.ok && meJson.success) {
-        router.push(getPostLoginPath(meJson.data.user.role));
+      if (me.success) {
+        router.push(getPostLoginPath(me.data.user.role));
       } else {
         router.push("/candidate");
       }
       router.refresh();
-    } finally {
-      setSubmitting(false);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setServerError(error.message);
+      } else {
+        setServerError("Đăng nhập thất bại");
+      }
     }
   }
 
@@ -112,8 +100,8 @@ function LoginFormFields() {
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting ? "Đang đăng nhập…" : "Đăng nhập"}
+        <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+          {loginMutation.isPending ? "Đang đăng nhập…" : "Đăng nhập"}
         </Button>
 
         <Separator />

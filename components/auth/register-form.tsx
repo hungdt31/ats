@@ -11,12 +11,13 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Alert, AlertDescription } from "../ui/alert";
 import { registerSchema, type RegisterInput } from "../../lib/validators/auth";
-import type { ApiErrorBody } from "../../types/api";
+import { useRegister } from "@/hooks/use-auth";
+import { ApiError } from "@/lib/api-client";
 
 export function RegisterForm() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const registerMutation = useRegister();
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -25,34 +26,22 @@ export function RegisterForm() {
 
   async function onSubmit(values: RegisterInput) {
     setServerError(null);
-    setSubmitting(true);
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      const data: unknown = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        if (typeof data === "object" && data !== null && "fieldErrors" in data) {
-          const fe = (data as ApiErrorBody).fieldErrors;
-          if (fe?.email?.[0]) form.setError("email", { message: fe.email[0] });
-          if (fe?.password?.[0]) form.setError("password", { message: fe.password[0] });
-          if (fe?.fullName?.[0]) form.setError("fullName", { message: fe.fullName[0] });
-        }
-        const msg =
-          typeof data === "object" && data !== null && "error" in data && typeof (data as { error: unknown }).error === "string"
-            ? (data as { error: string }).error
-            : "Đăng ký thất bại";
-        setServerError(msg);
-        return;
-      }
-
+      await registerMutation.mutateAsync(values);
       toast.success("Đăng ký thành công. Vui lòng đăng nhập.");
       router.push("/login");
-    } finally {
-      setSubmitting(false);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.fieldErrors) {
+          const fe = error.fieldErrors;
+          if (fe.email?.[0]) form.setError("email", { message: fe.email[0] });
+          if (fe.password?.[0]) form.setError("password", { message: fe.password[0] });
+          if (fe.fullName?.[0]) form.setError("fullName", { message: fe.fullName[0] });
+        }
+        setServerError(error.message);
+      } else {
+        setServerError("Đăng ký thất bại");
+      }
     }
   }
 
@@ -121,8 +110,8 @@ export function RegisterForm() {
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting ? "Đang tạo tài khoản…" : "Đăng ký"}
+        <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+          {registerMutation.isPending ? "Đang tạo tài khoản…" : "Đăng ký"}
         </Button>
       </form>
     </Form>
