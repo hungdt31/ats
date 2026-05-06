@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01FreeIcons } from "@hugeicons/core-free-icons";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusForm } from "../status-form";
@@ -54,9 +56,9 @@ export default function ApplicationStatusPage(props: PageProps) {
       <div className="flex items-center gap-2">
         <Link
           href={`/dashboard/applications/${appId}`}
-          className="inline-flex h-9 items-center justify-center rounded-2xl border border-input/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-muted hover:text-foreground transition-all"
+          className="inline-flex h-9 items-center justify-center rounded-2xl border border-input/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-muted hover:text-foreground transition-all gap-1.5"
         >
-          ← Quay lại hồ sơ 360°
+          <HugeiconsIcon icon={ArrowLeft01FreeIcons} className="size-4" /> Quay lại hồ sơ 360°
         </Link>
       </div>
 

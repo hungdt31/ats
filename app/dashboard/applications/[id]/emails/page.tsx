@@ -3,6 +3,8 @@
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01FreeIcons } from "@hugeicons/core-free-icons";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
@@ -49,9 +51,9 @@ export default function ApplicationEmailsPage(props: { params: Params }) {
         <div className="flex items-center gap-2">
           <Link
             href={`/dashboard/applications/${applicationId}`}
-            className="inline-flex h-9 items-center justify-center rounded-2xl border border-input/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-muted transition-all"
+            className="inline-flex h-9 items-center justify-center rounded-2xl border border-input/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-muted transition-all gap-1.5"
           >
-            ← Quay lại hồ sơ 360°
+            <HugeiconsIcon icon={ArrowLeft01FreeIcons} className="size-4" /> Quay lại hồ sơ 360°
           </Link>
         </div>
       </div>

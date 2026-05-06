@@ -76,7 +76,7 @@ export async function POST(
 
     // 1. Send email first via Resend
     const { data, error } = await resend.emails.send({
-      from: "onboarding@resend.dev",
+      from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
       to: [recipientEmail],
       subject,
       html: htmlBody,

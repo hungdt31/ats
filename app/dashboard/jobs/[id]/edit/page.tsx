@@ -3,7 +3,6 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -12,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { useDashboardJob, useUpdateDashboardJob } from "@/hooks/use-dashboard-jobs";
 
 const EMPLOYMENT_TYPES = [
   { value: "full_time", label: "Toàn thời gian (Full-time)" },
@@ -46,17 +47,9 @@ export default function EditJobPage(props: { params: Params }) {
   const [description, setDescription] = useState("");
   const [requirements, setRequirements] = useState("");
   const [benefits, setBenefits] = useState("");
-  const [isPending, setIsPending] = useState(false);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["dashboard", "jobs", jobId],
-    queryFn: async () => {
-      const res = await fetch(`/api/dashboard/jobs/${jobId}`);
-      if (!res.ok) throw new Error("Không thể tải tin.");
-      const json = await res.json();
-      return json.data;
-    },
-  });
+  const { data, isLoading } = useDashboardJob(jobId);
+  const updateMutation = useUpdateDashboardJob(jobId);
 
   useEffect(() => {
     if (data) {
@@ -95,45 +88,33 @@ export default function EditJobPage(props: { params: Params }) {
       return;
     }
 
-    setIsPending(true);
     try {
       const skillsArray = requiredSkills
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
 
-      const res = await fetch(`/api/dashboard/jobs/${jobId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          requirements,
-          benefits,
-          location,
-          department,
-          salary_min: salaryMin ? parseInt(salaryMin, 10) : null,
-          salary_max: salaryMax ? parseInt(salaryMax, 10) : null,
-          employment_type: employmentType,
-          required_skills: skillsArray.length > 0 ? skillsArray : null,
-          headcount: headcount ? parseInt(headcount, 10) : 1,
-          status,
-          expires_at: expiresAt || null,
-        }),
+      await updateMutation.mutateAsync({
+        title,
+        description,
+        requirements,
+        benefits,
+        location,
+        department,
+        salary_min: salaryMin ? parseInt(salaryMin, 10) : null,
+        salary_max: salaryMax ? parseInt(salaryMax, 10) : null,
+        employment_type: employmentType,
+        required_skills: skillsArray.length > 0 ? skillsArray : null,
+        headcount: headcount ? parseInt(headcount, 10) : 1,
+        status,
+        expires_at: expiresAt || null,
       });
-
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.message || "Lỗi cập nhật tin tuyển dụng.");
-      }
 
       toast.success("Cập nhật tin tuyển dụng thành công!");
       router.push("/dashboard/jobs");
       router.refresh();
     } catch (err: any) {
       toast.error(err.message || "Đã xảy ra lỗi.");
-    } finally {
-      setIsPending(false);
     }
   };
 
@@ -173,90 +154,90 @@ export default function EditJobPage(props: { params: Params }) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-foreground">Tiêu đề tin tuyển dụng</label>
+            <Field>
+              <FieldLabel className="font-medium text-foreground">Tiêu đề tin tuyển dụng</FieldLabel>
               <Input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="rounded-2xl h-10 px-3"
+                className="h-10"
                 required
               />
-            </div>
+            </Field>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground">Bộ phận / Phòng ban</label>
+              <Field>
+                <FieldLabel className="font-medium text-foreground">Bộ phận / Phòng ban</FieldLabel>
                 <Input
                   type="text"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className="rounded-2xl h-10 px-3"
+                  className="h-10"
                 />
-              </div>
+              </Field>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground">Địa điểm làm việc</label>
+              <Field>
+                <FieldLabel className="font-medium text-foreground">Địa điểm làm việc</FieldLabel>
                 <Input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="rounded-2xl h-10 px-3"
+                  className="h-10"
                 />
-              </div>
+              </Field>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground">Số lượng cần tuyển (Headcount)</label>
+              <Field>
+                <FieldLabel className="font-medium text-foreground">Số lượng cần tuyển (Headcount)</FieldLabel>
                 <Input
                   type="number"
                   min={1}
                   value={headcount}
                   onChange={(e) => setHeadcount(e.target.value)}
-                  className="rounded-2xl h-10 px-3"
+                  className="h-10"
                   required
                 />
-              </div>
+              </Field>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground">Hạn ứng tuyển</label>
+              <Field>
+                <FieldLabel className="font-medium text-foreground">Hạn ứng tuyển</FieldLabel>
                 <Input
                   type="date"
                   value={expiresAt}
                   onChange={(e) => setExpiresAt(e.target.value)}
-                  className="rounded-2xl h-10 px-3"
+                  className="h-10"
                 />
-              </div>
+              </Field>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground">Lương tối thiểu (VND/Tháng)</label>
+              <Field>
+                <FieldLabel className="font-medium text-foreground">Lương tối thiểu (VND/Tháng)</FieldLabel>
                 <Input
                   type="number"
                   value={salaryMin}
                   onChange={(e) => setSalaryMin(e.target.value)}
-                  className="rounded-2xl h-10 px-3"
+                  className="h-10"
                 />
-              </div>
+              </Field>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground">Lương tối đa (VND/Tháng)</label>
+              <Field>
+                <FieldLabel className="font-medium text-foreground">Lương tối đa (VND/Tháng)</FieldLabel>
                 <Input
                   type="number"
                   value={salaryMax}
                   onChange={(e) => setSalaryMax(e.target.value)}
-                  className="rounded-2xl h-10 px-3"
+                  className="h-10"
                 />
-              </div>
+              </Field>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground">Hình thức làm việc</label>
+              <Field>
+                <FieldLabel className="font-medium text-foreground">Hình thức làm việc</FieldLabel>
                 <Select value={employmentType} onValueChange={(val) => setEmploymentType(val)}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full h-10 rounded-2xl bg-background border-input/60">
                     <SelectValue placeholder="Chọn hình thức" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
@@ -267,12 +248,12 @@ export default function EditJobPage(props: { params: Params }) {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </Field>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground">Trạng thái đăng tuyển</label>
+              <Field>
+                <FieldLabel className="font-medium text-foreground">Trạng thái đăng tuyển</FieldLabel>
                 <Select value={status} onValueChange={(val) => setStatus(val)}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full h-10 rounded-2xl bg-background border-input/60">
                     <SelectValue placeholder="Chọn trạng thái" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
@@ -283,58 +264,55 @@ export default function EditJobPage(props: { params: Params }) {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </Field>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-foreground">Kỹ năng yêu cầu (Cách nhau bằng dấu phẩy)</label>
+            <Field>
+              <FieldLabel className="font-medium text-foreground">Kỹ năng yêu cầu (Cách nhau bằng dấu phẩy)</FieldLabel>
               <Input
                 type="text"
                 placeholder="Ví dụ: React, Node.js, TypeScript..."
                 value={requiredSkills}
                 onChange={(e) => setRequiredSkills(e.target.value)}
-                className="rounded-2xl h-10 px-3"
+                className="h-10"
               />
-            </div>
+            </Field>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-foreground">Mô tả công việc</label>
+            <Field>
+              <FieldLabel className="font-medium text-foreground">Mô tả công việc</FieldLabel>
               <Textarea
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="rounded-2xl p-3"
                 required
               />
-            </div>
+            </Field>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-foreground">Yêu cầu ứng viên</label>
+            <Field>
+              <FieldLabel className="font-medium text-foreground">Yêu cầu ứng viên</FieldLabel>
               <Textarea
                 rows={4}
                 value={requirements}
                 onChange={(e) => setRequirements(e.target.value)}
-                className="rounded-2xl p-3"
               />
-            </div>
+            </Field>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-foreground">Quyền lợi</label>
+            <Field>
+              <FieldLabel className="font-medium text-foreground">Quyền lợi</FieldLabel>
               <Textarea
                 rows={4}
                 value={benefits}
                 onChange={(e) => setBenefits(e.target.value)}
-                className="rounded-2xl p-3"
               />
-            </div>
+            </Field>
 
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="submit"
-                disabled={isPending}
+                disabled={updateMutation.isPending}
                 className="flex h-10 items-center justify-center rounded-2xl bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
               >
-                {isPending ? "Đang xử lý..." : "Lưu tin tuyển dụng"}
+                {updateMutation.isPending ? "Đang xử lý..." : "Lưu tin tuyển dụng"}
               </button>
             </div>
           </form>

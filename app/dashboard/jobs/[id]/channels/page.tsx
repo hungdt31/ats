@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { useDashboardJobChannels, useUpdateDashboardJobChannels } from "@/hooks/use-dashboard-jobs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01FreeIcons } from "@hugeicons/core-free-icons";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -41,20 +43,9 @@ export default function JobChannelsPage(props: { params: Params }) {
   const [externalUrl, setExternalUrl] = useState("");
   const [externalId, setExternalId] = useState("");
   const [status, setStatus] = useState("posted");
-  const [isPending, setIsPending] = useState(false);
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["dashboard", "jobs", jobId, "channels"],
-    queryFn: async () => {
-      const res = await fetch(`/api/dashboard/jobs/${jobId}/channels`);
-      if (!res.ok) throw new Error("Không thể tải thông tin.");
-      const json = await res.json();
-      return json.data as {
-        channels: any[];
-        job: any;
-      };
-    },
-  });
+  const { data, isLoading } = useDashboardJobChannels(jobId);
+  const updateChannelsMutation = useUpdateDashboardJobChannels(jobId);
 
   const channels = data?.channels || [];
   const job = data?.job || {};
@@ -66,34 +57,21 @@ export default function JobChannelsPage(props: { params: Params }) {
       return;
     }
 
-    setIsPending(true);
     try {
-      const res = await fetch(`/api/dashboard/jobs/${jobId}/channels`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          channel,
-          external_url: externalUrl,
-          external_id: externalId,
-          status,
-        }),
+      await updateChannelsMutation.mutateAsync({
+        channel,
+        external_url: externalUrl,
+        external_id: externalId,
+        status,
       });
-
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.message || "Lỗi lưu kênh tuyển dụng.");
-      }
 
       toast.success("Cập nhật kênh tuyển dụng thành công!");
       setChannel("linkedin");
       setExternalUrl("");
       setExternalId("");
       setStatus("posted");
-      refetch();
     } catch (err: any) {
       toast.error(err.message || "Đã xảy ra lỗi.");
-    } finally {
-      setIsPending(false);
     }
   };
 
@@ -128,10 +106,10 @@ export default function JobChannelsPage(props: { params: Params }) {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground">Kênh tuyển dụng</label>
+                <Field>
+                  <FieldLabel className="font-medium text-foreground">Kênh tuyển dụng</FieldLabel>
                   <Select value={channel} onValueChange={(val) => setChannel(val)}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full h-10 rounded-2xl bg-background border-input/60">
                       <SelectValue placeholder="Chọn kênh" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
@@ -142,12 +120,12 @@ export default function JobChannelsPage(props: { params: Params }) {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
+                </Field>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground">Trạng thái đăng tuyển</label>
+                <Field>
+                  <FieldLabel className="font-medium text-foreground">Trạng thái đăng tuyển</FieldLabel>
                   <Select value={status} onValueChange={(val) => setStatus(val)}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full h-10 rounded-2xl bg-background border-input/60">
                       <SelectValue placeholder="Chọn trạng thái" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
@@ -158,37 +136,37 @@ export default function JobChannelsPage(props: { params: Params }) {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
+                </Field>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground">Link bài viết (External URL)</label>
+                <Field>
+                  <FieldLabel className="font-medium text-foreground">Link bài viết (External URL)</FieldLabel>
                   <Input
                     type="url"
                     placeholder="https://..."
                     value={externalUrl}
                     onChange={(e) => setExternalUrl(e.target.value)}
-                    className="rounded-2xl h-10 px-3 border border-input/60 bg-background text-xs"
+                    className="h-10"
                   />
-                </div>
+                </Field>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground">ID bài viết bên ngoài (External ID)</label>
+                <Field>
+                  <FieldLabel className="font-medium text-foreground">ID bài viết bên ngoài (External ID)</FieldLabel>
                   <Input
                     type="text"
                     placeholder="Ví dụ: job-12345..."
                     value={externalId}
                     onChange={(e) => setExternalId(e.target.value)}
-                    className="rounded-2xl h-10 px-3 border border-input/60 bg-background text-xs"
+                    className="h-10"
                   />
-                </div>
+                </Field>
 
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     type="submit"
-                    disabled={isPending}
-                    className="flex h-9 items-center justify-center rounded-2xl bg-primary px-4 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer w-full"
+                    disabled={updateChannelsMutation.isPending}
+                    className="flex h-10 items-center justify-center rounded-2xl bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer w-full"
                   >
-                    {isPending ? "Đang lưu..." : "Lưu channel"}
+                    {updateChannelsMutation.isPending ? "Đang lưu..." : "Lưu channel"}
                   </button>
                 </div>
               </form>

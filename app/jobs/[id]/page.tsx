@@ -13,11 +13,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 import { employmentTypeLabel, formatSalaryRange } from "@/lib/data/jobs-utils";
 import { ApiError } from "@/lib/api-client";
 import { useMe } from "@/hooks/use-me";
 import { useJob } from "@/hooks/use-job";
-import { useApplyJob } from "@/hooks/use-candidate";
+import { useApplyJob, useAddCandidateFile } from "@/hooks/use-candidate";
 import { CVUpload } from "@/components/candidate/CVUpload";
 
 export default function JobDetailPage() {
@@ -30,6 +31,7 @@ export default function JobDetailPage() {
 
   // Apply mutation & local state for dialog
   const applyMutation = useApplyJob(id);
+  const addFileMutation = useAddCandidateFile();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [cvFileUrl, setCvFileUrl] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
@@ -83,15 +85,11 @@ export default function JobDetailPage() {
       // Register new file in user's personal files only if application was successful!
       if (newFileInfo) {
         try {
-          await fetch("/api/candidate/files", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              file_name: newFileInfo.fileName,
-              file_url: newFileInfo.fileUrl,
-              file_type: "cv",
-              appwrite_id: newFileInfo.appwriteId,
-            }),
+          await addFileMutation.mutateAsync({
+            file_name: newFileInfo.fileName,
+            file_url: newFileInfo.fileUrl,
+            file_type: "cv",
+            appwrite_id: newFileInfo.appwriteId,
           });
         } catch (fileErr) {
           console.error("[Register personal file error after apply]", fileErr);
@@ -191,17 +189,16 @@ export default function JobDetailPage() {
 
                             <CVUpload value={cvFileUrl} onChange={setCvFileUrl} onFileNameChange={setCvFilename} onNewFileUpload={setNewFileInfo} />
 
-                            <Field className="space-y-1.5">
-                              <FieldLabel htmlFor="cover_letter_dialog" className="text-xs font-medium text-foreground">
+                            <Field>
+                              <FieldLabel htmlFor="cover_letter_dialog" className="font-medium text-foreground">
                                 Thư giới thiệu (Cover Letter)
                               </FieldLabel>
-                              <textarea
+                              <Textarea
                                 id="cover_letter_dialog"
                                 rows={4}
                                 placeholder="Giới thiệu ngắn gọn về bản thân..."
                                 value={coverLetter}
                                 onChange={(e) => setCoverLetter(e.target.value)}
-                                className="flex w-full rounded-2xl border border-transparent bg-input/50 px-4 py-3 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 data-placeholder:text-muted-foreground"
                               />
                             </Field>
 

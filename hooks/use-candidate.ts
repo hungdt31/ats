@@ -137,3 +137,22 @@ export function useCandidateInterviews() {
     staleTime: 5 * 1000 * 60, // 5 minutes cache
   });
 }
+
+/** Thêm file mới vào hồ sơ ứng viên */
+export function useAddCandidateFile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      file_name: string;
+      file_url: string;
+      file_type: string;
+      appwrite_id?: string;
+    }) => {
+      const res = await apiPost<{ success: boolean }>("/api/candidate/files", data);
+      return res;
+    },
+    onSuccess: () => {
+    },
+  });
+}

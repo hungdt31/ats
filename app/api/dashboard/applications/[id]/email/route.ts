@@ -37,7 +37,7 @@ export async function POST(
 
     // Call Resend client
     const { data, error } = await resend.emails.send({
-      from: "onboarding@resend.dev",
+      from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
       to: [recipientEmail],
       subject: subject,
       html: `<div style="font-family: sans-serif; line-height: 1.5; color: #333;">${bodyText.replace(/\n/g, "<br>")}</div>`,

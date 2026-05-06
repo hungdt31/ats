@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
+import { useDashboardApplications } from "@/hooks/use-dashboard-applications";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
@@ -105,24 +105,10 @@ export default function ApplicationsDashboardPage() {
   const [status, setStatus] = useState<string>("all");
   const [source, setSource] = useState<string>("all");
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["dashboard", "applications", jobId, status, source],
-    queryFn: async () => {
-      const sp = new URLSearchParams();
-      if (jobId && jobId !== "all") sp.append("jobId", jobId);
-      if (status && status !== "all") sp.append("status", status);
-      if (source && source !== "all") sp.append("source", source);
+  const { data, isLoading } = useDashboardApplications({ jobId, status, source });
 
-      const res = await fetch(`/api/dashboard/applications?${sp.toString()}`);
-      if (!res.ok) throw new Error("Không thể tải đơn ứng tuyển.");
-      const json = await res.json();
-      return json.data as { applications: Application[]; jobs: any[] };
-    },
-    staleTime: 5000,
-  });
-
-  const applications = data?.applications || [];
-  const jobs = data?.jobs || [];
+  const applications = (data?.applications as Application[]) || [];
+  const jobs = (data?.jobs as { id: string; title: string }[]) || [];
 
   return (
     <div className="flex flex-col gap-6">

@@ -422,10 +422,10 @@ export default async function ApplicationDetailPage(props: {
                         if (log.type === "rejection") Icon = CancelCircleIcon;
 
                         return (
-                          <Card key={log.id} className="p-3 bg-muted/20">
+                          <Card key={log.id} className="bg-muted/20 p-4">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-4 mb-1">
                               <span className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                <HugeiconsIcon icon={Icon} className="size-4 text-muted-foreground shrink-0" />
+                                <HugeiconsIcon icon={Icon} className="size-6 text-muted-foreground shrink-0" />
                                 {log.subject}
                               </span>
                               <span className="text-muted-foreground">

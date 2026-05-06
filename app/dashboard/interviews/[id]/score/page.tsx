@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01FreeIcons } from "@hugeicons/core-free-icons";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -106,9 +108,9 @@ export default function InterviewScorePage(props: { params: Params }) {
       <div className="flex items-center gap-2">
         <Link
           href={`/dashboard/interviews/${interviewId}`}
-          className="inline-flex h-9 items-center justify-center rounded-2xl border border-input/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-muted transition-all"
+          className="inline-flex h-9 items-center justify-center rounded-2xl border border-input/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-muted transition-all gap-1.5"
         >
-          ← Quay lại chi tiết buổi PV
+          <HugeiconsIcon icon={ArrowLeft01FreeIcons} className="size-4" /> Quay lại chi tiết buổi PV
         </Link>
       </div>
 

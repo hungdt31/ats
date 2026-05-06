@@ -54,3 +54,53 @@ export async function apiPost<T>(url: string, data: unknown, init?: RequestInit)
 
   return body as T;
 }
+
+export async function apiPatch<T>(url: string, data: unknown, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    method: "PATCH",
+    ...init,
+    headers: { "Content-Type": "application/json", ...init?.headers },
+    body: JSON.stringify(data),
+  });
+
+  const body = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new ApiError(res.status, body?.message || body?.error || `HTTP ${res.status}`, body?.fieldErrors);
+  }
+
+  return body as T;
+}
+
+export async function apiDelete<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    method: "DELETE",
+    ...init,
+    headers: { "Content-Type": "application/json", ...init?.headers },
+  });
+
+  const body = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new ApiError(res.status, body?.message || body?.error || `HTTP ${res.status}`, body?.fieldErrors);
+  }
+
+  return body as T;
+}
+
+export async function apiPut<T>(url: string, data: unknown, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    method: "PUT",
+    ...init,
+    headers: { "Content-Type": "application/json", ...init?.headers },
+    body: JSON.stringify(data),
+  });
+
+  const body = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new ApiError(res.status, body?.message || body?.error || `HTTP ${res.status}`, body?.fieldErrors);
+  }
+
+  return body as T;
+}
