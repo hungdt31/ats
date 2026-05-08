@@ -3,20 +3,39 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { storage, BUCKET_ID, ID } from "@/lib/appwrite";
+import { Badge } from "@/components/ui/badge";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Folder01Icon, File01Icon, Upload01Icon, PencilEdit01Icon, Delete02Icon } from "@hugeicons/core-free-icons";
+import {
+  Folder01Icon,
+  File01Icon,
+  Upload01Icon,
+  PencilEdit01Icon,
+  Delete02Icon,
+  Mail01Icon,
+  CheckmarkCircle01Icon,
+} from "@hugeicons/core-free-icons";
+import { useSendOtp, useVerifyEmail } from "@/hooks/use-auth";
+import { ApiError } from "@/lib/api-client";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
+import type { CandidateProfileData, useUpdateCandidateProfile } from "@/hooks/use-candidate";
+import { useCandidateFiles } from "@/hooks/use-candidate-files";
+import { useChangePassword } from "@/hooks/use-change-password";
+
+type Msg = { type: "success" | "error"; text: string };
 
 type Props = {
-  profileData: any;
+  profileData: CandidateProfileData | undefined;
   isLoading: boolean;
-  updateProfileMutation: any;
+  updateProfileMutation: ReturnType<typeof useUpdateCandidateProfile>;
 };
 
 export function CandidateProfile({ profileData, isLoading, updateProfileMutation }: Props) {
-  // Profile form state
+  // ── Profile edit ──────────────────────────────────────────────────────────
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -28,58 +47,98 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
   const [githubUrl, setGithubUrl] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // Password form state
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [pwdMsg, setPwdMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [isPwdPending, setIsPwdPending] = useState(false);
+  // ── Password change ───────────────────────────────────────────────────────
+  const {
+    currentPassword,
+    newPassword,
+    confirmPassword,
+    isPending: isPwdPending,
+    msg: pwdMsg,
+    setCurrentPassword,
+    setNewPassword,
+    setConfirmPassword,
+    handleSubmit: handleChangePassword,
+  } = useChangePassword();
 
-  // File management state
-  const [files, setFiles] = useState<any[]>([]);
-  const [isFilesLoading, setIsFilesLoading] = useState(false);
-  const [isFilesUploading, setIsFilesUploading] = useState(false);
-  const [fileMsg, setFileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  // Modal / Edit state for files
-  const [editingFile, setEditingFile] = useState<any | null>(null);
-  const [editFileName, setEditFileName] = useState("");
-
-  const fetchFiles = async () => {
-    setIsFilesLoading(true);
-    try {
-      const res = await fetch("/api/candidate/files");
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setFiles(data.data.files);
-      }
-    } catch (err) {
-      console.error("[Fetch files error]", err);
-    } finally {
-      setIsFilesLoading(false);
-    }
-  };
+  // ── Email verification ────────────────────────────────────────────────────
+  const sendOtpMutation = useSendOtp();
+  const verifyEmailMutation = useVerifyEmail();
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpMsg, setOtpMsg] = useState<Msg | null>(null);
+  const [otpCooldown, setOtpCooldown] = useState(0);
 
   useEffect(() => {
-    fetchFiles();
-  }, []);
+    if (otpCooldown <= 0) return;
+    const id = setTimeout(() => setOtpCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(id);
+  }, [otpCooldown]);
 
-  const handleEditInit = () => {
+  async function handleSendOtp() {
+    if (!profileData?.email) return;
+    setOtpMsg(null);
+    try {
+      await sendOtpMutation.mutateAsync({ email: profileData.email, type: "email_verify" });
+      setOtpSent(true);
+      setOtpCooldown(60);
+      setOtpMsg({ type: "success", text: "Mã OTP đã được gửi đến email của bạn" });
+    } catch (err) {
+      setOtpMsg({
+        type: "error",
+        text: err instanceof ApiError ? err.message : "Gửi mã thất bại, vui lòng thử lại",
+      });
+    }
+  }
+
+  async function handleVerifyEmail() {
+    if (!profileData?.email || otpCode.length < 6) return;
+    setOtpMsg(null);
+    try {
+      await verifyEmailMutation.mutateAsync({ email: profileData.email, code: otpCode });
+      setOtpMsg({ type: "success", text: "Xác minh email thành công!" });
+      setOtpSent(false);
+      setOtpCode("");
+      window.location.reload();
+    } catch (err) {
+      setOtpMsg({
+        type: "error",
+        text: err instanceof ApiError ? err.message : "Xác minh thất bại, vui lòng thử lại",
+      });
+    }
+  }
+
+  // ── File management ───────────────────────────────────────────────────────
+  const {
+    files,
+    isLoading: isFilesLoading,
+    isUploading: isFilesUploading,
+    msg: fileMsg,
+    editingFile,
+    editFileName,
+    setEditingFile,
+    setEditFileName,
+    uploadFile,
+    renameFile,
+    deleteFile,
+  } = useCandidateFiles();
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  function handleEditInit() {
     if (profileData) {
-      setFullName(profileData.fullName || "");
-      setEmail(profileData.email || "");
-      setPhone(profileData.phone || "");
-      setTitle(profileData.profile?.title || "");
-      setBio(profileData.profile?.bio || "");
-      setLocation(profileData.profile?.location || "");
-      setYearsExperience(profileData.profile?.years_experience || 0);
-      setLinkedinUrl(profileData.profile?.linkedin_url || "");
-      setGithubUrl(profileData.profile?.github_url || "");
+      setFullName(profileData.fullName ?? "");
+      setEmail(profileData.email ?? "");
+      setPhone(profileData.phone ?? "");
+      setTitle(profileData.profile?.title ?? "");
+      setBio(profileData.profile?.bio ?? "");
+      setLocation(profileData.profile?.location ?? "");
+      setYearsExperience(profileData.profile?.years_experience ?? 0);
+      setLinkedinUrl(profileData.profile?.linkedin_url ?? "");
+      setGithubUrl(profileData.profile?.github_url ?? "");
     }
     setIsEditMode(true);
-  };
+  }
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
+  async function handleUpdateProfile(e: React.FormEvent) {
     e.preventDefault();
     try {
       await updateProfileMutation.mutateAsync({
@@ -97,82 +156,53 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
     } catch (err) {
       console.error(err);
     }
-  };
+  }
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPwdMsg(null);
-
-    if (newPassword !== confirmPassword) {
-      setPwdMsg({ type: "error", text: "Xác nhận mật khẩu mới không khớp" });
-      return;
-    }
-
-    setIsPwdPending(true);
-    try {
-      const res = await fetch("/api/auth/password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setPwdMsg({ type: "error", text: data.message || "Không thể đổi mật khẩu" });
-      } else {
-        setPwdMsg({ type: "success", text: "Đổi mật khẩu thành công!" });
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-      }
-    } catch (err) {
-      setPwdMsg({ type: "error", text: "Lỗi kết nối máy chủ khi đổi mật khẩu" });
-    } finally {
-      setIsPwdPending(false);
-    }
-  };
-
+  // ── Render ────────────────────────────────────────────────────────────────
   if (isLoading) {
-    return <p className="text-muted-foreground py-6 animate-pulse">Đang tải hồ sơ cá nhân...</p>;
+    return <p className="animate-pulse py-6 text-muted-foreground">Đang tải hồ sơ cá nhân...</p>;
   }
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
+      {/* ── Cột chính ──────────────────────────────────────────────────────── */}
       <div className="lg:col-span-2">
         {!isEditMode ? (
-          <Card className="border-border/80 h-full">
+          <Card className="h-full border-border/80">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <div className="space-y-1">
                 <CardTitle className="text-xl font-bold">
-                  {profileData?.fullName || "Chưa cập nhật"}
+                  {profileData?.fullName ?? "Chưa cập nhật"}
                 </CardTitle>
-                <span className="font-medium text-foreground">{profileData?.profile?.title || "—"}</span>
+                <span className="font-medium text-foreground">
+                  {profileData?.profile?.title ?? "—"}
+                </span>
               </div>
               <Button variant="outline" onClick={handleEditInit}>
                 Chỉnh sửa hồ sơ
               </Button>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm pt-2">
+
+            <CardContent className="space-y-4 pt-2 text-sm">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-muted-foreground block text-xs">Điện thoại</span>
-                  <span className="font-medium text-foreground">{profileData?.phone || "—"}</span>
+                  <span className="block text-xs text-muted-foreground">Điện thoại</span>
+                  <span className="font-medium text-foreground">{profileData?.phone ?? "—"}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground block text-xs">Email</span>
+                  <span className="block text-xs text-muted-foreground">Email</span>
+                  <span className="font-medium text-foreground">{profileData?.email ?? "—"}</span>
+                </div>
+                <div>
+                  <span className="block text-xs text-muted-foreground">Kinh nghiệm</span>
                   <span className="font-medium text-foreground">
-                    {profileData?.email || "—"}
+                    {profileData?.profile?.years_experience ?? 0} năm
                   </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground block text-xs">Kinh nghiệm</span>
+                  <span className="block text-xs text-muted-foreground">Địa điểm</span>
                   <span className="font-medium text-foreground">
-                    {profileData?.profile?.years_experience || 0} năm
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground block text-xs">Địa điểm</span>
-                  <span className="font-medium text-foreground">
-                    {profileData?.profile?.location || "—"}
+                    {profileData?.profile?.location ?? "—"}
                   </span>
                 </div>
               </div>
@@ -180,9 +210,11 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
               <Separator />
 
               <div>
-                <span className="text-muted-foreground block text-xs mb-1">Giới thiệu bản thân (Bio)</span>
-                <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-                  {profileData?.profile?.bio || "Chưa có thông tin giới thiệu."}
+                <span className="mb-1 block text-xs text-muted-foreground">
+                  Giới thiệu bản thân (Bio)
+                </span>
+                <p className="whitespace-pre-wrap leading-relaxed text-foreground">
+                  {profileData?.profile?.bio ?? "Chưa có thông tin giới thiệu."}
                 </p>
               </div>
 
@@ -190,13 +222,13 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-muted-foreground block text-xs">LinkedIn</span>
+                  <span className="block text-xs text-muted-foreground">LinkedIn</span>
                   {profileData?.profile?.linkedin_url ? (
                     <a
                       href={profileData.profile.linkedin_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary hover:underline break-all"
+                      className="break-all text-primary hover:underline"
                     >
                       {profileData.profile.linkedin_url}
                     </a>
@@ -205,13 +237,13 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                   )}
                 </div>
                 <div>
-                  <span className="text-muted-foreground block text-xs">GitHub</span>
+                  <span className="block text-xs text-muted-foreground">GitHub</span>
                   {profileData?.profile?.github_url ? (
                     <a
                       href={profileData.profile.github_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary hover:underline break-all"
+                      className="break-all text-primary hover:underline"
                     >
                       {profileData.profile.github_url}
                     </a>
@@ -226,117 +258,75 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
               {/* Quản lý file cá nhân */}
               <div className="space-y-4 pt-2">
                 <div>
-                  <span className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <HugeiconsIcon icon={Folder01Icon} className="size-4 text-primary" /> Quản lý tệp cá nhân
+                  <span className="flex items-center gap-2 text-sm font-bold text-foreground">
+                    <HugeiconsIcon icon={Folder01Icon} className="size-4 text-primary" />
+                    Quản lý tệp cá nhân
                   </span>
-                  <span className="text-xs text-muted-foreground block mt-0.5">
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
                     Upload CV, Portfolio hay chứng chỉ của bạn.
                   </span>
                 </div>
 
-                {fileMsg && (
-                  <div
-                    className={`rounded-xl border px-4 py-3 text-xs ${fileMsg.type === "success"
-                      ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
-                      : "border-destructive/30 bg-destructive/5 text-destructive"
-                      }`}
-                  >
-                    {fileMsg.text}
-                  </div>
-                )}
+                {fileMsg && <MsgBox msg={fileMsg} />}
 
-                {/* Upload file mới */}
+                {/* Upload mới */}
                 <div className="space-y-2">
-                  <span className="text-xs font-medium text-foreground flex items-center gap-1.5">
-                    <HugeiconsIcon icon={Upload01Icon} className="size-3.5 text-muted-foreground" /> Thêm tệp tin mới
+                  <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                    <HugeiconsIcon icon={Upload01Icon} className="size-3.5 text-muted-foreground" />
+                    Thêm tệp tin mới
                   </span>
-                  <input
+                  <Input
                     type="file"
                     accept=".pdf,.doc,.docx"
                     disabled={isFilesUploading}
                     onChange={async (e) => {
                       const fileObj = e.target.files?.[0];
                       if (!fileObj) return;
-
-                      const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
-                      const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
-                      if (!endpoint || !project || !BUCKET_ID) {
-                        setFileMsg({ type: "error", text: "Cấu hình Appwrite chưa đầy đủ trong file .env" });
-                        return;
-                      }
-
-                      setIsFilesUploading(true);
-                      setFileMsg(null);
-                      try {
-                        // 1. Upload to Appwrite Storage
-                        const fileResponse = await storage.createFile(BUCKET_ID, ID.unique(), fileObj);
-                        const fileUrl = `${endpoint}/storage/buckets/${BUCKET_ID}/files/${fileResponse.$id}/view?project=${project}`;
-
-                        // 2. Save to database
-                        const res = await fetch("/api/candidate/files", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            file_name: fileObj.name,
-                            file_url: fileUrl,
-                            file_type: "cv",
-                            appwrite_id: fileResponse.$id,
-                          }),
-                        });
-
-                        if (!res.ok) {
-                          const data = await res.json();
-                          setFileMsg({ type: "error", text: data.message || "Không thể lưu tệp vào hệ thống" });
-                        } else {
-                          setFileMsg({ type: "success", text: "Tải tệp lên thành công" });
-                          fetchFiles();
-                        }
-                      } catch (err: any) {
-                        setFileMsg({ type: "error", text: err.message || "Lỗi khi tải tệp lên" });
-                      } finally {
-                        setIsFilesUploading(false);
-                        e.target.value = "";
-                      }
+                      await uploadFile(fileObj);
+                      e.target.value = "";
                     }}
-                    className="flex w-full rounded-2xl border border-dashed border-border bg-input/20 px-4 py-3 text-sm transition-all focus:border-ring focus:outline-none file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-3 file:py-1 file:text-xs file:font-semibold file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
                   />
-                  {isFilesUploading && <p className="text-xs text-muted-foreground animate-pulse">Đang tải tệp lên...</p>}
+                  {isFilesUploading && (
+                    <p className="animate-pulse text-xs text-muted-foreground">Đang tải tệp lên...</p>
+                  )}
                 </div>
 
                 <Separator />
 
-                {/* Danh sách các file */}
+                {/* Danh sách file */}
                 <div className="space-y-3">
-                  <span className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
                     Tệp tin đã tải lên
                   </span>
                   {isFilesLoading ? (
-                    <p className="text-xs text-muted-foreground animate-pulse">Đang tải danh sách tệp...</p>
+                    <p className="animate-pulse text-xs text-muted-foreground">Đang tải danh sách tệp...</p>
                   ) : files.length === 0 ? (
                     <p className="text-xs text-muted-foreground">Bạn chưa tải lên tệp tin nào.</p>
                   ) : (
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                    <div className="max-h-64 space-y-2 overflow-y-auto">
                       {files.map((file) => (
                         <div
                           key={file.id}
-                          className="flex flex-col gap-1 p-2 rounded-xl border border-secondary shadow-sm text-xs"
+                          className="flex flex-col gap-1 rounded-xl border border-secondary p-2 text-xs shadow-sm"
                         >
                           <div className="flex items-center justify-between gap-2">
                             {editingFile?.id === file.id ? (
-                              <input
-                                type="text"
+                              <Input
                                 value={editFileName}
                                 onChange={(e) => setEditFileName(e.target.value)}
-                                className="flex h-7 w-full rounded-3xl border border-transparent bg-input/80 px-2 text-xs transition-all outline-none"
+                                className="h-7 px-2 text-xs"
                               />
                             ) : (
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <HugeiconsIcon icon={File01Icon} className="size-3.5 text-muted-foreground flex-shrink-0" />
+                              <div className="flex min-w-0 items-center gap-1.5">
+                                <HugeiconsIcon
+                                  icon={File01Icon}
+                                  className="size-3.5 flex-shrink-0 text-muted-foreground"
+                                />
                                 <a
                                   href={file.file_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="font-medium hover:underline truncate"
+                                  className="truncate font-medium hover:underline"
                                 >
                                   {file.file_name}
                                 </a>
@@ -344,7 +334,7 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                             )}
                           </div>
 
-                          <div className="flex justify-end items-center gap-2 mt-1">
+                          <div className="mt-1 flex items-center justify-end gap-2">
                             {editingFile?.id === file.id ? (
                               <>
                                 <Button
@@ -359,22 +349,7 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                                   variant="default"
                                   size="sm"
                                   className="h-6 px-2 text-xs"
-                                  onClick={async () => {
-                                    try {
-                                      const res = await fetch(`/api/candidate/files/${file.id}`, {
-                                        method: "PUT",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({ file_name: editFileName }),
-                                      });
-                                      if (res.ok) {
-                                        setFileMsg({ type: "success", text: "Đổi tên tệp thành công" });
-                                        setEditingFile(null);
-                                        fetchFiles();
-                                      }
-                                    } catch (err) {
-                                      setFileMsg({ type: "error", text: "Không thể đổi tên tệp" });
-                                    }
-                                  }}
+                                  onClick={() => renameFile(file.id, editFileName)}
                                 >
                                   Lưu
                                 </Button>
@@ -384,33 +359,26 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-6 px-2 text-xs flex items-center gap-1"
+                                  className="flex h-6 items-center gap-1 px-2 text-xs"
                                   onClick={() => {
                                     setEditingFile(file);
                                     setEditFileName(file.file_name);
                                   }}
                                 >
-                                  <HugeiconsIcon icon={PencilEdit01Icon} className="size-3 text-muted-foreground" /> Sửa tên
+                                  <HugeiconsIcon
+                                    icon={PencilEdit01Icon}
+                                    className="size-3 text-muted-foreground"
+                                  />
+                                  Sửa tên
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-6 px-2 text-xs text-destructive hover:text-destructive flex items-center gap-1"
-                                  onClick={async () => {
-                                    try {
-                                      const res = await fetch(`/api/candidate/files/${file.id}`, {
-                                        method: "DELETE",
-                                      });
-                                      if (res.ok) {
-                                        setFileMsg({ type: "success", text: "Xóa tệp thành công" });
-                                        fetchFiles();
-                                      }
-                                    } catch (err) {
-                                      setFileMsg({ type: "error", text: "Không thể xóa tệp" });
-                                    }
-                                  }}
+                                  className="flex h-6 items-center gap-1 px-2 text-xs text-destructive hover:text-destructive"
+                                  onClick={() => deleteFile(file.id)}
                                 >
-                                  <HugeiconsIcon icon={Delete02Icon} className="size-3 text-destructive" /> Xóa
+                                  <HugeiconsIcon icon={Delete02Icon} className="size-3 text-destructive" />
+                                  Xóa
                                 </Button>
                               </>
                             )}
@@ -424,6 +392,7 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
             </CardContent>
           </Card>
         ) : (
+          /* ── Form chỉnh sửa ──────────────────────────────────────────────── */
           <Card className="border-border/80">
             <CardHeader>
               <CardTitle className="text-xl font-bold">Chỉnh sửa hồ sơ</CardTitle>
@@ -434,21 +403,19 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                 <div className="grid grid-cols-2 gap-4">
                   <Field className="space-y-1.5">
                     <FieldLabel className="text-xs font-medium">Họ và tên</FieldLabel>
-                    <input
+                    <Input
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                       required
                     />
                   </Field>
                   <Field className="space-y-1.5">
                     <FieldLabel className="text-xs font-medium">Email</FieldLabel>
-                    <input
+                    <Input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                       required
                     />
                   </Field>
@@ -457,74 +424,67 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                 <div className="grid grid-cols-2 gap-4">
                   <Field className="space-y-1.5">
                     <FieldLabel className="text-xs font-medium">Điện thoại</FieldLabel>
-                    <input
+                    <Input
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                     />
                   </Field>
                   <Field className="space-y-1.5">
                     <FieldLabel className="text-xs font-medium">Tiêu đề (Vị trí công việc)</FieldLabel>
-                    <input
+                    <Input
                       type="text"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="Software Engineer, Frontend Developer, ..."
-                      className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                     />
                   </Field>
                   <Field className="space-y-1.5">
                     <FieldLabel className="text-xs font-medium">Kinh nghiệm (năm)</FieldLabel>
-                    <input
+                    <Input
                       type="number"
                       min={0}
                       value={yearsExperience}
                       onChange={(e) => setYearsExperience(Number(e.target.value))}
-                      className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                     />
                   </Field>
                   <Field className="space-y-1.5">
                     <FieldLabel className="text-xs font-medium">Địa điểm</FieldLabel>
-                    <input
+                    <Input
                       type="text"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       placeholder="Hà Nội, TP. Hồ Chí Minh, ..."
-                      className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                     />
                   </Field>
                 </div>
 
                 <Field className="space-y-1.5">
                   <FieldLabel className="text-xs font-medium">Giới thiệu bản thân (Bio)</FieldLabel>
-                  <textarea
+                  <Textarea
                     rows={4}
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
-                    className="flex w-full rounded-2xl border border-transparent bg-input/50 px-4 py-3 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                   />
                 </Field>
 
                 <div className="grid grid-cols-2 gap-4">
                   <Field className="space-y-1.5">
                     <FieldLabel className="text-xs font-medium">LinkedIn URL</FieldLabel>
-                    <input
+                    <Input
                       type="url"
                       value={linkedinUrl}
                       onChange={(e) => setLinkedinUrl(e.target.value)}
                       placeholder="https://linkedin.com/in/..."
-                      className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                     />
                   </Field>
                   <Field className="space-y-1.5">
                     <FieldLabel className="text-xs font-medium">GitHub URL</FieldLabel>
-                    <input
+                    <Input
                       type="url"
                       value={githubUrl}
                       onChange={(e) => setGithubUrl(e.target.value)}
                       placeholder="https://github.com/..."
-                      className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                     />
                   </Field>
                 </div>
@@ -543,7 +503,9 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
         )}
       </div>
 
-      <div className="lg:col-span-1">
+      {/* ── Cột phải ───────────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-6 lg:col-span-1">
+        {/* Card đổi mật khẩu */}
         <Card className="border-border/80">
           <CardHeader>
             <CardTitle className="text-xl font-bold">Đổi mật khẩu</CardTitle>
@@ -551,47 +513,35 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
           </CardHeader>
           <CardContent>
             <form onSubmit={handleChangePassword} className="space-y-4">
-              {pwdMsg && (
-                <div
-                  className={`rounded-xl border px-4 py-3 text-xs ${pwdMsg.type === "success"
-                    ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
-                    : "border-destructive/30 bg-destructive/5 text-destructive"
-                    }`}
-                >
-                  {pwdMsg.text}
-                </div>
-              )}
+              {pwdMsg && <MsgBox msg={pwdMsg} />}
 
               <Field className="space-y-1.5">
                 <FieldLabel className="text-xs font-medium">Mật khẩu hiện tại</FieldLabel>
-                <input
+                <Input
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   required
-                  className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                 />
               </Field>
 
               <Field className="space-y-1.5">
                 <FieldLabel className="text-xs font-medium">Mật khẩu mới</FieldLabel>
-                <input
+                <Input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                 />
               </Field>
 
               <Field className="space-y-1.5">
                 <FieldLabel className="text-xs font-medium">Xác nhận mật khẩu mới</FieldLabel>
-                <input
+                <Input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="flex h-9 w-full rounded-3xl border border-transparent bg-input/50 px-4 py-2 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3"
                 />
               </Field>
 
@@ -601,7 +551,114 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
             </form>
           </CardContent>
         </Card>
+
+        {/* Card xác minh email */}
+        <Card className="border-border/80">
+          <CardHeader className="pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <CardTitle className="flex items-center gap-2 text-xl font-bold">
+                <HugeiconsIcon icon={Mail01Icon} className="size-5 text-primary" />
+                Xác minh email
+              </CardTitle>
+              {profileData?.emailVerified ? (
+                <Badge
+                  variant="secondary"
+                  className="flex items-center gap-1 border-emerald-500/20 bg-emerald-500/10 text-emerald-600"
+                >
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="size-3.5" />
+                  Đã xác minh
+                </Badge>
+              ) : (
+                <Badge
+                  variant="secondary"
+                  className="border-amber-500/20 bg-amber-500/10 text-amber-600"
+                >
+                  Chưa xác minh
+                </Badge>
+              )}
+            </div>
+            <CardDescription>
+              {profileData?.emailVerified
+                ? "Địa chỉ email của bạn đã được xác minh."
+                : "Xác minh email để bảo vệ tài khoản của bạn."}
+            </CardDescription>
+          </CardHeader>
+
+          {!profileData?.emailVerified && (
+            <CardContent className="space-y-4">
+              {otpMsg && <MsgBox msg={otpMsg} />}
+
+              <p className="text-xs text-muted-foreground">
+                Mã OTP sẽ được gửi đến{" "}
+                <span className="font-medium text-foreground">{profileData?.email}</span>
+              </p>
+
+              {!otpSent ? (
+                <Button className="w-full" onClick={handleSendOtp} disabled={sendOtpMutation.isPending}>
+                  {sendOtpMutation.isPending ? "Đang gửi…" : "Gửi mã OTP"}
+                </Button>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex flex-col items-center gap-3">
+                    <p className="self-start text-xs text-muted-foreground">Nhập mã 6 chữ số:</p>
+                    <InputOTP
+                      maxLength={6}
+                      pattern={REGEXP_ONLY_DIGITS}
+                      value={otpCode}
+                      onChange={setOtpCode}
+                      disabled={verifyEmailMutation.isPending}
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                        <InputOTPSlot index={2} />
+                        <InputOTPSlot index={3} />
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    onClick={handleVerifyEmail}
+                    disabled={verifyEmailMutation.isPending || otpCode.length < 6}
+                  >
+                    {verifyEmailMutation.isPending ? "Đang xác minh…" : "Xác minh email"}
+                  </Button>
+
+                  <p className="text-center text-xs text-muted-foreground">
+                    Không nhận được mã?{" "}
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      disabled={otpCooldown > 0 || sendOtpMutation.isPending}
+                      className="font-medium text-primary underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {otpCooldown > 0 ? `Gửi lại sau ${otpCooldown}s` : "Gửi lại mã"}
+                    </button>
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          )}
+        </Card>
       </div>
+    </div>
+  );
+}
+
+/** Component hiển thị thông báo success / error dùng chung. */
+function MsgBox({ msg }: { msg: Msg }) {
+  return (
+    <div
+      className={`rounded-xl border px-4 py-3 text-xs ${
+        msg.type === "success"
+          ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
+          : "border-destructive/30 bg-destructive/5 text-destructive"
+      }`}
+    >
+      {msg.text}
     </div>
   );
 }

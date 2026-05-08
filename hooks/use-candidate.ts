@@ -25,6 +25,7 @@ export type CandidateProfileData = {
   email: string;
   fullName: string;
   phone: string | null;
+  emailVerified: boolean;
   profile: {
     title: string | null;
     bio: string | null;

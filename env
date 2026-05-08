@@ -7,3 +7,5 @@ AUTH_SECRET="thay-bang-chuoi-ngau-nhien-dai-tren-32-ky-tu"
 NEXT_PUBLIC_APPWRITE_ENDPOINT="....."
 NEXT_PUBLIC_APPWRITE_PROJECT="....."
 NEXT_PUBLIC_APPWRITE_BUCKET_ID="....."
+
+RESEND_FROM_EMAIL="....."

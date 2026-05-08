@@ -19,7 +19,7 @@ import { ApiError } from "@/lib/api-client";
 import { useMe } from "@/hooks/use-me";
 import { useJob } from "@/hooks/use-job";
 import { useApplyJob, useAddCandidateFile } from "@/hooks/use-candidate";
-import { CVUpload } from "@/components/candidate/CVUpload";
+import { CVUpload, type NewFileInfo } from "@/components/candidate/CVUpload";
 
 export default function JobDetailPage() {
   const params = useParams<{ id: string }>();
@@ -36,7 +36,7 @@ export default function JobDetailPage() {
   const [cvFileUrl, setCvFileUrl] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [newFileInfo, setNewFileInfo] = useState<any | null>(null);
+  const [newFileInfo, setNewFileInfo] = useState<NewFileInfo | null>(null);
   const [cvFilename, setCvFilename] = useState("");
 
   // 404 từ API → Next.js notFound()
@@ -99,7 +99,7 @@ export default function JobDetailPage() {
       // Navigate to candidate profile after success
       setIsDialogOpen(false);
       router.push("/candidate");
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof ApiError) {
         setApplyError(err.message);
       } else {
@@ -125,6 +125,9 @@ export default function JobDetailPage() {
             <Card>
               <CardHeader className="gap-2">
                 <CardTitle className="font-heading text-2xl font-bold">{job.title}</CardTitle>
+                {meta ? (
+                  <p className="text-sm text-muted-foreground">{meta}</p>
+                ) : null}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <CardDescription>
                     Ngày đăng tuyển: {publishedDate ?? "Đang tuyển"}

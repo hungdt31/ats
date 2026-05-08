@@ -91,6 +91,12 @@ function LoginFormFields() {
             <FormItem>
               <div className="flex items-center justify-between gap-2">
                 <FormLabel>Mật khẩu</FormLabel>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+                >
+                  Quên mật khẩu?
+                </Link>
               </div>
               <FormControl>
                 <Input type="password" autoComplete="current-password" {...field} />
@@ -100,17 +106,11 @@ function LoginFormFields() {
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+        <Button type="submit" className="w-full h-12" disabled={loginMutation.isPending}>
           {loginMutation.isPending ? "Đang đăng nhập…" : "Đăng nhập"}
         </Button>
 
         <Separator />
-
-        <p className="text-center text-xs text-muted-foreground">
-          <Link href="/register" className="underline-offset-2 hover:underline">
-            Tạo tài khoản mới
-          </Link>
-        </p>
       </form>
     </Form>
   );

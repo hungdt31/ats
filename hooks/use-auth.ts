@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiPost, ApiError } from "@/lib/api-client";
 import { queryKeys } from "./query-keys";
-import type { LoginInput, RegisterInput } from "@/lib/validators/auth";
+import type { LoginInput, RegisterInput, SendOtpInput, VerifyEmailInput, ResetPasswordInput } from "@/lib/validators/auth";
 import type { MeResponse } from "@/types/api";
 
 export function useLogin() {
@@ -23,7 +23,6 @@ export function useLogin() {
       return { me: meJson };
     },
     onSuccess: () => {
-      // Làm mới dữ liệu người dùng
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
     },
   });
@@ -34,5 +33,26 @@ export function useRegister() {
     mutationFn: async (values) => {
       return apiPost("/api/auth/register", values);
     },
+  });
+}
+
+/** Gửi OTP đến email (dùng cho cả xác minh email và quên mật khẩu). */
+export function useSendOtp() {
+  return useMutation<unknown, ApiError | Error, SendOtpInput>({
+    mutationFn: (values) => apiPost("/api/auth/otp/send", values),
+  });
+}
+
+/** Xác minh mã OTP để kích hoạt email. */
+export function useVerifyEmail() {
+  return useMutation<unknown, ApiError | Error, VerifyEmailInput>({
+    mutationFn: (values) => apiPost("/api/auth/otp/verify-email", values),
+  });
+}
+
+/** Đặt lại mật khẩu bằng mã OTP. */
+export function useResetPassword() {
+  return useMutation<unknown, ApiError | Error, ResetPasswordInput>({
+    mutationFn: (values) => apiPost("/api/auth/otp/reset-password", values),
   });
 }

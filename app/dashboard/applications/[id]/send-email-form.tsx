@@ -44,9 +44,9 @@ export function SendEmailForm({ applicationId, onSuccess }: SendEmailFormProps) 
       setBodyText("");
       if (onSuccess) onSuccess();
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[Send Email Error]", err);
-      setMsg({ type: "error", text: err.message || "Không thể gửi email. Vui lòng thử lại." });
+      setMsg({ type: "error", text: (err as Error).message || "Không thể gửi email. Vui lòng thử lại." });
     }
   };
 
@@ -104,7 +104,7 @@ export function SendEmailForm({ applicationId, onSuccess }: SendEmailFormProps) 
       </Field>
 
       <div className="flex justify-end pt-2">
-        <Button type="submit" size="sm" disabled={sendEmailMutation.isPending}>
+        <Button type="submit" size="lg" disabled={sendEmailMutation.isPending}>
           {sendEmailMutation.isPending ? "Đang gửi..." : "Gửi Email"}
         </Button>
       </div>

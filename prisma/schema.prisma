@@ -16,6 +16,7 @@ model User {
   avatarUrl                                 String?                      @map("avatar_url") @db.Text
   provider                                  String?                      @db.VarChar(50)
   isActive                                  Boolean                      @default(true) @map("is_active")
+  emailVerified                             Boolean                      @default(false) @map("email_verified")
   lastLoginAt                               DateTime?                    @map("last_login_at") @db.DateTime(0)
   createdAt                                 DateTime                     @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt                                 DateTime                     @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
@@ -211,6 +212,25 @@ enum UserRole {
   admin
   hr
   interviewer
+}
+
+model OtpToken {
+  id        String    @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  email     String    @db.VarChar(255)
+  code      String    @db.Char(60)
+  type      OtpType
+  attempts  Int       @default(0) @db.TinyInt
+  expiresAt DateTime  @map("expires_at") @db.DateTime(0)
+  usedAt    DateTime? @map("used_at") @db.DateTime(0)
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+
+  @@index([email, type], map: "idx_otp_email_type")
+  @@map("otp_tokens")
+}
+
+enum OtpType {
+  email_verify
+  password_reset
 }
 
 enum job_channels_channel {

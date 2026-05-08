@@ -80,7 +80,7 @@ export function CreateInterviewForm({ applicationId, interviewers, onSuccess }: 
       } else {
         setMsg({ type: "error", text: data.message || "Không thể tạo lịch phỏng vấn." });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[Create Interview Error]", err);
       setMsg({ type: "error", text: "Đã xảy ra lỗi khi tạo lịch phỏng vấn." });
     } finally {
@@ -199,7 +199,7 @@ export function CreateInterviewForm({ applicationId, interviewers, onSuccess }: 
       </Field>
 
       <div className="flex justify-end pt-2">
-        <Button type="submit" size="sm" disabled={isLoading}>
+        <Button type="submit" size="lg" disabled={isLoading}>
           {isLoading ? "Đang xử lý..." : "Lên lịch phỏng vấn"}
         </Button>
       </div>

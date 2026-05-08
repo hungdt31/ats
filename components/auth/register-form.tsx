@@ -7,29 +7,41 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
-import { Input } from "../ui/input";
+import { Input } from "@/components/ui/input";
 import { Button } from "../ui/button";
-import { Alert, AlertDescription } from "../ui/alert";
-import { registerSchema, type RegisterInput } from "../../lib/validators/auth";
-import { useRegister } from "@/hooks/use-auth";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
+import { registerSchema, type RegisterInput } from "@/lib/validators/auth";
+import { useRegister, useSendOtp } from "@/hooks/use-auth";
 import { ApiError } from "@/lib/api-client";
 
 export function RegisterForm() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [verifyEmail, setVerifyEmail] = useState(false);
   const registerMutation = useRegister();
+  const sendOtpMutation = useSendOtp();
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: { email: "", password: "", fullName: "", phone: "" },
   });
 
+  const isPending = registerMutation.isPending || sendOtpMutation.isPending;
+
   async function onSubmit(values: RegisterInput) {
     setServerError(null);
     try {
       await registerMutation.mutateAsync(values);
-      toast.success("Đăng ký thành công. Vui lòng đăng nhập.");
-      router.push("/login");
+
+      if (verifyEmail) {
+        await sendOtpMutation.mutateAsync({ email: values.email, type: "email_verify" });
+        toast.success("Đăng ký thành công! Vui lòng kiểm tra email để xác minh tài khoản.");
+        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
+      } else {
+        toast.success("Đăng ký thành công. Vui lòng đăng nhập.");
+        router.push("/login");
+      }
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.fieldErrors) {
@@ -110,8 +122,30 @@ export function RegisterForm() {
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
-          {registerMutation.isPending ? "Đang tạo tài khoản…" : "Đăng ký"}
+        {/* Tuỳ chọn xác minh email */}
+        <label
+          htmlFor="verify-email-checkbox"
+          className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border/60 bg-muted/40 px-4 py-3 transition-colors hover:bg-muted/70 has-[button[data-state=checked]]:border-primary/40 has-[button[data-state=checked]]:bg-primary/5"
+        >
+          <Checkbox
+            id="verify-email-checkbox"
+            checked={verifyEmail}
+            onCheckedChange={(checked) => setVerifyEmail(checked === true)}
+            className="mt-0.5"
+          />
+          <span className="grid gap-0.5">
+            <span className="text-sm font-medium leading-snug text-foreground">
+              Xác minh email sau khi đăng ký
+            </span>
+            <span className="text-xs leading-relaxed text-muted-foreground">
+              Email đã xác minh giúp hệ thống gửi thông báo phỏng vấn, kết quả ứng tuyển và
+              các email quan trọng khác đến bạn khi ứng tuyển.
+            </span>
+          </span>
+        </label>
+
+        <Button type="submit" className="w-full h-12" disabled={isPending}>
+          {isPending ? "Đang xử lý…" : "Đăng ký"}
         </Button>
       </form>
     </Form>
