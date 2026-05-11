@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const RESULT_OPTIONS = [
   { value: "pass", label: "Đạt (Pass)" },
@@ -80,8 +81,9 @@ export default function InterviewScorePage(props: { params: Params }) {
       toast.success("Đã lưu bảng điểm đánh giá thành công!");
       router.push(`/dashboard/interviews/${interviewId}`);
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || "Đã xảy ra lỗi.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Đã xảy ra lỗi.";
+      toast.error(message);
     } finally {
       setIsPending(false);
     }
@@ -132,7 +134,7 @@ export default function InterviewScorePage(props: { params: Params }) {
                   max={10}
                   value={technicalScore}
                   onChange={(e) => setTechnicalScore(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="rounded-2xl h-10 px-3"
                   required
                 />
               </div>
@@ -145,7 +147,7 @@ export default function InterviewScorePage(props: { params: Params }) {
                   max={10}
                   value={communicationScore}
                   onChange={(e) => setCommunicationScore(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="rounded-2xl h-10 px-3"
                   required
                 />
               </div>
@@ -158,7 +160,7 @@ export default function InterviewScorePage(props: { params: Params }) {
                   max={10}
                   value={culturalFitScore}
                   onChange={(e) => setCulturalFitScore(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="rounded-2xl h-10 px-3"
                   required
                 />
               </div>
@@ -171,7 +173,7 @@ export default function InterviewScorePage(props: { params: Params }) {
                   max={10}
                   value={overallScore}
                   onChange={(e) => setOverallScore(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="rounded-2xl h-10 px-3"
                   required
                 />
               </div>
@@ -200,7 +202,7 @@ export default function InterviewScorePage(props: { params: Params }) {
                 placeholder="Khả năng tư duy logic tốt, am hiểu sâu sắc..."
                 value={strengths}
                 onChange={(e) => setStrengths(e.target.value)}
-                className="rounded-2xl p-3 border border-input/60 bg-background"
+                className="rounded-2xl p-3"
               />
             </div>
 
@@ -211,7 +213,7 @@ export default function InterviewScorePage(props: { params: Params }) {
                 placeholder="Cần cải thiện giao tiếp tiếng Anh..."
                 value={weaknesses}
                 onChange={(e) => setWeaknesses(e.target.value)}
-                className="rounded-2xl p-3 border border-input/60 bg-background"
+                className="rounded-2xl p-3"
               />
             </div>
 
@@ -222,17 +224,15 @@ export default function InterviewScorePage(props: { params: Params }) {
                 placeholder="Nhận xét tổng hợp về ứng viên..."
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-                className="rounded-2xl p-3 border border-input/60 bg-background"
+                className="rounded-2xl p-3"
               />
             </div>
 
             <div className="flex items-center gap-2 select-none">
-              <input
+              <Checkbox
                 id="is-final-check"
-                type="checkbox"
                 checked={isFinal}
-                onChange={(e) => setIsFinal(e.target.checked)}
-                className="rounded border-input text-primary focus:ring-primary h-4 w-4"
+                onCheckedChange={(checked) => setIsFinal(checked === true)}
               />
               <label htmlFor="is-final-check" className="text-xs font-medium text-foreground cursor-pointer">
                 Đánh dấu đây là kết quả đánh giá cuối cùng (Is Final)
