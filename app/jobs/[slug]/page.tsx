@@ -65,6 +65,8 @@ export default function JobDetailPage() {
   const salary = formatSalaryRange(job.salary_min, job.salary_max);
   const meta = [job.department, job.category, job.location].filter(Boolean).join(" · ");
   const publishedDate = job.published_at ? new Date(job.published_at).toLocaleDateString("vi-VN") : null;
+  /** Chỉ ứng viên được nộp đơn qua cổng công khai — đồng ý với `/api/jobs/[slug]/apply`. */
+  const isCandidate = user?.role === "candidate";
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,72 +165,80 @@ export default function JobDetailPage() {
                   </section>
                 ) : null}
                 <Separator />
-                <div className="flex flex-wrap gap-2">
-                  {user ? (
-                    job.hasApplied ? (
-                      <Button asChild variant="outline">
-                        <Link href="/candidate">Xem đơn ứng tuyển</Link>
-                      </Button>
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {user ? (
+                      isCandidate ? (
+                        job.hasApplied ? (
+                          <Button asChild variant="outline">
+                            <Link href="/candidate">Xem đơn ứng tuyển</Link>
+                          </Button>
+                        ) : (
+                          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Button>Ứng tuyển ngay</Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                              <DialogHeader>
+                                <DialogTitle className="text-xl font-bold">Ứng tuyển vị trí</DialogTitle>
+                                <DialogDescription className="text-base font-medium text-primary">
+                                  {job.title}
+                                </DialogDescription>
+                              </DialogHeader>
+
+                              <form onSubmit={handleApply} className="space-y-4">
+                                {applyError && (
+                                  <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                                    {applyError}
+                                  </div>
+                                )}
+
+                                <CVUpload value={cvFileUrl} onChange={setCvFileUrl} onFileNameChange={setCvFilename} onNewFileUpload={setNewFileInfo} />
+
+                                <Field>
+                                  <FieldLabel htmlFor="cover_letter_dialog" className="text-xs font-medium text-foreground">
+                                    Thư giới thiệu (Cover Letter)
+                                  </FieldLabel>
+                                  <Textarea
+                                    id="cover_letter_dialog"
+                                    rows={4}
+                                    placeholder="Giới thiệu ngắn gọn về bản thân..."
+                                    value={coverLetter}
+                                    onChange={(e) => setCoverLetter(e.target.value)}
+                                  />
+                                </Field>
+
+                                <div className="flex justify-end gap-2 pt-2">
+                                  <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
+                                    Hủy
+                                  </Button>
+                                  <Button type="submit" disabled={applyMutation.isPending}>
+                                    {applyMutation.isPending ? "Đang gửi..." : "Gửi hồ sơ"}
+                                  </Button>
+                                </div>
+                              </form>
+                            </DialogContent>
+                          </Dialog>
+                        )
+                      ) : (
+                        <Button disabled title="Chỉ tài khoản ứng viên có thể nộp đơn cho vị trí này.">
+                          Ứng tuyển ngay
+                        </Button>
+                      )
                     ) : (
-                      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button>Ứng tuyển ngay</Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                          <DialogHeader>
-                            <DialogTitle className="text-xl font-bold">Ứng tuyển vị trí</DialogTitle>
-                            <DialogDescription className="text-base font-medium text-primary">
-                              {job.title}
-                            </DialogDescription>
-                          </DialogHeader>
-
-                          <form onSubmit={handleApply} className="space-y-4">
-                            {applyError && (
-                              <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-                                {applyError}
-                              </div>
-                            )}
-
-                            <CVUpload value={cvFileUrl} onChange={setCvFileUrl} onFileNameChange={setCvFilename} onNewFileUpload={setNewFileInfo} />
-
-                            <Field>
-                              <FieldLabel htmlFor="cover_letter_dialog" className="font-medium text-foreground">
-                                Thư giới thiệu (Cover Letter)
-                              </FieldLabel>
-                              <Textarea
-                                id="cover_letter_dialog"
-                                rows={4}
-                                placeholder="Giới thiệu ngắn gọn về bản thân..."
-                                value={coverLetter}
-                                onChange={(e) => setCoverLetter(e.target.value)}
-                              />
-                            </Field>
-
-                            <div className="flex justify-end gap-2 pt-2">
-                              <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
-                                Hủy
-                              </Button>
-                              <Button type="submit" disabled={applyMutation.isPending}>
-                                {applyMutation.isPending ? "Đang gửi..." : "Gửi hồ sơ"}
-                              </Button>
-                            </div>
-                          </form>
-                        </DialogContent>
-                      </Dialog>
-                    )
-                  ) : (
-                    <Button asChild>
-                      <Link
-                        href={`/login?callbackUrl=${encodeURIComponent(`/jobs/${job.slug}`)}`}
-                        prefetch={false}
-                      >
-                        Đăng nhập để ứng tuyển
-                      </Link>
+                      <Button asChild>
+                        <Link
+                          href={`/login?callbackUrl=${encodeURIComponent(`/jobs/${job.slug}`)}`}
+                          prefetch={false}
+                        >
+                          Đăng nhập để ứng tuyển
+                        </Link>
+                      </Button>
+                    )}
+                    <Button variant="outline" asChild>
+                      <Link href="/jobs">Xem tin khác</Link>
                     </Button>
-                  )}
-                  <Button variant="outline" asChild>
-                    <Link href="/jobs">Xem tin khác</Link>
-                  </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

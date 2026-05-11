@@ -23,4 +23,14 @@ export const queryKeys = {
     profile: () => ["candidate", "profile"] as const,
     interviews: () => ["candidate", "interviews"] as const,
   },
+
+  /** Dashboard (HR/admin) */
+  dashboard: {
+    interviews: {
+      /** Danh sách phỏng vấn, có thêm segment `status` để cache theo lọc */
+      list: (status: string) => ["dashboard", "interviews", status] as const,
+      detail: (id: string) => ["dashboard", "interviews", id] as const,
+      metadata: () => ["dashboard", "interviews", "metadata"] as const,
+    },
+  },
 } as const;

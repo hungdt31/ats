@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
+import { type DashboardInterviewListItem, useDashboardInterviews } from "@/hooks/use-dashboard-interviews";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
@@ -16,20 +16,7 @@ const STATUS_OPTIONS = [
   { value: "rescheduled", label: "Dời lịch", variant: "secondary" as const },
 ];
 
-type Interview = {
-  id: string;
-  scheduled_at: string;
-  duration_minutes: number;
-  type: string;
-  status: string;
-  applications?: {
-    users?: { fullName: string };
-    jobs?: { title: string };
-  };
-  users?: { fullName: string };
-};
-
-const columns: ColumnDef<Interview>[] = [
+const columns: ColumnDef<DashboardInterviewListItem>[] = [
   {
     id: "candidate",
     accessorFn: (row) =>
@@ -107,20 +94,8 @@ const columns: ColumnDef<Interview>[] = [
 export default function InterviewsDashboardPage() {
   const [status, setStatus] = useState<string>("all");
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["dashboard", "interviews", status],
-    queryFn: async () => {
-      const sp = new URLSearchParams();
-      if (status && status !== "all") sp.append("status", status);
-      const res = await fetch(`/api/dashboard/interviews?${sp.toString()}`);
-      if (!res.ok) throw new Error("Không thể tải lịch phỏng vấn.");
-      const json = await res.json();
-      return json.data as Interview[];
-    },
-    staleTime: 5000,
-  });
-
-  const interviews = data || [];
+  const { data, isLoading } = useDashboardInterviews(status);
+  const interviews = data ?? [];
 
   return (
     <div className="flex flex-col gap-6">
