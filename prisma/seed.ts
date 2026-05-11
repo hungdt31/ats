@@ -3,6 +3,7 @@ import "dotenv/config";
 import * as bcrypt from "bcrypt";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@prisma/client";
+import { slugify } from "../lib/utils/slugify";
 
 /**
  * Prisma 7 yêu cầu driver adapter khi instantiate PrismaClient.
@@ -71,10 +72,12 @@ async function main() {
 
   // Jobs
   const now = new Date();
+  const job1Title = "Senior Backend Engineer (Node.js)";
   const job1 = await prisma.jobs.create({
     data: {
       created_by: hr.id,
-      title: "Senior Backend Engineer (Node.js)",
+      title: job1Title,
+      slug: slugify(job1Title),
       description: "Xây dựng API hiệu năng cao cho hệ thống ATS.\n\n- Node.js/TypeScript\n- Prisma/MySQL\n- Clean Architecture",
       requirements: "- 3+ năm kinh nghiệm\n- Có kinh nghiệm với Next.js/Node.js\n- Biết CI/CD là lợi thế",
       benefits:
@@ -92,10 +95,12 @@ async function main() {
     },
   });
 
+  const job2Title = "Frontend Engineer (React/Next.js)";
   const job2 = await prisma.jobs.create({
     data: {
       created_by: hr.id,
-      title: "Frontend Engineer (React/Next.js)",
+      title: job2Title,
+      slug: slugify(job2Title),
       description: "Phát triển UI/UX cho portal tuyển dụng.\n\n- Next.js App Router\n- Tailwind + shadcn/ui\n- React Hook Form + Zod",
       requirements: "- 2+ năm React\n- Biết tối ưu performance\n- Biết design system là lợi thế",
       benefits:
@@ -119,6 +124,7 @@ async function main() {
       {
         created_by: hr.id,
         title: "QA Engineer (Manual/Automation)",
+        slug: slugify("QA Engineer (Manual/Automation)"),
         description: "Đảm bảo chất lượng hệ thống ATS qua test plan, test case và automation.",
         requirements: "- 2+ năm QA\n- Biết API testing\n- Ưu tiên có automation",
         benefits: "- Bảo hiểm full lương\n- Hỗ trợ chứng chỉ ISTQB",
@@ -136,6 +142,7 @@ async function main() {
       {
         created_by: hr.id,
         title: "DevOps Engineer (AWS)",
+        slug: slugify("DevOps Engineer (AWS)"),
         description: "Thiết kế hạ tầng cloud, CI/CD và tối ưu hiệu năng hệ thống.",
         requirements: "- Kinh nghiệm AWS\n- Docker/K8s\n- CI/CD",
         benefits: "- On-call allowance\n- Làm việc hybrid",
@@ -153,6 +160,7 @@ async function main() {
       {
         created_by: hr.id,
         title: "Product Designer (UI/UX)",
+        slug: slugify("Product Designer (UI/UX)"),
         description: "Thiết kế trải nghiệm người dùng cho portal tuyển dụng và dashboard nội bộ.",
         requirements: "- Thành thạo Figma\n- Tư duy UX\n- Có portfolio",
         benefits: "- Work from home 2 ngày/tuần\n- Quỹ học tập",
@@ -170,6 +178,7 @@ async function main() {
       {
         created_by: hr.id,
         title: "Data Analyst (Recruitment)",
+        slug: slugify("Data Analyst (Recruitment)"),
         description: "Phân tích dữ liệu tuyển dụng, xây dashboard KPI và tối ưu funnel tuyển dụng.",
         requirements: "- SQL tốt\n- Kinh nghiệm BI\n- Tư duy số liệu",
         benefits: "- Flexible time\n- Performance bonus",
@@ -187,6 +196,7 @@ async function main() {
       {
         created_by: hr.id,
         title: "Technical Recruiter",
+        slug: slugify("Technical Recruiter"),
         description: "Phụ trách sourcing, screening và phối hợp team kỹ thuật trong tuyển dụng.",
         requirements: "- Kinh nghiệm tuyển IT\n- Giao tiếp tốt",
         benefits: "- KPI bonus theo tháng\n- Team building",
@@ -204,6 +214,7 @@ async function main() {
       {
         created_by: hr.id,
         title: "Project Manager (Software)",
+        slug: slugify("Project Manager (Software)"),
         description: "Quản lý tiến độ dự án ATS, điều phối team kỹ thuật và stakeholder.",
         requirements: "- 3+ năm PM\n- Agile/Scrum\n- Risk management",
         benefits: "- Review lương định kỳ\n- Bảo hiểm sức khỏe cao cấp",
@@ -221,6 +232,7 @@ async function main() {
       {
         created_by: hr.id,
         title: "Part-time Content Marketing",
+        slug: slugify("Part-time Content Marketing"),
         description: "Sản xuất nội dung tuyển dụng, truyền thông thương hiệu nhà tuyển dụng.",
         requirements: "- Viết tốt\n- Hiểu social media\n- Có tư duy sáng tạo",
         benefits: "- Làm việc linh hoạt\n- Hỗ trợ công cụ làm việc",
@@ -238,6 +250,7 @@ async function main() {
       {
         created_by: hr.id,
         title: "Contract Mobile Developer (React Native)",
+        slug: slugify("Contract Mobile Developer (React Native)"),
         description: "Phát triển app mobile cho candidate portal theo hợp đồng 6 tháng.",
         requirements: "- React Native\n- Kinh nghiệm release app\n- API integration",
         benefits: "- Hợp đồng rõ ràng\n- Thanh toán đúng hạn",
@@ -259,9 +272,9 @@ async function main() {
   // Channels
   await prisma.job_channels.createMany({
     data: [
-      { job_id: job1.id, channel: "website", status: "posted", posted_at: now, external_url: `/jobs/${job1.id}` },
+      { job_id: job1.id, channel: "website", status: "posted", posted_at: now, external_url: `/jobs/${job1.slug}` },
       { job_id: job1.id, channel: "linkedin", status: "pending" },
-      { job_id: job2.id, channel: "website", status: "posted", posted_at: now, external_url: `/jobs/${job2.id}` },
+      { job_id: job2.id, channel: "website", status: "posted", posted_at: now, external_url: `/jobs/${job2.slug}` },
     ],
     skipDuplicates: true,
   });
