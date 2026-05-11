@@ -12,6 +12,7 @@ export async function getFeaturedJobs(limit = 6) {
     take: limit,
     select: {
       id: true,
+      slug: true,
       title: true,
       location: true,
       department: true,
@@ -32,6 +33,7 @@ export async function getActiveJobs() {
     orderBy: [{ published_at: "desc" }, { created_at: "desc" }],
     select: {
       id: true,
+      slug: true,
       title: true,
       location: true,
       department: true,

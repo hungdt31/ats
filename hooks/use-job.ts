@@ -3,25 +3,24 @@ import { useQuery } from "@tanstack/react-query";
 import { apiGet, ApiError } from "@/lib/api-client";
 import { queryKeys } from "@/hooks/query-keys";
 
-import type { JobDetail, JobDetailResponse } from "@/app/api/jobs/[id]/route";
+import type { JobDetail, JobDetailResponse } from "@/app/api/jobs/[slug]/route";
 
 /**
- * Chi tiết một tin tuyển dụng theo `id`.
- * - enabled: false khi id chưa có (tránh fetch với key rỗng).
+ * Chi tiết một tin tuyển dụng theo `slug`.
+ * - enabled: false khi slug chưa có (tránh fetch với key rỗng).
  * - staleTime 5 phút.
- * - notFound: true khi API trả 404 (dùng để điều hướng notFound()).
+ * - Không retry khi API trả 404/401.
  */
-export function useJob(id: string | undefined) {
+export function useJob(slug: string | undefined) {
   return useQuery<JobDetail, ApiError>({
-    queryKey: queryKeys.jobs.detail(id ?? ""),
+    queryKey: queryKeys.jobs.detail(slug ?? ""),
     queryFn: async () => {
-      const data = await apiGet<JobDetailResponse>(`/api/jobs/${id}`);
+      const data = await apiGet<JobDetailResponse>(`/api/jobs/${slug}`);
       return data.data.job;
     },
-    enabled: Boolean(id),
+    enabled: Boolean(slug),
     staleTime: 5 * 60 * 1000, // 5 phút
     retry: (failureCount, error) => {
-      // Không retry khi 404 hoặc 401
       if (error instanceof ApiError && (error.status === 404 || error.status === 401)) return false;
       return failureCount < 2;
     },

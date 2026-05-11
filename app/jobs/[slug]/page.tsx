@@ -22,15 +22,15 @@ import { useApplyJob, useAddCandidateFile } from "@/hooks/use-candidate";
 import { CVUpload, type NewFileInfo } from "@/components/candidate/CVUpload";
 
 export default function JobDetailPage() {
-  const params = useParams<{ id: string }>();
-  const id = params?.id || "";
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug || "";
   const router = useRouter();
 
   const { data: user } = useMe();
-  const { data: job, isLoading, error } = useJob(id);
+  const { data: job, isLoading, error } = useJob(slug);
 
   // Apply mutation & local state for dialog
-  const applyMutation = useApplyJob(id);
+  const applyMutation = useApplyJob(slug);
   const addFileMutation = useAddCandidateFile();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [cvFileUrl, setCvFileUrl] = useState("");
@@ -82,7 +82,7 @@ export default function JobDetailPage() {
         cover_letter: coverLetter,
       });
 
-      // Register new file in user's personal files only if application was successful!
+      // Đăng ký file vào hồ sơ cá nhân sau khi nộp thành công
       if (newFileInfo) {
         try {
           await addFileMutation.mutateAsync({
@@ -96,7 +96,6 @@ export default function JobDetailPage() {
         }
       }
 
-      // Navigate to candidate profile after success
       setIsDialogOpen(false);
       router.push("/candidate");
     } catch (err: unknown) {
@@ -220,7 +219,7 @@ export default function JobDetailPage() {
                   ) : (
                     <Button asChild>
                       <Link
-                        href={`/login?callbackUrl=${encodeURIComponent(`/jobs/${job.id}`)}`}
+                        href={`/login?callbackUrl=${encodeURIComponent(`/jobs/${job.slug}`)}`}
                         prefetch={false}
                       >
                         Đăng nhập để ứng tuyển

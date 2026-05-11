@@ -8,6 +8,7 @@ import type { ApiSuccess } from "@/types/api";
 
 export type JobDetail = {
   id: string;
+  slug: string;
   title: string;
   description: string;
   requirements: string | null;
@@ -28,18 +29,19 @@ export type JobDetail = {
 
 export type JobDetailResponse = ApiSuccess<{ job: JobDetail }>;
 
-type Params = { params: Promise<{ id: string }> };
+type Params = { params: Promise<{ slug: string }> };
 
 /**
- * GET /api/jobs/[id]
- * Trả chi tiết một tin tuyển dụng active.
+ * GET /api/jobs/[slug]
+ * Trả chi tiết một tin tuyển dụng active theo slug.
+ * Dùng slug thay id để tránh lộ UUID trên URL public.
  */
 export async function GET(_req: Request, { params }: Params) {
-  const { id } = await params;
+  const { slug } = await params;
 
   try {
     const job = await prisma.jobs.findFirst({
-      where: { id, status: "active" },
+      where: { slug, status: "active" },
     });
 
     if (!job) {
@@ -52,7 +54,7 @@ export async function GET(_req: Request, { params }: Params) {
       const app = await prisma.applications.findUnique({
         where: {
           job_id_candidate_id: {
-            job_id: id,
+            job_id: job.id,
             candidate_id: session.user.id,
           },
         },
@@ -63,6 +65,7 @@ export async function GET(_req: Request, { params }: Params) {
 
     const serialized: JobDetail = {
       id: job.id,
+      slug: job.slug,
       title: job.title,
       description: job.description,
       requirements: job.requirements,
@@ -76,14 +79,14 @@ export async function GET(_req: Request, { params }: Params) {
       published_at: job.published_at?.toISOString() ?? null,
       expires_at: job.expires_at?.toISOString() ?? null,
       created_at: job.created_at.toISOString(),
-      required_skills: job.required_skills as string[] ?? [],
+      required_skills: (job.required_skills as string[]) ?? [],
       headcount: job.headcount,
       hasApplied,
     };
 
     return NextResponse.json({ success: true, data: { job: serialized } } satisfies JobDetailResponse);
   } catch (e) {
-    console.error(`[GET /api/jobs/${id}]`, e);
+    console.error(`[GET /api/jobs/${slug}]`, e);
     return jsonError(500, "Không thể tải tin tuyển dụng");
   }
 }

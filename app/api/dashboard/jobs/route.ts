@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/http/json-response";
 import { jobs_status } from "@prisma/client";
+import { uniqueSlug } from "@/lib/utils/slugify";
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "";
 
-    const where: any = {};
+    const where: { status?: jobs_status } = {};
     if (status) where.status = status as jobs_status;
 
     const jobs = await prisma.jobs.findMany({
@@ -66,10 +67,16 @@ export async function POST(request: Request) {
       return jsonError(400, "Vui lòng nhập đầy đủ tiêu đề và mô tả công việc.");
     }
 
+    // Sinh slug duy nhất từ tiêu đề
+    const slug = await uniqueSlug(title, (s) =>
+      prisma.jobs.findUnique({ where: { slug: s }, select: { id: true } }).then(Boolean),
+    );
+
     const job = await prisma.jobs.create({
       data: {
         created_by: session.user.id,
         title,
+        slug,
         description,
         requirements: requirements || null,
         benefits: benefits || null,
@@ -78,7 +85,7 @@ export async function POST(request: Request) {
         salary_min: salary_min ? parseInt(salary_min, 10) : null,
         salary_max: salary_max ? parseInt(salary_max, 10) : null,
         employment_type: employment_type || "full_time",
-        required_skills: required_skills ? (required_skills as any) : undefined,
+        required_skills: required_skills ? (required_skills as string[]) : undefined,
         headcount: headcount ? parseInt(headcount, 10) : 1,
         status: (status as jobs_status) || "draft",
         expires_at: expires_at ? new Date(expires_at) : null,

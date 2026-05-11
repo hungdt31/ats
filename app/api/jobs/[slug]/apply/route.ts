@@ -3,8 +3,12 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/http/json-response";
 
-type Params = { params: Promise<{ id: string }> };
+type Params = { params: Promise<{ slug: string }> };
 
+/**
+ * POST /api/jobs/[slug]/apply
+ * Ứng viên nộp đơn ứng tuyển. Dùng slug để tra cứu job, tránh lộ UUID.
+ */
 export async function POST(req: Request, { params }: Params) {
   const session = await getSession();
 
@@ -12,26 +16,26 @@ export async function POST(req: Request, { params }: Params) {
     return jsonError(401, "Bạn phải đăng nhập với tư cách ứng viên để ứng tuyển.");
   }
 
-  const { id: jobId } = await params;
+  const { slug } = await params;
   const candidateId = session.user.id;
 
   try {
-    // Check if the job exists and is active
+    // Tra cứu job theo slug, chỉ cho phép nộp khi status = active
     const job = await prisma.jobs.findFirst({
-      where: { id: jobId, status: "active" },
+      where: { slug, status: "active" },
+      select: { id: true },
     });
 
     if (!job) {
       return jsonError(404, "Không tìm thấy tin tuyển dụng");
     }
 
-    // Check if candidate already applied
+    const jobId = job.id;
+
+    // Kiểm tra đã ứng tuyển chưa
     const existingApplication = await prisma.applications.findUnique({
       where: {
-        job_id_candidate_id: {
-          job_id: jobId,
-          candidate_id: candidateId,
-        },
+        job_id_candidate_id: { job_id: jobId, candidate_id: candidateId },
       },
     });
 
@@ -39,7 +43,6 @@ export async function POST(req: Request, { params }: Params) {
       return jsonError(400, "Bạn đã ứng tuyển vào vị trí này rồi.");
     }
 
-    // Read payload
     const body = await req.json();
     const { cv_file_url, cv_filename, cover_letter } = body;
 
@@ -47,7 +50,6 @@ export async function POST(req: Request, { params }: Params) {
       return jsonError(400, "Vui lòng cung cấp link CV của bạn.");
     }
 
-    // Create the application
     const application = await prisma.applications.create({
       data: {
         job_id: jobId,
@@ -59,12 +61,9 @@ export async function POST(req: Request, { params }: Params) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: { application },
-    });
+    return NextResponse.json({ success: true, data: { application } });
   } catch (error) {
-    console.error(`[POST /api/jobs/${jobId}/apply] Error:`, error);
+    console.error(`[POST /api/jobs/${slug}/apply] Error:`, error);
     return jsonError(500, "Không thể xử lý yêu cầu ứng tuyển của bạn.");
   }
 }

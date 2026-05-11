@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowRight01Icon, Briefcase01Icon, Calendar01Icon, File01Icon } from "@hugeicons/core-free-icons";
+
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSession } from "@/lib/auth/session";
@@ -52,9 +55,11 @@ export default async function DashboardPage() {
           <CardContent>
             <Link
               href="/dashboard/jobs"
-              className="text-xs font-medium text-primary hover:underline"
+              className="inline-flex items-center gap-2 text-xs font-medium text-primary hover:underline"
             >
-              Quản lý tin tuyển dụng →
+              <HugeiconsIcon icon={Briefcase01Icon} strokeWidth={2} className="size-3.5 shrink-0" />
+              Quản lý tin tuyển dụng
+              <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} className="size-3.5 shrink-0" />
             </Link>
           </CardContent>
         </Card>
@@ -67,9 +72,11 @@ export default async function DashboardPage() {
           <CardContent>
             <Link
               href="/dashboard/applications"
-              className="text-xs font-medium text-primary hover:underline"
+              className="inline-flex items-center gap-2 text-xs font-medium text-primary hover:underline"
             >
-              Xem đơn ứng tuyển →
+              <HugeiconsIcon icon={File01Icon} strokeWidth={2} className="size-3.5 shrink-0" />
+              Xem đơn ứng tuyển
+              <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} className="size-3.5 shrink-0" />
             </Link>
           </CardContent>
         </Card>
@@ -82,9 +89,11 @@ export default async function DashboardPage() {
           <CardContent>
             <Link
               href="/dashboard/interviews"
-              className="text-xs font-medium text-primary hover:underline"
+              className="inline-flex items-center gap-2 text-xs font-medium text-primary hover:underline"
             >
-              Xem lịch phỏng vấn →
+              <HugeiconsIcon icon={Calendar01Icon} strokeWidth={2} className="size-3.5 shrink-0" />
+              Xem lịch phỏng vấn
+              <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} className="size-3.5 shrink-0" />
             </Link>
           </CardContent>
         </Card>

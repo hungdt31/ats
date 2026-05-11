@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/http/json-response";
 import { jobs_status } from "@prisma/client";
+import { uniqueSlug } from "@/lib/utils/slugify";
 
 export async function GET(
   request: Request,
@@ -71,10 +72,17 @@ export async function PUT(
       return jsonError(400, "Vui lòng nhập đầy đủ tiêu đề và mô tả công việc.");
     }
 
+    // Tái sinh slug khi title thay đổi (bỏ qua slug hiện tại của chính job này)
+    const slug = await uniqueSlug(title, async (s) => {
+      const existing = await prisma.jobs.findUnique({ where: { slug: s }, select: { id: true } });
+      return !!existing && existing.id !== jobId;
+    });
+
     const job = await prisma.jobs.update({
       where: { id: jobId },
       data: {
         title,
+        slug,
         description,
         requirements: requirements || null,
         benefits: benefits || null,

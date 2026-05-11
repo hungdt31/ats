@@ -182,6 +182,8 @@ model jobs {
   id              String               @id @default(dbgenerated("(uuid())")) @db.Char(36)
   created_by      String               @db.Char(36)
   title           String               @unique(map: "uq_jobs_title") @db.VarChar(255)
+  /// Slug URL-friendly, dùng trên public URL thay cho id (tránh lộ UUID).
+  slug            String               @unique(map: "uq_jobs_slug") @db.VarChar(300)
   description     String               @db.Text
   requirements    String?              @db.Text
   benefits        String?              @db.Text
@@ -204,6 +206,7 @@ model jobs {
 
   @@index([created_by], map: "idx_jobs_created_by")
   @@index([expires_at], map: "idx_jobs_expires_at")
+  @@index([slug], map: "idx_jobs_slug")
   @@index([status], map: "idx_jobs_status")
 }
 

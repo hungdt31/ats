@@ -6,6 +6,7 @@ import { Badge } from "../ui/badge";
 
 type JobCardProps = {
   id: string;
+  slug: string;
   title: string;
   location: string | null;
   department: string | null;
@@ -19,7 +20,7 @@ type JobCardProps = {
 
 /** Thẻ tin tuyển dụng (landing / danh sách). */
 export function JobCardPreview({
-  id,
+  slug,
   title,
   location,
   department,
@@ -34,7 +35,7 @@ export function JobCardPreview({
   const expiresDate = expires_at ? new Date(expires_at).toLocaleDateString("vi-VN") : null;
 
   return (
-    <Link href={`/jobs/${id}`} className="group block h-full transition-opacity hover:opacity-95">
+    <Link href={`/jobs/${slug}`} className="group block h-full transition-opacity hover:opacity-95">
       <Card className="h-full min-h-44 border-border/80 shadow-md transition-shadow group-hover:shadow-lg flex flex-col justify-between">
         <CardHeader className="gap-2 pb-3">
           <CardTitle className="line-clamp-2 min-h-[2.75rem] text-base leading-snug group-hover:underline">

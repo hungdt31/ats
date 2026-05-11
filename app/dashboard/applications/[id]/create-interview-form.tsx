@@ -108,7 +108,7 @@ export function CreateInterviewForm({ applicationId, interviewers, onSuccess }: 
             Người phỏng vấn <span className="text-destructive">*</span>
           </FieldLabel>
           <Select value={interviewerId} onValueChange={setInterviewerId}>
-            <SelectTrigger className="w-full h-10 rounded-xl bg-background border-border/60">
+            <SelectTrigger className="w-full h-10">
               <SelectValue placeholder="Chọn người phỏng vấn" />
             </SelectTrigger>
             <SelectContent position="popper">
@@ -126,7 +126,7 @@ export function CreateInterviewForm({ applicationId, interviewers, onSuccess }: 
             Hình thức <span className="text-destructive">*</span>
           </FieldLabel>
           <Select value={type} onValueChange={setType}>
-            <SelectTrigger className="w-full h-10 rounded-xl bg-background border-border/60">
+            <SelectTrigger className="w-full h-10">
               <SelectValue placeholder="Chọn hình thức" />
             </SelectTrigger>
             <SelectContent position="popper">

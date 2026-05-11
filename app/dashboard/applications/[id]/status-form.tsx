@@ -10,9 +10,11 @@ type StatusFormProps = {
   applicationId: string;
   currentStatus: string;
   statusOptions: { value: string; label: string }[];
+  /** Gọi sau khi cập nhật thành công (vd. đóng Dialog). */
+  onSuccess?: () => void;
 };
 
-export function StatusForm({ applicationId, currentStatus, statusOptions }: StatusFormProps) {
+export function StatusForm({ applicationId, currentStatus, statusOptions, onSuccess }: StatusFormProps) {
   const router = useRouter();
   const [toStatus, setToStatus] = useState(currentStatus);
   const [note, setNote] = useState("");
@@ -40,9 +42,10 @@ export function StatusForm({ applicationId, currentStatus, statusOptions }: Stat
 
       toast.success("Cập nhật trạng thái thành công!");
       setNote("");
+      onSuccess?.();
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || "Đã xảy ra lỗi khi cập nhật.");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Đã xảy ra lỗi khi cập nhật.");
     } finally {
       setIsPending(false);
     }

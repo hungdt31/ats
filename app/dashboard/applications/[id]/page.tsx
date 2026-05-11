@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { StatusForm } from "./status-form";
+import { StatusUpdateDialog } from "./status-update-dialog";
 import { SendEmailForm } from "./send-email-form";
 import { CreateInterviewForm } from "./create-interview-form";
 import { Button } from "@/components/ui/button";
@@ -164,37 +164,28 @@ export default async function ApplicationDetailPage(props: {
 
         {/* Right Column - Tabs */}
         <div className="lg:col-span-2">
-          <Tabs defaultValue="status-update" className="w-full">
+          <Tabs defaultValue="audit-history" className="w-full">
             <TabsList className="mb-4">
-              <TabsTrigger value="status-update">Cập nhật trạng thái</TabsTrigger>
               <TabsTrigger value="audit-history">Lịch sử ({application.application_status_history.length})</TabsTrigger>
               <TabsTrigger value="interviews">Phỏng vấn ({application.interviews.length})</TabsTrigger>
               <TabsTrigger value="emails">Nhật ký email ({application.email_logs.length})</TabsTrigger>
             </TabsList>
 
-            {/* Tab 1: Cập nhật Trạng thái */}
-            <TabsContent value="status-update" className="space-y-4">
-              <Card className="max-w-xl">
-                <CardHeader>
-                  <CardTitle className="text-lg">Cập nhật trạng thái đơn</CardTitle>
-                  <CardDescription>Chọn trạng thái mới và đính kèm ghi chú audit.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <StatusForm
-                    applicationId={application.id}
-                    currentStatus={application.status}
-                    statusOptions={STATUS_OPTIONS}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Tab 2: Lịch sử trạng thái */}
+            {/* Tab 1: Lịch sử trạng thái */}
             <TabsContent value="audit-history" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Lịch sử thay đổi trạng thái</CardTitle>
-                  <CardDescription>Nhật ký chi tiết các lần cập nhật đơn ứng tuyển.</CardDescription>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <div>
+                      <CardTitle className="text-lg">Lịch sử thay đổi trạng thái</CardTitle>
+                      <CardDescription>Nhật ký chi tiết các lần cập nhật đơn ứng tuyển.</CardDescription>
+                    </div>
+                    <StatusUpdateDialog
+                      applicationId={application.id}
+                      currentStatus={application.status}
+                      statusOptions={STATUS_OPTIONS}
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {application.application_status_history.length === 0 ? (
@@ -233,7 +224,7 @@ export default async function ApplicationDetailPage(props: {
               </Card>
             </TabsContent>
 
-            {/* Tab 3: Phỏng vấn & Đánh giá */}
+            {/* Tab 2: Phỏng vấn & Đánh giá */}
             <TabsContent value="interviews" className="space-y-4">
               <Card>
                 <CardHeader>
@@ -380,7 +371,7 @@ export default async function ApplicationDetailPage(props: {
               </Card>
             </TabsContent>
 
-            {/* Tab 4: Nhật ký Email */}
+            {/* Tab 3: Nhật ký Email */}
             <TabsContent value="emails" className="space-y-4">
               <Card>
                 <CardHeader>

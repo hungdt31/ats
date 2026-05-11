@@ -88,8 +88,8 @@ export function useUpdateCandidateProfile() {
   });
 }
 
-/** Gửi đơn ứng tuyển */
-export function useApplyJob(jobId: string) {
+/** Gửi đơn ứng tuyển. Truyền slug của job thay vì id. */
+export function useApplyJob(jobSlug: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -98,7 +98,7 @@ export function useApplyJob(jobId: string) {
       cv_filename?: string;
       cover_letter?: string;
     }) => {
-      const res = await apiPost<{ success: boolean }>(`/api/jobs/${jobId}/apply`, data);
+      const res = await apiPost<{ success: boolean }>(`/api/jobs/${jobSlug}/apply`, data);
       return res;
     },
     onSuccess: () => {

@@ -7,6 +7,7 @@ import type { ApiSuccess } from "@/types/api";
 
 export type JobListItem = {
   id: string;
+  slug: string;
   title: string;
   location: string | null;
   department: string | null;
@@ -33,6 +34,7 @@ export async function GET() {
       orderBy: [{ published_at: "desc" }, { created_at: "desc" }],
       select: {
         id: true,
+        slug: true,
         title: true,
         location: true,
         department: true,
