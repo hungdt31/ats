@@ -1,8 +1,101 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiPost, apiPatch, apiDelete, ApiError } from "@/lib/api-client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiError, apiGet, apiPost, apiPatch } from "@/lib/api-client";
 import { queryKeys } from "./query-keys";
 
-export function useDashboardApplications(filters?: { jobId?: string; status?: string; source?: string }) {
+// ---------------------------------------------------------------------------
+// Shared types
+// ---------------------------------------------------------------------------
+
+type StatusHistoryItem = {
+  id: string;
+  from_status: string | null;
+  to_status: string;
+  note: string | null;
+  changed_at: string;
+  users: { fullName: string | null; email: string | null } | null;
+};
+
+type InterviewScore = {
+  id: string;
+  overall_score: number | null;
+  technical_score: number | null;
+  communication_score: number | null;
+  cultural_fit_score: number | null;
+  feedback: string | null;
+  result: string;
+  users: { fullName: string | null; email: string | null } | null;
+};
+
+type Interview = {
+  id: string;
+  scheduled_at: string;
+  duration_minutes: number;
+  type: string;
+  status: string;
+  meeting_link: string | null;
+  location: string | null;
+  notes: string | null;
+  users: { fullName: string | null; email: string | null } | null;
+  interview_scores: InterviewScore[];
+};
+
+type EmailLog = {
+  id: string;
+  subject: string;
+  type: string;
+  status: string;
+  sent_at: string | null;
+  error_message: string | null;
+};
+
+export type ApplicationDetail = {
+  id: string;
+  status: string;
+  cv_file_url: string;
+  cv_filename: string | null;
+  cover_letter: string | null;
+  applied_at: string;
+  users: { fullName: string | null; email: string | null } | null;
+  jobs: { title: string | null } | null;
+  application_status_history: StatusHistoryItem[];
+  interviews: Interview[];
+  email_logs: EmailLog[];
+};
+
+export type ApplicationDetailInterviewer = {
+  id: string;
+  fullName: string | null;
+  email: string;
+};
+
+export type ApplicationDetailData = {
+  application: ApplicationDetail;
+  interviewers: ApplicationDetailInterviewer[];
+};
+
+export type DashboardApplicationListItem = {
+  id: string;
+  status: string;
+  source_channel: string | null;
+  applied_at: string;
+  users: { fullName: string | null; email: string | null } | null;
+  jobs: { id: string; title: string | null } | null;
+};
+
+export type DashboardApplicationsPayload = {
+  applications: DashboardApplicationListItem[];
+  jobs: { id: string; title: string | null }[];
+};
+
+// ---------------------------------------------------------------------------
+// Hooks
+// ---------------------------------------------------------------------------
+
+export function useDashboardApplications(filters?: {
+  jobId?: string;
+  status?: string;
+  source?: string;
+}) {
   return useQuery({
     queryKey: ["dashboard", "applications", filters],
     queryFn: async () => {
@@ -10,35 +103,42 @@ export function useDashboardApplications(filters?: { jobId?: string; status?: st
       if (filters?.jobId && filters.jobId !== "all") sp.append("jobId", filters.jobId);
       if (filters?.status && filters.status !== "all") sp.append("status", filters.status);
       if (filters?.source && filters.source !== "all") sp.append("source", filters.source);
-
       const url = `/api/dashboard/applications${sp.toString() ? `?${sp.toString()}` : ""}`;
-      const res = await apiGet<{ data: any }>(url);
+      const res = await apiGet<{ data: DashboardApplicationsPayload }>(url);
       return res.data;
     },
   });
 }
 
-export function useDashboardApplication(appId: string) {
+/** Chi tiết 360° một đơn ứng tuyển, kèm danh sách interviewer. */
+export function useDashboardApplicationDetail(appId: string) {
   return useQuery({
-    queryKey: ["dashboard", "applications", appId],
+    queryKey: queryKeys.dashboard.applications.detail(appId),
     queryFn: async () => {
-      if (!appId) return null;
-      const res = await apiGet<{ data: any }>(`/api/dashboard/applications/${appId}`);
+      const res = await apiGet<{ data: ApplicationDetailData }>(
+        `/api/dashboard/applications/${appId}`,
+      );
       return res.data;
     },
     enabled: !!appId,
+    retry: (_count, err) => !(err instanceof ApiError && err.status === 404),
   });
 }
 
+/** Cập nhật trạng thái + invalidate chi tiết. */
 export function useUpdateDashboardApplicationStatus(appId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { status: string; notes?: string }) => {
-      return apiPatch<{ success: boolean; message?: string }>(`/api/dashboard/applications/${appId}/status`, data);
-    },
+    mutationFn: (data: { status: string; notes?: string }) =>
+      apiPatch<{ success: boolean; message?: string }>(
+        `/api/dashboard/applications/${appId}/status`,
+        data,
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard", "applications"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard", "applications", appId] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard", "applications"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.applications.detail(appId),
+      });
     },
   });
 }
@@ -46,11 +146,15 @@ export function useUpdateDashboardApplicationStatus(appId: string) {
 export function useSendDashboardApplicationEmail(appId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: any) => {
-      return apiPost<{ success: boolean; message?: string }>(`/api/dashboard/applications/${appId}/email`, data);
-    },
+    mutationFn: (data: Record<string, unknown>) =>
+      apiPost<{ success: boolean; message?: string }>(
+        `/api/dashboard/applications/${appId}/email`,
+        data,
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard", "applications", appId, "emails"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.applications.detail(appId),
+      });
     },
   });
 }
@@ -58,12 +162,16 @@ export function useSendDashboardApplicationEmail(appId: string) {
 export function useCreateDashboardApplicationInterview(appId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: any) => {
-      return apiPost<{ success: boolean; message?: string }>(`/api/dashboard/applications/${appId}/interviews`, data);
-    },
+    mutationFn: (data: Record<string, unknown>) =>
+      apiPost<{ success: boolean; message?: string }>(
+        `/api/dashboard/applications/${appId}/interviews`,
+        data,
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard", "applications", appId, "interviews"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard", "interviews"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.applications.detail(appId),
+      });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard", "interviews"] });
     },
   });
 }
@@ -72,8 +180,9 @@ export function useDashboardApplicationEmails(appId: string) {
   return useQuery({
     queryKey: ["dashboard", "applications", appId, "emails"],
     queryFn: async () => {
-      if (!appId) return null;
-      const res = await apiGet<{ data: any }>(`/api/dashboard/applications/${appId}/emails`);
+      const res = await apiGet<{ data: EmailLog[] }>(
+        `/api/dashboard/applications/${appId}/emails`,
+      );
       return res.data;
     },
     enabled: !!appId,

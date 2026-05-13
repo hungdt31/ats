@@ -26,6 +26,9 @@ export const queryKeys = {
 
   /** Dashboard (HR/admin) */
   dashboard: {
+    applications: {
+      detail: (id: string) => ["dashboard", "applications", "detail", id] as const,
+    },
     interviews: {
       /** Danh sách phỏng vấn, có thêm segment `status` để cache theo lọc */
       list: (status: string) => ["dashboard", "interviews", status] as const,

@@ -74,8 +74,10 @@ export default function NewJobPage() {
       toast.success("Tạo tin tuyển dụng thành công!");
       router.push("/dashboard/jobs");
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || "Đã xảy ra lỗi.");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Đã xảy ra lỗi.";
+      toast.error(message);
     }
   };
 
@@ -187,7 +189,7 @@ export default function NewJobPage() {
               <Field>
                 <FieldLabel className="font-medium text-foreground">Hình thức làm việc</FieldLabel>
                 <Select value={employmentType} onValueChange={(val) => setEmploymentType(val)}>
-                  <SelectTrigger className="w-full h-10 rounded-2xl bg-background border-input/60">
+                  <SelectTrigger className="w-full h-10">
                     <SelectValue placeholder="Chọn hình thức" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
@@ -203,7 +205,7 @@ export default function NewJobPage() {
               <Field>
                 <FieldLabel className="font-medium text-foreground">Trạng thái đăng tuyển</FieldLabel>
                 <Select value={status} onValueChange={(val) => setStatus(val)}>
-                  <SelectTrigger className="w-full h-10 rounded-2xl bg-background border-input/60">
+                  <SelectTrigger className="w-full h-10">
                     <SelectValue placeholder="Chọn trạng thái" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">

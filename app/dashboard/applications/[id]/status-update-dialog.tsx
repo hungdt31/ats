@@ -18,6 +18,8 @@ type StatusUpdateDialogProps = {
   applicationId: string;
   currentStatus: string;
   statusOptions: StatusOption[];
+  /** Gọi sau khi đóng dialog thành công để refetch dữ liệu (vd. invalidate React Query). */
+  onDataChanged?: () => void;
 };
 
 /**
@@ -27,6 +29,7 @@ export function StatusUpdateDialog({
   applicationId,
   currentStatus,
   statusOptions,
+  onDataChanged,
 }: StatusUpdateDialogProps) {
   const [open, setOpen] = useState(false);
 
@@ -37,7 +40,7 @@ export function StatusUpdateDialog({
           Cập nhật trạng thái
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Cập nhật trạng thái đơn</DialogTitle>
           <DialogDescription>
@@ -50,7 +53,10 @@ export function StatusUpdateDialog({
             applicationId={applicationId}
             currentStatus={currentStatus}
             statusOptions={statusOptions}
-            onSuccess={() => setOpen(false)}
+            onSuccess={() => {
+              setOpen(false);
+              onDataChanged?.();
+            }}
           />
         </div>
       </DialogContent>

@@ -65,10 +65,10 @@ export function SendEmailForm({ applicationId, onSuccess }: SendEmailFormProps) 
       )}
 
       <div className="grid sm:grid-cols-2 gap-4">
-        <Field className="space-y-1.5">
+        <Field>
           <FieldLabel className="text-xs font-medium text-foreground">Loại email</FieldLabel>
           <Select value={type} onValueChange={setType}>
-            <SelectTrigger className="w-full h-10 rounded-2xl bg-background border-input/60">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Chọn loại email" />
             </SelectTrigger>
             <SelectContent position="popper" className="rounded-2xl">
@@ -81,19 +81,18 @@ export function SendEmailForm({ applicationId, onSuccess }: SendEmailFormProps) 
           </Select>
         </Field>
 
-        <Field className="space-y-1.5">
+        <Field>
           <FieldLabel className="text-xs font-medium text-foreground">Tiêu đề email</FieldLabel>
           <Input
             type="text"
             placeholder="VD: Lịch phỏng vấn vòng 1..."
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="h-10"
           />
         </Field>
       </div>
 
-      <Field className="space-y-1.5">
+      <Field>
         <FieldLabel className="text-xs font-medium text-foreground">Nội dung email</FieldLabel>
         <Textarea
           rows={5}
