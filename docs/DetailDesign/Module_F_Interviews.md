@@ -1,5 +1,6 @@
-# DETAIL DESIGN DOCUMENT
 # Module F - Interviews
+
+**Người phụ trách:** Bùi Minh Khôi
 
 ## Mục lục
 
@@ -297,6 +298,8 @@ if is_final → prisma.interview.update({ where: { id }, data: { status: 'comple
 
 ### 3. Màn hình 1 - /dashboard/interviews
 
+![Trang Danh sách phỏng vấn](./images/F/1.png)
+
 | Field | Nội dung |
 |---|---|
 | Route / URL | /dashboard/interviews |
@@ -332,6 +335,8 @@ if is_final → prisma.interview.update({ where: { id }, data: { status: 'comple
 
 ### 6. Màn hình 2 - /dashboard/interviews/new
 
+![Trang Tạo mới phỏng vấn](./images/F/2.png)
+
 | Field | Nội dung |
 |---|---|
 | Route / URL | /dashboard/interviews/new |
@@ -358,6 +363,8 @@ if is_final → prisma.interview.update({ where: { id }, data: { status: 'comple
 
 ### 8. Màn hình 3 - /dashboard/interviews/[id]
 
+![Trang Chi tiết phỏng vấn](./images/F/3.png)
+
 | Field | Nội dung |
 |---|---|
 | Route / URL | /dashboard/interviews/[id] |
@@ -370,6 +377,8 @@ if is_final → prisma.interview.update({ where: { id }, data: { status: 'comple
 | Liên kết Message | Sheet Thông báo, F-SUC-002, F-ERR-003 |
 
 ### 9. Màn hình 4 - /dashboard/interviews/[id]/score
+
+![Trang Điểm đánh giá phỏng vấn](./images/F/4.png)
 
 | Field | Nội dung |
 |---|---|

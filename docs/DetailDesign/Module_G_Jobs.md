@@ -1,5 +1,6 @@
-# DETAIL DESIGN DOCUMENT
 # Module G - Jobs
+
+**Người phụ trách:** Nguyễn Minh Khôi
 
 ## Mục lục
 
@@ -293,6 +294,8 @@ Sử dụng cùng cấu trúc control với form tạo mới, thêm:
 
 ### 3. Màn hình 1 - /dashboard/jobs
 
+![Trang Danh sách việc làm](./images/G/1.png)
+
 | Field | Nội dung |
 |---|---|
 | Route / URL | /dashboard/jobs |
@@ -327,6 +330,8 @@ Sử dụng cùng cấu trúc control với form tạo mới, thêm:
 
 ### 6. Màn hình 2 - /dashboard/jobs/new
 
+![Trang Tạo mới việc làm](./images/G/2.png)
+
 | Field | Nội dung |
 |---|---|
 | Route / URL | /dashboard/jobs/new |
@@ -352,6 +357,8 @@ Sử dụng cùng cấu trúc control với form tạo mới, thêm:
 
 ### 8. Màn hình 3 - /dashboard/jobs/[id]/edit
 
+![Trang Chỉnh sửa việc làm cụ thể](./images/G/3.png)
+
 | Field | Nội dung |
 |---|---|
 | Route / URL | /dashboard/jobs/[id]/edit |
@@ -365,6 +372,8 @@ Sử dụng cùng cấu trúc control với form tạo mới, thêm:
 | Ghi chú | Pre-fill form với data hiện tại; React Hook Form defaultValues |
 
 ### 9. Màn hình 4 - /dashboard/jobs/[id]/channels
+
+![Trang Quản lý kênh đăng tin](./images/G/4.png)
 
 | Field | Nội dung |
 |---|---|

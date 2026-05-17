@@ -1,5 +1,6 @@
-# DETAIL DESIGN DOCUMENT
 # Module A - Khu vực Công khai (Public & Landing)
+
+**Người phụ trách:** Vương Quang Khải
 
 ## Mục lục
 
@@ -284,6 +285,8 @@
 
 ### 2. Màn hình 1 - Trang chủ `/`
 
+![Trang chủ](./images/A/1.png)
+
 | Field | Nội dung |
 |---|---|
 | Route / URL | `/` |
@@ -319,6 +322,8 @@ Không có form validation (trang chỉ hiển thị).
 ---
 
 ### 5. Màn hình 2 - Danh sách việc làm `/jobs`
+
+![Trang Danh sách việc làm](./images/A/2.png)
 
 | Field | Nội dung |
 |---|---|
@@ -359,6 +364,8 @@ Không có form validation (trang chỉ hiển thị).
 
 ### 8. Màn hình 3 - Chi tiết việc làm `/jobs/[slug]`
 
+![Trang Chi tiết việc làm](./images/A/3.png)
+
 | Field | Nội dung |
 |---|---|
 | Route / URL | `/jobs/[slug]` |
@@ -389,6 +396,7 @@ Không có form validation (trang chỉ hiển thị).
 
 ### 10. Màn hình 4 - Modal nộp đơn
 
+![Modal nộp đơn ứng tuyển](./images/A/4.png)
 | Field | Nội dung |
 |---|---|
 | Route / URL | `/jobs/[slug]` (modal overlay) |

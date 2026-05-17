@@ -1,5 +1,6 @@
-# DETAIL DESIGN DOCUMENT
-# Module E - Applications
+# Module E - Quản lý Đơn ứng tuyển (Applications)
+
+**Người phụ trách:** Lê Đức Anh Tuấn
 
 ## Mục lục
 
@@ -22,35 +23,44 @@
 
 ### 1. Khái quát chức năng
 
-| No | Nội dung |
-|---:|---|
-| 1 | Hiển thị danh sách hồ sơ ứng tuyển dạng pipeline với bộ lọc theo job, trạng thái, nguồn ứng tuyển. |
-| 2 | Xem hồ sơ ứng viên: thông tin cá nhân, CV, cover letter, lịch sử trạng thái, lịch phỏng vấn, nhật ký email. |
-| 3 | Thay đổi trạng thái hồ sơ (applied → screening → interviewing → offered → hired/rejected) kèm ghi chú. |
-| 4 | Gửi email thông báo cho ứng viên (mời PV, kết quả, từ chối...) trực tiếp từ màn hình chi tiết. |
-| 5 | Tạo lịch phỏng vấn cho ứng viên từ màn hình chi tiết hồ sơ. |
-| 6 | Xem lịch sử toàn bộ thay đổi trạng thái của hồ sơ. |
+Module E gồm **3 màn hình** trong `/dashboard/applications`:
+
+| No | Màn hình | Route | Chức năng chính |
+|---:|---|---|---|
+| 1 | Danh sách đơn | `/dashboard/applications` | Xem, lọc, tìm kiếm toàn bộ đơn ứng tuyển |
+| 2 | Chi tiết đơn | `/dashboard/applications/[id]` | Xem chi tiết thông tin ứng viên + 3 Tab hành động |
+| 3 | Đổi trạng thái (standalone) | `/dashboard/applications/[id]/status` | Form đổi trạng thái độc lập (có thể dùng ngoài dialog) |
+
+**Màn hình Chi tiết (`[id]`)** là trung tâm của module, bao gồm **3 Tab**:
+
+| Tab | key | Nội dung |
+|---|---|---|
+| Lịch sử | `audit-history` | Timeline thay đổi trạng thái + nút "Cập nhật trạng thái" (dialog) |
+| Phỏng vấn | `interviews` | Danh sách lịch PV + điểm chấm + nút "Lên lịch phỏng vấn" (dialog) |
+| Nhật ký email | `emails` | Danh sách email đã gửi + nút "Gửi Email mới" (dialog) |
 
 ### 2. Danh sách table sử dụng
 
 | No | Table | Create | Read | Update | Delete | Ghi chú |
 |---:|---|---|---|---|---|---|
-| 1 | applications | - | x | x | - | Xem, cập nhật trạng thái |
-| 2 | application_status_history | x | x | - | - | Ghi log thay đổi trạng thái |
-| 3 | users | - | x | - | - | Thông tin ứng viên |
-| 4 | jobs | - | x | - | - | Thông tin tin tuyển dụng |
-| 5 | interviews | x | x | - | - | Tạo và xem lịch PV từ hồ sơ |
-| 6 | email_logs | x | x | - | - | Gửi và xem nhật ký email |
+| 1 | `applications` | - | x | x | - | Đọc danh sách + cập nhật status |
+| 2 | `users` | - | x | - | - | Thông tin ứng viên (fullName, email) |
+| 3 | `jobs` | - | x | - | - | Tên vị trí job (title) |
+| 4 | `application_status_history` | x | x | - | - | Tạo audit log sau mỗi lần đổi trạng thái |
+| 5 | `interviews` | x | x | - | - | Tạo lịch PV từ chi tiết đơn |
+| 6 | `interview_scores` | - | x | - | - | Đọc điểm từ interviewer, hiển thị trong tab PV |
+| 7 | `email_logs` | x | x | - | - | Ghi log sau mỗi lần gửi email qua Resend |
 
 ### 3. Đối tượng / Bộ phận sử dụng
 
-| Đối tượng | Xem danh sách | Xem chi tiết đơn ứng tuyển | Đổi trạng thái | Gửi email | Tạo PV |
+| Vai trò | Xem danh sách | Xem chi tiết | Đổi trạng thái | Lên lịch PV | Gửi email |
 |---|---|---|---|---|---|
-| Guest | - | - | - | - | - |
-| Candidate | - | - | - | - | - |
-| HR | x | x | x | x | x |
-| Admin | x | x | x | x | x |
-| Interviewer | - | - | - | - | - |
+| admin | x | x | x | x | x |
+| hr | x | x | x | x | x |
+| interviewer | x | x | - | - | - |
+| candidate | - | - | - | - | - |
+
+> Phân quyền: `session.user.role === "candidate"` → 401. Tất cả role khác (admin/hr/interviewer) đều truy cập được. Không phân biệt admin vs hr vs interviewer ở tầng API — UI ẩn nút action nếu cần.
 
 ---
 
@@ -59,54 +69,57 @@
 
 ### 1. Danh sách nhóm chức năng
 
-| No | Nhóm chức năng | Mô tả |
-|---:|---|---|
-| 1 | Xem danh sách hồ sơ | Lọc, phân trang, hiển thị pipeline |
-| 2 | Xem chi tiết hồ sơ | Thông tin đầy đủ ứng viên + 3 tab |
-| 3 | Đổi trạng thái hồ sơ | Cập nhật status + ghi log |
-| 4 | Gửi email cho ứng viên | Soạn và gửi email qua Resend |
-| 5 | Tạo lịch phỏng vấn từ hồ sơ | Tạo interview record liên kết application |
-| 6 | Xem nhật ký email của hồ sơ | Lịch sử các email đã gửi cho ứng viên |
+| No | Nhóm | Màn hình | Mô tả |
+|---:|---|---|---|
+| 1 | Xem danh sách đơn | `/dashboard/applications` | Filter jobId / status / source; hiển thị DataTable với search theo tên/email |
+| 2 | Xem chi tiết đơn ứng tuyển | `/dashboard/applications/[id]` | Load đơn + lịch sử + PV + điểm + email logs + danh sách interviewers |
+| 3 | Cập nhật trạng thái | Tab "Lịch sử" + `/[id]/status` | Chọn to_status + ghi chú → UPDATE applications + INSERT history |
+| 4 | Lên lịch phỏng vấn | Tab "Phỏng vấn" (dialog) | Tạo interview record + tự động gửi email mời qua Resend |
+| 5 | Gửi email cho ứng viên | Tab "Nhật ký email" (dialog) | Soạn subject/type/bodyText → gửi qua Resend → ghi email_logs |
 
-### 2. Nhóm 1 - Xem danh sách hồ sơ
-
-| Thành phần | Nội dung |
-|---|---|
-| **Input** | JWT session; query: `jobId`, `status`, `source`, `page`, `limit` |
-| **Process** | WHERE theo filter; JOIN jobs + users (candidate); ORDER BY applied_at DESC; phân trang |
-| **Output** | `{ items: [...], total, page, limit }` mỗi item gồm: id, ứng viên, job, status, applied_at, source |
-
-### 3. Nhóm 2 - Xem chi tiết hồ sơ đơn ứng tuyển
+### 2. Nhóm 1 — Xem danh sách đơn
 
 | Thành phần | Nội dung |
 |---|---|
-| **Input** | JWT session; path param `id` (application id) |
-| **Process** | findUnique application JOIN jobs, candidate, interviews (với interviewer), email_logs; lấy application_status_history |
-| **Output** | Object đầy đủ: thông tin ứng viên, job, CV URL, status history, danh sách interviews, danh sách emails |
+| **Input** | JWT session; query: `jobId?`, `status?`, `source?` |
+| **Process** | `findMany applications` WHERE các filter; JOIN users (fullName, email), jobs (id, title); ORDER BY applied_at DESC. Song song: `findMany jobs` để populate dropdown filter |
+| **Output** | `{ applications: [...], jobs: [...] }` |
 
-### 4. Nhóm 3 - Đổi trạng thái hồ sơ
-
-| Thành phần | Nội dung |
-|---|---|
-| **Input** | JWT session; path param `id`; body: `{ toStatus, note }` |
-| **Process** | Validate toStatus hợp lệ theo flow; UPDATE applications SET status; INSERT application_status_history; nếu toStatus = hired/rejected → trigger email tự động (optional) |
-| **Output** | Application đã cập nhật, history record mới |
-
-### 5. Nhóm 4 - Gửi email cho ứng viên
+### 3. Nhóm 2 — Xem chi tiết đơn ứng tuyển
 
 | Thành phần | Nội dung |
 |---|---|
-| **Input** | JWT session; path param `id`; body: `{ type, subject, body }` |
-| **Process** | Lấy email ứng viên từ application; gọi Resend API; INSERT email_logs với status pending → sent/failed |
-| **Output** | email_log record mới với status sent hoặc failed |
+| **Input** | JWT; path param `id` |
+| **Process** | `Promise.all([findUnique applications WITH include, findMany users WHERE role IN [admin,hr,interviewer]])` |
+| **Include** | `users` (all fields), `jobs` (all fields), `application_status_history` (+ users: fullName/email), `interviews` (+ users: fullName/email, + interview_scores: + users), `email_logs` (ORDER BY created_at DESC) |
+| **Output** | `{ application: {...}, interviewers: [{id, fullName, email}] }` |
 
-### 6. Nhóm 5 - Tạo lịch phỏng vấn từ hồ sơ
+### 4. Nhóm 3 — Cập nhật trạng thái
 
 | Thành phần | Nội dung |
 |---|---|
-| **Input** | JWT session; path param `id`; body: `{ interviewer_id, scheduled_at, duration_minutes, type, meeting_link, location, notes }` |
-| **Process** | Validate application tồn tại; INSERT interviews với application_id; trả về interview mới |
-| **Output** | Interview record mới |
+| **Input** | JWT; path param `id`; body: `{ to_status, note? }` |
+| **Validate** | `to_status` bắt buộc; application phải tồn tại |
+| **Process** | `prisma.$transaction`: UPDATE `applications.status = to_status`; INSERT `application_status_history` (`from_status = application.status`, `changed_by = session.user.id`) |
+| **Output** | `{ success: true, message: "Đã cập nhật trạng thái đơn ứng tuyển thành công." }` |
+
+### 5. Nhóm 4 — Lên lịch phỏng vấn
+
+| Thành phần | Nội dung |
+|---|---|
+| **Input** | JWT; path param `id`; body: `{ interviewer_id, scheduled_at, duration_minutes?, type, meeting_link?, location?, notes? }` |
+| **Validate** | `interviewer_id`, `scheduled_at`, `type` bắt buộc; application & interviewer phải tồn tại |
+| **Process** | 1. Gửi email mời qua `sendInterviewInviteEmail` (Resend); nếu lỗi → 500 sớm. 2. `prisma.$transaction`: INSERT `interviews`; INSERT `email_logs` (type=invite, status=sent) |
+| **Output** | `{ success: true, message: "Tạo lịch phỏng vấn và gửi email thành công.", data: newInterview }` |
+
+### 6. Nhóm 5 — Gửi email cho ứng viên
+
+| Thành phần | Nội dung |
+|---|---|
+| **Input** | JWT; path param `id`; body: `{ subject, type, bodyText }` |
+| **Validate** | Cả 3 field bắt buộc; application phải tồn tại |
+| **Process** | Lấy `application.users.email`; gọi `resend.emails.send`; nếu thành công → INSERT `email_logs` (status=sent, sent_at=NOW()) |
+| **Output** | `{ success: true, message: "Gửi email qua Resend thành công.", data: newLog }` |
 
 ---
 
@@ -115,285 +128,276 @@
 
 ### Danh sách method
 
-| No | Method | API | Mô tả |
-|---:|---|---|---|
-| 1 | List Applications | GET /api/dashboard/applications | Danh sách hồ sơ có filter + phân trang |
-| 2 | Get Application Detail | GET /api/dashboard/applications/[id] | Chi tiết đơn ứng tuyển |
-| 3 | Change Status | POST /api/dashboard/applications/[id]/status | Đổi trạng thái |
-| 4 | Send Email | POST /api/dashboard/applications/[id]/email | Gửi email |
-| 5 | Create Interview | POST /api/dashboard/applications/[id]/interviews | Tạo lịch PV |
-| 6 | Get Email Logs | GET /api/dashboard/applications/[id]/emails | Lịch sử email |
+| No | Method | API | Mô tả | Role |
+|---:|---|---|---|---|
+| E-01 | GET | `/api/dashboard/applications` | Danh sách + filter + jobs dropdown | admin/hr/interviewer |
+| E-02 | GET | `/api/dashboard/applications/[id]` | Chi tiết đơn ứng tuyển + interviewers | admin/hr/interviewer |
+| E-03 | POST | `/api/dashboard/applications/[id]/status` | Đổi trạng thái + tạo history | admin/hr/interviewer |
+| E-04 | POST | `/api/dashboard/applications/[id]/email` | Gửi email qua Resend + log | admin/hr/interviewer |
+| E-05 | POST | `/api/dashboard/applications/[id]/interviews` | Tạo lịch PV + gửi email invite | admin/hr/interviewer |
+| E-06 | GET | `/api/dashboard/applications/[id]/emails` | Danh sách email logs của đơn | admin/hr/interviewer |
 
-### Method 1 - GET /api/dashboard/applications
+### Chi tiết E-01: GET /api/dashboard/applications
 
-**Init:**
-- Xác thực JWT; kiểm tra role ∈ [hr, admin]
-
-**Search:**
-- Query params: `jobId` (UUID), `status` (enum), `source` (string), `page` (int ≥1), `limit` (int, default 20)
-
-**Process:**
 ```
-where = {}
-if jobId → where.job_id = jobId
-if status → where.status = status
-if source → where.source_channel = source
-applications = prisma.application.findMany({ where, include: { job, candidate }, orderBy: { applied_at: 'desc' }, skip, take })
-total = prisma.application.count({ where })
+Query params: jobId?, status?, source?
+WHERE:
+  job_id        = :jobId   (nếu có)
+  status        = :status  (nếu có)
+  source_channel = :source  (nếu có)
+JOIN users { id, fullName, email }
+JOIN jobs  { id, title }
+ORDER BY applied_at DESC
+
++ Song song: findMany jobs { id, title } ORDER BY title ASC
 ```
 
-**Output:** `{ success: true, data: { items, total, page, limit } }`
+### Chi tiết E-02: GET /api/dashboard/applications/[id]
 
-### Method 2 - GET /api/dashboard/applications/[id]
-
-**Init:**
-- Xác thực JWT; role hr/admin
-
-**Process:**
 ```
-application = prisma.application.findUnique({
-  where: { id },
-  include: {
-    job: true,
-    candidate: true,
-    statusHistory: { orderBy: { changed_at: 'desc' } },
-    interviews: { include: { interviewer: true, scores: true } },
-    emailLogs: { orderBy: { sent_at: 'desc' } }
+Promise.all([
+  findUnique applications WHERE id = :id
+    INCLUDE users (ALL)
+    INCLUDE jobs (ALL)
+    INCLUDE application_status_history ORDER BY changed_at DESC
+      INCLUDE users { fullName, email }
+    INCLUDE interviews ORDER BY scheduled_at DESC
+      INCLUDE users { fullName, email }
+      INCLUDE interview_scores
+        INCLUDE users { fullName, email }
+    INCLUDE email_logs ORDER BY created_at DESC
+  ,
+  findMany users WHERE role IN ['admin','hr','interviewer']
+    SELECT { id, fullName, email }
+])
+```
+
+### Chi tiết E-03: POST /api/dashboard/applications/[id]/status
+
+```
+Validate: to_status required
+Find application → 404 nếu không có
+$transaction [
+  UPDATE applications SET status=to_status, updated_at=NOW()
+  INSERT application_status_history {
+    application_id, changed_by=session.user.id,
+    from_status=application.status, to_status, note
   }
-})
-if !application → 404
+]
 ```
 
-**Output:** Object application đầy đủ
+### Chi tiết E-04: POST /api/dashboard/applications/[id]/email
 
-### Method 3 - POST /api/dashboard/applications/[id]/status
-
-**Init:**
-- Xác thực JWT; role hr/admin
-
-**Validate:**
-- `toStatus` bắt buộc, phải ∈ enum applications_status
-- `note` tùy chọn, max 500 ký tự
-
-**Process:**
 ```
-(transaction)
-prisma.application.update({ where: { id }, data: { status: toStatus } })
-prisma.applicationStatusHistory.create({
-  data: { application_id: id, changed_by: currentUser.id, from_status: current, to_status: toStatus, note }
-})
+Validate: subject, type, bodyText required
+Find application + users → 404 nếu không có
+resend.emails.send({ from, to: [recipientEmail], subject, html })
+→ nếu Resend lỗi: return 500
+INSERT email_logs { application_id, recipient_id, sender_id, subject, type, status='sent', sent_at }
 ```
 
-**Output:** `{ success: true, data: { application, historyRecord } }`
+### Chi tiết E-05: POST /api/dashboard/applications/[id]/interviews
 
-### Method 4 - POST /api/dashboard/applications/[id]/email
-
-**Init:**
-- Xác thực JWT; role hr/admin
-
-**Validate:**
-- `type` bắt buộc ∈ ['invite','result','reminder','rejection','offer']
-- `subject` bắt buộc, max 200 ký tự
-- `body` bắt buộc, max 5000 ký tự
-
-**Process:**
 ```
-application = prisma.application.findUnique({ where: { id }, include: { candidate: true } })
-emailLogId = UUID
-prisma.emailLog.create({ data: { status: 'pending', ... } })
-resend.emails.send({ to: candidate.email, subject, html: body })
-prisma.emailLog.update({ where: { id: emailLogId }, data: { status: 'sent', sent_at: now } })
-// Nếu lỗi: update status = 'failed', error_message = error.message
+Validate: interviewer_id, scheduled_at, type required
+Find application (+ users, jobs) → 404
+Find interviewer user → 404
+sendInterviewInviteEmail(...) → nếu lỗi: return 500
+$transaction [
+  INSERT interviews { application_id, interviewer_id, scheduled_at, duration_minutes, type, meeting_link, location, notes }
+  INSERT email_logs { type='invite', status='sent', sent_at }
+]
 ```
-
-**Output:** email_log record
-
-### Method 5 - POST /api/dashboard/applications/[id]/interviews
-
-**Validate:**
-- `interviewer_id`, `scheduled_at`, `type` bắt buộc
-- `duration_minutes` default 60
-- `type` ∈ ['phone','video','onsite','technical']
-
-**Process:**
-```
-prisma.interview.create({
-  data: { application_id: id, interviewer_id, scheduled_at, duration_minutes, type, status: 'scheduled', meeting_link, location, notes }
-})
-```
-
-**Output:** Interview record mới
 
 ---
 
 <a id="sheet-04"></a>
 ## Sheet 04 - Chi tiết điều khiển
 
-### Màn hình /dashboard/applications - Danh sách
+### Màn hình 1 — `/dashboard/applications` (Danh sách)
 
-| No | Tên control | Loại | I/O | Check nhập | Giá trị mặc định | Ghi chú |
-|---:|---|---|---|---|---|---|
-| 1 | Bộ lọc Job | DROPDOWN | I | Danh sách jobs active | Tất cả | Lọc theo jobId |
-| 2 | Bộ lọc Trạng thái | DROPDOWN | I | applied/screening/.../rejected | Tất cả | Lọc theo status |
-| 3 | Bộ lọc Nguồn | DROPDOWN | I | Danh sách source_channel | Tất cả | Lọc theo source |
-| 4 | Nút Áp dụng | BUTTON | I | - | - | Trigger filter |
-| 5 | Bảng danh sách hồ sơ | TABLE | O | - | - | Cols: Ứng viên, Job, Trạng thái, Nguồn, Ngày nộp |
-| 6 | Badge trạng thái | TEXT | O | - | - | Color-coded theo status |
-| 7 | Phân trang | SECTION | I/O | - | Page 1, 20/trang | Điều hướng trang |
-| 8 | Link xem chi tiết | BUTTON | I | - | - | Click row → /dashboard/applications/[id] |
+| No | Tên control | Loại | I/O | Check nhập | Ghi chú |
+|---:|---|---|---|---|---|
+| 1 | Dropdown "Lọc theo việc làm" | SELECT | I | Tùy chọn | Populate từ `jobs` trong API response; "Tất cả việc làm" = all |
+| 2 | Dropdown "Lọc theo trạng thái" | SELECT | I | Tùy chọn | applied/screening/interviewing/offered/hired/rejected + "Tất cả" |
+| 3 | Dropdown "Lọc theo nguồn" | SELECT | I | Tùy chọn | website/linkedin/itviec/topcv/vietnamworks + "Tất cả" |
+| 4 | Nút "Xoá lọc" | BUTTON | I | Hiện khi có filter đang active | Reset cả 3 filter về "all" |
+| 5 | DataTable | TABLE | O | - | Columns: Ứng viên (fullName + email), Vị trí, Trạng thái (badge), Nguồn, Ngày gửi, Hành động |
+| 6 | Search trong DataTable | INPUT | I | - | searchKey="candidate" — tìm theo fullName + email |
+| 7 | Badge trạng thái | BADGE | O | - | applied=outline, screening=secondary, interviewing=default, offered=default, hired=default, rejected=destructive |
+| 8 | Link "Xem chi tiết" | LINK | I | - | href="/dashboard/applications/[id]" |
+| 9 | Badge "Tổng: N đơn" | BADGE | O | - | Hiển thị số row sau filter |
+| 10 | Loading state | TEXT | O | - | "Đang tải danh sách đơn ứng tuyển..." |
 
-### Màn hình /dashboard/applications/[id] - Chi tiết
+### Màn hình 2 — `/dashboard/applications/[id]` (Chi tiết — Cột trái: Card ứng viên)
 
-| No | Tên control | Loại | I/O | Check nhập | Giá trị mặc định | Ghi chú |
-|---:|---|---|---|---|---|---|
-| 1 | Thông tin ứng viên | SECTION | O | - | - | Tên, email, phone |
-| 2 | Thông tin job | SECTION | O | - | - | Title, department |
-| 3 | Link tải CV | BUTTON | I | - | - | Mở URL cv_file_url |
-| 4 | Cover letter | TEXT | O | - | - | Hiển thị cover_letter |
-| 5 | Dropdown đổi trạng thái | DROPDOWN | I | Enum applications_status | Trạng thái hiện tại | Trigger modal xác nhận |
-| 6 | Nút Gửi email | BUTTON | I | - | - | Mở modal soạn email |
-| 7 | Nút Tạo lịch PV | BUTTON | I | - | - | Điều hướng /dashboard/interviews/new |
-| 8 | Tab Lịch sử trạng thái | TAB | I/O | - | Tab mặc định | Timeline thay đổi status |
-| 9 | Tab Phỏng vấn | TAB | I/O | - | - | Danh sách interviews liên quan |
-| 10 | Tab Email | TAB | I/O | - | - | Nhật ký email |
-| 11 | Modal gửi email | MODAL | I/O | - | - | Form: type, subject, body |
-| 12 | Modal xác nhận đổi status | MODAL | I/O | - | - | Chọn toStatus + ghi chú |
+| No | Tên control | Loại | I/O | Ghi chú |
+|---:|---|---|---|---|
+| 1 | Tiêu đề "Hồ sơ ứng viên" | TEXT | O | H1 + mô tả |
+| 2 | Link "Quay lại danh sách" | LINK | I | href="/dashboard/applications" |
+| 3 | Badge trạng thái hiện tại | BADGE | O | Hiển thị trong Card header |
+| 4 | Vị trí (job title) | TEXT | O | `application.jobs.title` |
+| 5 | Họ tên ứng viên | TEXT | O | `application.users.fullName` |
+| 6 | Email ứng viên | TEXT | O | `application.users.email` |
+| 7 | Ngày gửi đơn | TEXT | O | `toLocaleString("vi-VN")` |
+| 8 | Link CV | LINK | O | href=cv_file_url, target="_blank"; label = cv_filename nếu có |
+| 9 | Cover letter | TEXT | O | Hiện trong box muted nếu có |
+| 10 | Skeleton loading | SKELETON | O | Hiện khi isLoading |
+| 11 | Card lỗi 404 / API error | CARD | O | "Không tìm thấy đơn" hoặc "Không thể tải dữ liệu" + nút quay lại |
 
-### Màn hình /dashboard/applications/[id]/status - Đổi trạng thái
+### Màn hình 2 — Cột phải: 3 Tabs
 
-| No | Tên control | Loại | I/O | Check nhập | Giá trị mặc định | Ghi chú |
-|---:|---|---|---|---|---|---|
-| 1 | Dropdown Trạng thái mới | DROPDOWN | I | Bắt buộc chọn; enum hợp lệ | - | Hiển thị các bước tiếp theo |
-| 2 | Textarea Ghi chú | TEXTBOX | I | Tùy chọn; max 500 ký tự | - | Lý do thay đổi |
-| 3 | Nút Lưu | BUTTON | I | Form hợp lệ mới enable | - | Submit đổi trạng thái |
-| 4 | Nút Hủy | BUTTON | I | - | - | Quay lại /dashboard/applications/[id] |
+| No | Tab | key | Mặc định | Nội dung |
+|---:|---|---|---|---|
+| 1 | Lịch sử (N) | `audit-history` | **active** | Timeline thay đổi + nút "Cập nhật trạng thái" |
+| 2 | Phỏng vấn (N) | `interviews` | - | Danh sách card PV + điểm chấm + nút "Lên lịch phỏng vấn" |
+| 3 | Nhật ký email (N) | `emails` | - | Danh sách email đã gửi + nút "Gửi Email mới" |
+
+### Tab "Lịch sử"
+
+| No | Control | Loại | I/O | Ghi chú |
+|---:|---|---|---|---|
+| 1 | Timeline audit history | LIST | O | Mỗi item: badge from→to, người thay đổi, thời gian, ghi chú |
+| 2 | Nút "Cập nhật trạng thái" | BUTTON | I | Mở Dialog StatusUpdateDialog |
+| 3 | Dialog cập nhật trạng thái | DIALOG | I/O | Chứa StatusForm (SELECT + TEXTAREA + submit) |
+| 4 | Dropdown trạng thái mới | SELECT | I | 6 trạng thái: applied→rejected |
+| 5 | Textarea ghi chú audit | TEXTAREA | I | Tùy chọn; "Lý do chuyển trạng thái..." |
+| 6 | Nút submit trạng thái | BUTTON | I | "Cập nhật trạng thái" — disabled khi isPending |
+| 7 | Empty state | TEXT | O | "Chưa có thay đổi nào." khi history = [] |
+
+### Tab "Phỏng vấn"
+
+| No | Control | Loại | I/O | Ghi chú |
+|---:|---|---|---|---|
+| 1 | Danh sách Card PV | CARD_LIST | O | Ngày giờ PV, hình thức, thời lượng, interviewer, link/địa điểm, ghi chú |
+| 2 | Badge trạng thái PV | BADGE | O | `iv.status` (uppercase) |
+| 3 | Link "Xem chi tiết phỏng vấn" | LINK | I | href="/dashboard/interviews/[iv.id]" |
+| 4 | Scorecard (nếu có điểm) | SECTION | O | overall/technical/communication/cultural_fit (N/10), kết quả PASS/FAIL/HOLD, feedback |
+| 5 | Nút "Lên lịch phỏng vấn" | BUTTON | I | Mở Dialog CreateInterviewForm |
+| 6 | Dialog lên lịch PV | DIALOG | I/O | Form CreateInterviewForm |
+| 7 | SELECT Người phỏng vấn | SELECT | I | Bắt buộc (*); populate từ `interviewers` trong response |
+| 8 | SELECT Hình thức | SELECT | I | Bắt buộc (*); video/phone/onsite/technical |
+| 9 | INPUT datetime-local | INPUT | I | Bắt buộc (*) |
+| 10 | INPUT Thời lượng (phút) | INPUT NUMBER | I | Bắt buộc (*); default=60; min=1 |
+| 11 | INPUT Link phỏng vấn | INPUT URL | I | Tùy chọn |
+| 12 | INPUT Địa điểm | INPUT TEXT | I | Tùy chọn |
+| 13 | TEXTAREA Ghi chú HR | TEXTAREA | I | Tùy chọn |
+| 14 | Nút "Lên lịch phỏng vấn" | BUTTON SUBMIT | I | disabled khi isLoading |
+| 15 | Empty state | TEXT | O | "Chưa có lịch phỏng vấn nào." |
+
+### Tab "Nhật ký email"
+
+| No | Control | Loại | I/O | Ghi chú |
+|---:|---|---|---|---|
+| 1 | Danh sách Card email | CARD_LIST | O | Subject, loại email (badge), trạng thái (sent=default/failed=destructive), sent_at |
+| 2 | Icon theo loại email | ICON | O | invite=Calendar, result=Checkmark, reminder=Notification, rejection=CancelCircle, offer=Mail |
+| 3 | Error message | TEXT | O | Hiển thị `log.error_message` nếu failed |
+| 4 | Nút "Gửi Email mới" | BUTTON | I | Mở Dialog SendEmailForm |
+| 5 | Dialog gửi email | DIALOG | I/O | Form SendEmailForm |
+| 6 | SELECT Loại email | SELECT | I | Bắt buộc; invite/result/reminder/rejection/offer |
+| 7 | INPUT Tiêu đề email | INPUT TEXT | I | Bắt buộc |
+| 8 | TEXTAREA Nội dung email | TEXTAREA | I | Bắt buộc; rows=5 |
+| 9 | Nút "Gửi Email" | BUTTON SUBMIT | I | disabled khi isPending |
+| 10 | Empty state | TEXT | O | "Chưa có email nào." |
+
+### Màn hình 3 — `/dashboard/applications/[id]/status` (Standalone)
+
+| No | Control | Loại | I/O | Ghi chú |
+|---:|---|---|---|---|
+| 1 | Link "Quay lại hồ sơ ứng tuyển" | LINK | I | href="/dashboard/applications/[id]" |
+| 2 | Tiêu đề + mô tả đơn | TEXT | O | Họ tên ứng viên + tên vị trí |
+| 3 | Form đổi trạng thái (StatusForm) | FORM | I/O | Dùng chung với dialog trong màn hình 2 |
 
 ---
 
 <a id="sheet-05"></a>
 ## Sheet 05 - Giao diện màn hình
 
-### 2. Danh sách màn hình
+### 1. Danh sách màn hình
 
-| No | Tên màn hình | Route / URL | Loại màn hình | Khái quát | Trạng thái |
-|---:|---|---|---|---|---|
-| 1 | Danh sách hồ sơ | /dashboard/applications | Danh sách | Pipeline hồ sơ ứng tuyển với filter | x |
-| 2 | Chi tiết hồ sơ ứng tuyển | /dashboard/applications/[id] | Chi tiết | Thông tin đầy đủ ứng viên + 3 tab | x |
-| 3 | Đổi trạng thái hồ sơ | /dashboard/applications/[id]/status | Form | Form chuyển trạng thái pipeline | x |
+![Trang Quản lý đơn ứng tuyển](./images/E/1.png)
 
-### 3. Màn hình 1 - /dashboard/applications
+![Trang Chi tiết đơn ứng tuyển - Tab 1](./images/E/2.png)
 
-| Field | Nội dung |
-|---|---|
-| Route / URL | /dashboard/applications |
-| Tên màn hình | Danh sách hồ sơ ứng tuyển |
-| Loại màn hình | Danh sách |
-| Khái quát chức năng | Hiển thị tất cả hồ sơ dạng bảng có filter theo job, trạng thái, nguồn; click vào hồ sơ để xem chi tiết |
-| Tác vụ liên quan | Lọc theo job/status/source; phân trang; xem chi tiết |
-| Điều kiện hiển thị | User đăng nhập với role hr hoặc admin |
-| Điều kiện không có dữ liệu | Empty state: "Chưa có hồ sơ nào. Khi ứng viên nộp đơn, hồ sơ sẽ xuất hiện tại đây." |
-| Điều hướng từ màn hình này | /dashboard/applications/[id] khi click hàng trong bảng |
-| Điều hướng đến màn hình này | Sidebar menu; KPI card từ Dashboard |
-| Liên kết control | Sheet Chi tiết điều khiển, No.1-8 (applications list) |
-| Liên kết API | Sheet API, API No.E-01 |
-| Liên kết Request | Sheet Request, API No.E-01 |
-| Liên kết Response | Sheet Response, API No.E-01 |
-| Liên kết Message | Sheet Thông báo, E-ERR-001 |
-| Ghi chú | Client Component; React Query; URL sync với filter params |
+![Trang Chi tiết đơn ứng tuyển - Tab 2](./images/E/3.png)
 
-### 4. Rule hiển thị màn hình 1
+![Trang Chi tiết đơn ứng tuyển - Tab 3](./images/E/4.png)
 
-| No | Trường hợp | Điều kiện | Nội dung hiển thị | Ghi chú |
+| No | Tên | Route | Loại | Liên kết API |
 |---:|---|---|---|---|
-| 1 | Bình thường | Có hồ sơ | Bảng danh sách với badge status màu sắc | - |
-| 2 | Không có dữ liệu | total = 0 | Empty state với icon và message | - |
-| 3 | Lỗi tải | API lỗi | Alert lỗi + nút thử lại | - |
-| 4 | Đang loading | Fetching | Skeleton table | - |
-| 5 | Filter không có kết quả | Filter active nhưng không có match | "Không tìm thấy hồ sơ phù hợp với bộ lọc" + nút xóa filter | - |
+| 1 | Danh sách đơn | `/dashboard/applications` | Danh sách + Filter | E-01 |
+| 2 | Chi tiết đơn ứng tuyển | `/dashboard/applications/[id]` | Chi tiết + 3 Tab + 3 Dialog | E-02, E-03, E-04, E-05 |
+| 3 | Đổi trạng thái standalone | `/dashboard/applications/[id]/status` | Form | E-03 |
+| 4 | Nhật ký email (trang riêng) | `/dashboard/applications/[id]/emails` | Danh sách | E-06 |
 
-### 5. Rule validation màn hình 1
+### 2. Rule hiển thị màn hình 1
 
-| No | Item | Điều kiện validation | MessageCD | Hành vi khi lỗi |
-|---:|---|---|---|---|
-| 1 | jobId trong URL | Phải là UUID hợp lệ nếu có | - | Bỏ qua filter không hợp lệ |
-| 2 | status trong URL | Phải thuộc enum nếu có | - | Bỏ qua |
+| No | Trường hợp | Điều kiện | Hiển thị |
+|---:|---|---|---|
+| 1 | Đang tải | isLoading | "Đang tải danh sách đơn ứng tuyển..." |
+| 2 | Có dữ liệu | applications.length > 0 | DataTable đầy đủ |
+| 3 | Không có đơn | applications.length = 0 | DataTable trống + empty state của TanStack Table |
+| 4 | Filter active | jobId/status/source ≠ "all" | Nút "Xoá lọc" hiện; kết quả lọc |
+| 5 | API lỗi | - | React Query error handling |
 
-### 6. Màn hình 2 - /dashboard/applications/[id]
+### 3. Rule hiển thị màn hình 2
 
-| Field | Nội dung |
-|---|---|
-| Route / URL | /dashboard/applications/[id] |
-| Tên màn hình | Chi tiết hồ sơ ứng viên |
-| Loại màn hình | Chi tiết |
-| Khái quát chức năng | Xem toàn bộ thông tin ứng viên, CV, trạng thái hiện tại, và 3 tab: Lịch sử trạng thái / Phỏng vấn / Email |
-| Tác vụ liên quan | Xem thông tin; tải CV; đổi trạng thái; gửi email; tạo lịch PV |
-| Điều kiện hiển thị | User đăng nhập role hr/admin; application tồn tại |
-| Điều kiện không có dữ liệu | 404 nếu application không tồn tại |
-| Điều hướng từ màn hình này | /dashboard/applications/[id]/status; /dashboard/interviews/new; /dashboard/interviews/[id] |
-| Điều hướng đến màn hình này | Click row từ danh sách hồ sơ |
-| Liên kết control | Sheet Chi tiết điều khiển, No.1-12 (chi tiết hồ sơ) |
-| Liên kết API | Sheet API, API No.E-02, E-03, E-04, E-06 |
-| Liên kết Message | Sheet Thông báo, E-SUC-001, E-SUC-002, E-ERR-002 |
-| Ghi chú | Server Component cho phần static; Client Component cho 3 tab |
+| No | Trường hợp | Điều kiện | Hiển thị |
+|---:|---|---|---|
+| 1 | Đang tải | isLoading | DetailSkeleton (aria-busy) |
+| 2 | Đơn không tồn tại | error.status = 404 | Card "Không tìm thấy đơn" |
+| 3 | API lỗi khác | isError | Card "Không thể tải dữ liệu" |
+| 4 | Load thành công | data OK | Card ứng viên (trái) + 3 Tab (phải) |
 
-### 7. Rule hiển thị màn hình 2
+### 4. Rule validation màn hình 2
 
-| No | Trường hợp | Điều kiện | Nội dung hiển thị | Ghi chú |
-|---:|---|---|---|---|
-| 1 | Bình thường | Application tồn tại | Toàn bộ thông tin + 3 tab | - |
-| 2 | Không tìm thấy | 404 từ API | Trang 404 "Hồ sơ không tồn tại" | - |
-| 3 | Tab Lịch sử trống | Chưa có thay đổi | "Chưa có lịch sử thay đổi trạng thái" | - |
-| 4 | Tab PV trống | Chưa có interview | "Chưa có lịch phỏng vấn nào" + nút tạo mới | - |
-| 5 | Tab Email trống | Chưa gửi email | "Chưa có email nào được gửi" | - |
+#### Form đổi trạng thái
 
-### 8. Rule validation màn hình 2 (Modal đổi trạng thái)
+![Form Đổi trạng thái](./images/E/5.png)
 
-| No | Item | Điều kiện validation | MessageCD | Hành vi khi lỗi |
-|---:|---|---|---|---|
-| 1 | Trạng thái mới | Bắt buộc chọn | E-VAL-001 | Disable nút lưu |
-| 2 | Ghi chú | Max 500 ký tự | E-VAL-002 | Hiển thị lỗi dưới field |
+| No | Field | Rule | Lỗi |
+|---:|---|---|---|
+| 1 | to_status | Bắt buộc | `toast.error("Vui lòng chọn trạng thái mới.")` |
 
-### 9. Màn hình 3 - /dashboard/applications/[id]/status
+#### Form lên lịch phỏng vấn
 
-| Field | Nội dung |
-|---|---|
-| Route / URL | /dashboard/applications/[id]/status |
-| Tên màn hình | Đổi trạng thái hồ sơ |
-| Loại màn hình | Form |
-| Khái quát chức năng | Form standalone để thay đổi trạng thái pipeline của hồ sơ |
-| Tác vụ liên quan | Chọn trạng thái mới; nhập ghi chú; lưu thay đổi |
-| Điều kiện hiển thị | User đăng nhập role hr/admin; application tồn tại |
-| Điều hướng từ màn hình này | Sau submit thành công → /dashboard/applications/[id] |
-| Điều hướng đến màn hình này | Từ /dashboard/applications/[id] |
-| Liên kết API | Sheet API, API No.E-03 |
-| Liên kết Message | Sheet Thông báo, E-SUC-001, E-ERR-003 |
-| Ghi chú | Client Component; React Hook Form + Zod |
+![Form Lên lịch phỏng vấn](./images/E/6.png)
 
-### 10. Rule validation màn hình 3
+| No | Field | Rule | Lỗi |
+|---:|---|---|---|
+| 1 | interviewer_id | Bắt buộc | Msg inline "Vui lòng điền đầy đủ các trường thông tin bắt buộc (*)" |
+| 2 | scheduled_at | Bắt buộc | Như trên |
+| 3 | type | Bắt buộc | Như trên |
+| 4 | duration_minutes | min=1 | HTML5 native |
 
-| No | Item | Điều kiện validation | MessageCD | Hành vi khi lỗi |
-|---:|---|---|---|---|
-| 1 | Trạng thái mới | Bắt buộc; phải thuộc enum; không được giống trạng thái hiện tại | E-VAL-001 | Hiển thị lỗi; disable submit |
-| 2 | Ghi chú | Tùy chọn; max 500 ký tự | E-VAL-002 | Hiển thị đếm ký tự |
+#### Form gửi email
+
+![Form Gửi email](./images/E/7.png)
+
+| No | Field | Rule | Lỗi |
+|---:|---|---|---|
+| 1 | subject | Bắt buộc (trim) | Msg inline "Vui lòng nhập đầy đủ Tiêu đề, Loại email và Nội dung." |
+| 2 | type | Bắt buộc | Như trên |
+| 3 | bodyText | Bắt buộc (trim) | Như trên |
 
 ---
 
 <a id="sheet-06"></a>
 ## Sheet 06 - Thông báo
 
-| MessageCD | Loại | Nội dung (tiếng Việt) | Ghi chú |
+| MessageCD | Loại | Nội dung | Khi nào |
 |---|---|---|---|
-| E-SUC-001 | Success | Trạng thái hồ sơ đã được cập nhật thành công. | Sau đổi trạng thái |
-| E-SUC-002 | Success | Email đã được gửi thành công đến ứng viên. | Sau gửi email |
-| E-SUC-003 | Success | Lịch phỏng vấn đã được tạo thành công. | Sau tạo interview |
-| E-ERR-001 | Error | Không thể tải danh sách hồ sơ. Vui lòng thử lại. | API fetch thất bại |
-| E-ERR-002 | Error | Hồ sơ không tồn tại hoặc đã bị xóa. | 404 |
-| E-ERR-003 | Error | Không thể cập nhật trạng thái. Vui lòng thử lại. | Lỗi API |
-| E-ERR-004 | Error | Không thể gửi email. Vui lòng thử lại sau. | Resend API lỗi |
-| E-ERR-005 | Error | Không thể tạo lịch phỏng vấn. Vui lòng kiểm tra lại thông tin. | Lỗi tạo interview |
-| E-VAL-001 | Validation | Vui lòng chọn trạng thái mới cho hồ sơ. | Bỏ trống trạng thái |
-| E-VAL-002 | Validation | Ghi chú không được vượt quá 500 ký tự. | Ghi chú quá dài |
-| E-VAL-003 | Validation | Loại email không hợp lệ. | type enum sai |
+| E-SUC-001 | Toast Success | Cập nhật trạng thái thành công! | POST .../status 200 |
+| E-SUC-002 | Msg inline Success | Gửi email qua Resend thành công. | POST .../email 200 |
+| E-SUC-003 | Msg inline Success | Tạo lịch phỏng vấn và gửi email thành công. | POST .../interviews 200 |
+| E-ERR-001 | Toast Error | [err.message] hoặc "Đã xảy ra lỗi khi cập nhật." | POST .../status lỗi |
+| E-ERR-002 | Msg inline Error | Vui lòng nhập đầy đủ Tiêu đề, Loại email và Nội dung. | Form email validate |
+| E-ERR-003 | Msg inline Error | Không thể gửi email. Vui lòng thử lại. | POST .../email lỗi |
+| E-ERR-004 | Msg inline Error | Vui lòng điền đầy đủ các trường thông tin bắt buộc (*). | Form PV validate |
+| E-ERR-005 | Msg inline Error | Không thể tạo lịch phỏng vấn. | POST .../interviews lỗi |
+| E-ERR-006 | Toast Error | Vui lòng chọn trạng thái mới. | StatusForm validate |
+| E-404 | Card | Đơn ứng tuyển không tồn tại hoặc đã bị xoá. | GET [id] → 404 |
+| E-API-ERR | Card | Đã có lỗi xảy ra. Vui lòng thử lại. | GET [id] → lỗi khác |
 
 ---
 
@@ -402,421 +406,309 @@ prisma.interview.create({
 
 ### 1. Danh sách API
 
-| API No | Method | Endpoint | Auth | Mô tả |
-|---|---|---|---|---|
-| E-01 | GET | /api/dashboard/applications | hr, admin | Danh sách hồ sơ có filter, phân trang |
-| E-02 | GET | /api/dashboard/applications/[id] | hr, admin | Chi tiết hồ sơ ứng tuyển |
-| E-03 | POST | /api/dashboard/applications/[id]/status | hr, admin | Đổi trạng thái hồ sơ |
-| E-04 | POST | /api/dashboard/applications/[id]/email | hr, admin | Gửi email cho ứng viên |
-| E-05 | POST | /api/dashboard/applications/[id]/interviews | hr, admin | Tạo lịch phỏng vấn từ hồ sơ |
-| E-06 | GET | /api/dashboard/applications/[id]/emails | hr, admin | Nhật ký email của hồ sơ |
+| No | Method | Endpoint | Role cho phép | Status OK |
+|---:|---|---|---|---|
+| E-01 | GET | `/api/dashboard/applications` | admin, hr, interviewer | 200 |
+| E-02 | GET | `/api/dashboard/applications/[id]` | admin, hr, interviewer | 200 |
+| E-03 | POST | `/api/dashboard/applications/[id]/status` | admin, hr, interviewer | 200 |
+| E-04 | POST | `/api/dashboard/applications/[id]/email` | admin, hr, interviewer | 200 |
+| E-05 | POST | `/api/dashboard/applications/[id]/interviews` | admin, hr, interviewer | 200 |
+| E-06 | GET | `/api/dashboard/applications/[id]/emails` | admin, hr | 200 |
 
-### 2. API E-01 - GET /api/dashboard/applications
+### 2. Phân quyền
 
-| Field | Nội dung |
-|---|---|
-| Method | GET |
-| Endpoint | /api/dashboard/applications |
-| Auth | JWT Cookie `session`; role: hr, admin |
-| Mô tả | Danh sách hồ sơ ứng tuyển có lọc theo jobId, status, source; phân trang |
-| Query Params | `jobId`, `status`, `source`, `page` (default 1), `limit` (default 20) |
-| Biến trả về | `items[]`, `total`, `page`, `limit` |
-| Validation | status ∈ enum nếu có; jobId là UUID nếu có |
-| Xử lý lỗi | 401, 403, 500 |
-| Xử lý thành công | 200 + JSON envelope |
-
-### 3. API E-02 - GET /api/dashboard/applications/[id]
-
-| Field | Nội dung |
-|---|---|
-| Method | GET |
-| Endpoint | /api/dashboard/applications/[id] |
-| Auth | JWT Cookie `session`; role: hr, admin |
-| Mô tả | Chi tiết đầy đủ 1 hồ sơ: thông tin ứng viên, job, CV, lịch sử trạng thái, interviews, email logs |
-| Path Params | `id`: UUID của application |
-| Biến trả về | `application` object đầy đủ với include relations |
-| Xử lý lỗi | 401, 403, 404 (không tìm thấy), 500 |
-| Xử lý thành công | 200 + JSON envelope |
-
-### 4. API E-03 - POST /api/dashboard/applications/[id]/status
-
-| Field | Nội dung |
-|---|---|
-| Method | POST |
-| Endpoint | /api/dashboard/applications/[id]/status |
-| Auth | JWT Cookie `session`; role: hr, admin |
-| Mô tả | Cập nhật trạng thái hồ sơ và ghi log vào application_status_history |
-| Path Params | `id`: UUID của application |
-| Body | `{ toStatus: string, note?: string }` |
-| Validation | toStatus bắt buộc ∈ applications_status enum; note max 500 ký tự |
-| Xử lý lỗi | 400 (validation fail), 401, 403, 404, 500 |
-| Xử lý thành công | 200 + application và history record mới |
-
-### 5. API E-04 - POST /api/dashboard/applications/[id]/email
-
-| Field | Nội dung |
-|---|---|
-| Method | POST |
-| Endpoint | /api/dashboard/applications/[id]/email |
-| Auth | JWT Cookie `session`; role: hr, admin |
-| Mô tả | Gửi email thông báo đến ứng viên qua Resend; ghi log vào email_logs |
-| Body | `{ type: string, subject: string, body: string }` |
-| Validation | type ∈ ['invite','result','reminder','rejection','offer']; subject max 200; body max 5000 |
-| Xử lý lỗi | 400, 401, 403, 404, 502 (Resend lỗi), 500 |
-| Xử lý thành công | 200 + email_log record |
-
-### 6. API E-05 - POST /api/dashboard/applications/[id]/interviews
-
-| Field | Nội dung |
-|---|---|
-| Method | POST |
-| Endpoint | /api/dashboard/applications/[id]/interviews |
-| Auth | JWT Cookie `session`; role: hr, admin |
-| Mô tả | Tạo lịch phỏng vấn mới liên kết với hồ sơ ứng tuyển |
-| Body | `{ interviewer_id, scheduled_at, duration_minutes?, type, meeting_link?, location?, notes? }` |
-| Validation | interviewer_id là UUID hợp lệ; scheduled_at là datetime hợp lệ và trong tương lai; type ∈ enum |
-| Xử lý lỗi | 400, 401, 403, 404, 500 |
-| Xử lý thành công | 201 + interview record mới |
-
-### 7. API E-06 - GET /api/dashboard/applications/[id]/emails
-
-| Field | Nội dung |
-|---|---|
-| Method | GET |
-| Endpoint | /api/dashboard/applications/[id]/emails |
-| Auth | JWT Cookie `session`; role: hr, admin |
-| Mô tả | Lấy danh sách email đã gửi cho ứng viên của hồ sơ cụ thể |
-| Biến trả về | Array email_logs với thông tin sender |
-| Xử lý lỗi | 401, 403, 404, 500 |
-| Xử lý thành công | 200 + array emails |
+Tất cả endpoint kiểm tra:
+```
+if (!session || session.user.role === "candidate") → 401
+```
 
 ---
 
 <a id="sheet-08"></a>
 ## Sheet 08 - Request
 
-### API E-01 - GET /api/dashboard/applications
+### E-01: GET /api/dashboard/applications
 
-**Header:**
 ```
-Cookie: session=<JWT_TOKEN>
-```
-
-**Query Params:**
-| Tên | Kiểu | Bắt buộc | Mô tả |
-|---|---|---|---|
-| jobId | string (UUID) | Không | Lọc theo job |
-| status | string | Không | applied \| screening \| interviewing \| offered \| hired \| rejected |
-| source | string | Không | Nguồn ứng tuyển |
-| page | number | Không | Default 1 |
-| limit | number | Không | Default 20 |
-
-**Ví dụ:**
-```
-GET /api/dashboard/applications?status=screening&page=1&limit=20
+GET /api/dashboard/applications?jobId=uuid&status=screening&source=linkedin
 ```
 
----
+| Param | Bắt buộc | Mô tả |
+|---|---|---|
+| `jobId` | Không | ID job để filter; bỏ qua nếu không có |
+| `status` | Không | applied / screening / interviewing / offered / hired / rejected |
+| `source` | Không | website / linkedin / itviec / topcv / vietnamworks |
 
-### API E-03 - POST /api/dashboard/applications/[id]/status
+### E-03: POST /api/dashboard/applications/[id]/status
 
-**Header:**
-```
-Cookie: session=<JWT_TOKEN>
-Content-Type: application/json
-```
-
-**Body:**
 ```json
 {
-  "toStatus": "interviewing",
-  "note": "Hồ sơ phù hợp, mời phỏng vấn vòng 1"
+  "to_status": "screening",
+  "note": "Hồ sơ phù hợp, chuyển sang vòng sàng lọc kỹ hơn."
 }
 ```
 
----
+| Field | Bắt buộc | Mô tả |
+|---|---|---|
+| `to_status` | Có | applied / screening / interviewing / offered / hired / rejected |
+| `note` | Không | Ghi chú audit tự do |
 
-### API E-04 - POST /api/dashboard/applications/[id]/email
+### E-04: POST /api/dashboard/applications/[id]/email
 
-**Header:**
-```
-Cookie: session=<JWT_TOKEN>
-Content-Type: application/json
-```
-
-**Body:**
 ```json
 {
+  "subject": "Lịch phỏng vấn vòng 1 — Vị trí Senior Frontend Developer",
   "type": "invite",
-  "subject": "Thư mời phỏng vấn - Vị trí Frontend Developer tại Company X",
-  "body": "<p>Kính chào Nguyễn Văn A,</p><p>Chúng tôi trân trọng mời bạn tham dự phỏng vấn...</p>"
+  "bodyText": "Kính gửi ứng viên,\n\nChúng tôi trân trọng mời bạn tham gia phỏng vấn..."
 }
 ```
 
----
+| Field | Bắt buộc | Mô tả |
+|---|---|---|
+| `subject` | Có | Tiêu đề email |
+| `type` | Có | invite / result / reminder / rejection / offer |
+| `bodyText` | Có | Nội dung thuần text (backend convert `\n` → `<br>`) |
 
-### API E-05 - POST /api/dashboard/applications/[id]/interviews
+### E-05: POST /api/dashboard/applications/[id]/interviews
 
-**Body:**
 ```json
 {
-  "interviewer_id": "uuid-interviewer-001",
-  "scheduled_at": "2026-05-20T09:00:00Z",
+  "interviewer_id": "uuid-interviewer",
+  "scheduled_at": "2026-06-01T09:00",
   "duration_minutes": 60,
   "type": "video",
-  "meeting_link": "https://meet.google.com/xxx-yyy-zzz",
-  "notes": "Phỏng vấn kỹ thuật vòng 1, tập trung vào React và TypeScript"
+  "meeting_link": "https://meet.google.com/abc-xyz",
+  "location": null,
+  "notes": "Chuẩn bị bài test thuật toán 30 phút đầu."
 }
 ```
+
+| Field | Bắt buộc | Mô tả |
+|---|---|---|
+| `interviewer_id` | Có | UUID user có role admin/hr/interviewer |
+| `scheduled_at` | Có | Datetime string (datetime-local format) |
+| `type` | Có | phone / video / onsite / technical |
+| `duration_minutes` | Không | Integer, default=60 |
+| `meeting_link` | Không | URL họp trực tuyến |
+| `location` | Không | Địa điểm onsite |
+| `notes` | Không | Ghi chú từ HR |
 
 ---
 
 <a id="sheet-09"></a>
 ## Sheet 09 - Response
 
-### API E-01 - GET /api/dashboard/applications
+### E-01: GET /api/dashboard/applications — 200
 
-**Success (200):**
 ```json
 {
   "success": true,
   "data": {
-    "items": [
+    "applications": [
       {
-        "id": "uuid-app-001",
+        "id": "uuid",
         "status": "screening",
-        "applied_at": "2026-05-15T08:00:00Z",
-        "source_channel": "website",
-        "cv_filename": "NguyenVanA_CV.pdf",
-        "candidate": { "id": "uuid-u1", "full_name": "Nguyễn Văn A", "email": "a@email.com", "phone": "0901234567" },
-        "job": { "id": "uuid-job-1", "title": "Frontend Developer", "department": "Engineering" }
+        "source_channel": "linkedin",
+        "applied_at": "2026-05-01T10:00:00.000Z",
+        "users": { "id": "uuid", "fullName": "Nguyễn Văn A", "email": "a@mail.com" },
+        "jobs": { "id": "uuid", "title": "Senior Frontend Developer" }
       }
     ],
-    "total": 45,
-    "page": 1,
-    "limit": 20
+    "jobs": [
+      { "id": "uuid", "title": "Senior Frontend Developer" },
+      { "id": "uuid", "title": "Backend Engineer" }
+    ]
   }
 }
 ```
 
----
+### E-02: GET /api/dashboard/applications/[id] — 200
 
-### API E-03 - POST .../status
-
-**Success (200):**
 ```json
 {
   "success": true,
   "data": {
-    "application": { "id": "uuid-app-001", "status": "interviewing" },
-    "historyRecord": {
-      "id": "uuid-hist-1",
-      "from_status": "screening",
-      "to_status": "interviewing",
-      "note": "Hồ sơ phù hợp, mời phỏng vấn vòng 1",
-      "changed_at": "2026-05-17T10:00:00Z"
-    }
+    "application": {
+      "id": "uuid",
+      "status": "interviewing",
+      "cv_file_url": "https://...",
+      "cv_filename": "CV_2026.pdf",
+      "cover_letter": "Kính gửi...",
+      "applied_at": "2026-05-01T10:00:00.000Z",
+      "users": { "id": "uuid", "fullName": "Nguyễn Văn A", "email": "a@mail.com", "..." },
+      "jobs": { "id": "uuid", "title": "Senior Frontend Developer", "..." },
+      "application_status_history": [
+        {
+          "id": "uuid",
+          "from_status": "applied",
+          "to_status": "screening",
+          "note": "CV ổn",
+          "changed_at": "2026-05-02T08:00:00.000Z",
+          "users": { "fullName": "HR Manager", "email": "hr@company.com" }
+        }
+      ],
+      "interviews": [
+        {
+          "id": "uuid",
+          "scheduled_at": "2026-05-10T09:00:00.000Z",
+          "duration_minutes": 60,
+          "type": "video",
+          "status": "scheduled",
+          "meeting_link": "https://meet.google.com/...",
+          "location": null,
+          "notes": null,
+          "users": { "fullName": "Interviewer A", "email": "iv@company.com" },
+          "interview_scores": [
+            {
+              "id": "uuid",
+              "overall_score": 8,
+              "technical_score": 7,
+              "communication_score": 9,
+              "cultural_fit_score": 8,
+              "result": "pass",
+              "feedback": "Ứng viên tốt",
+              "users": { "fullName": "Interviewer A", "email": "iv@company.com" }
+            }
+          ]
+        }
+      ],
+      "email_logs": [
+        {
+          "id": "uuid",
+          "subject": "Lịch phỏng vấn",
+          "type": "invite",
+          "status": "sent",
+          "sent_at": "2026-05-09T10:00:00.000Z",
+          "error_message": null
+        }
+      ]
+    },
+    "interviewers": [
+      { "id": "uuid", "fullName": "Interviewer A", "email": "iv@company.com" }
+    ]
   }
 }
 ```
 
-**Error (400):**
+### E-03: POST .../status — 200
+
 ```json
-{
-  "success": false,
-  "error": "Dữ liệu không hợp lệ.",
-  "fieldErrors": { "toStatus": "Trạng thái không hợp lệ." }
-}
+{ "success": true, "message": "Đã cập nhật trạng thái đơn ứng tuyển thành công." }
 ```
 
----
+### E-04: POST .../email — 200
 
-### API E-04 - POST .../email
-
-**Success (200):**
 ```json
 {
   "success": true,
-  "data": {
-    "id": "uuid-email-log-1",
-    "type": "invite",
-    "status": "sent",
-    "sent_at": "2026-05-17T10:05:00Z",
-    "subject": "Thư mời phỏng vấn - Vị trí Frontend Developer"
-  }
+  "message": "Gửi email qua Resend thành công.",
+  "data": { "id": "uuid", "status": "sent", "sent_at": "..." }
 }
 ```
 
-**Error (502):**
-```json
-{ "success": false, "error": "Không thể gửi email. Vui lòng thử lại sau." }
-```
+### E-05: POST .../interviews — 200
 
----
-
-### API E-05 - POST .../interviews
-
-**Success (201):**
 ```json
 {
   "success": true,
-  "data": {
-    "id": "uuid-interview-1",
-    "application_id": "uuid-app-001",
-    "scheduled_at": "2026-05-20T09:00:00Z",
-    "type": "video",
-    "status": "scheduled",
-    "duration_minutes": 60,
-    "meeting_link": "https://meet.google.com/xxx-yyy-zzz"
-  }
+  "message": "Tạo lịch phỏng vấn và gửi email thành công.",
+  "data": { "id": "uuid", "scheduled_at": "...", "type": "video", "..." }
 }
 ```
+
+### Lỗi chung
+
+```json
+{ "success": false, "error": "Mô tả lỗi" }
+```
+
+| Status | Trường hợp |
+|---|---|
+| 400 | Thiếu field bắt buộc |
+| 401 | Chưa đăng nhập hoặc role = candidate |
+| 404 | Application / interviewer không tồn tại |
+| 500 | Lỗi DB / Resend gửi email thất bại |
 
 ---
 
 <a id="sheet-10"></a>
 ## Sheet 10 - SQL
 
-### 1. Danh sách SQL
+### Danh sách đơn (filter)
 
-| SQL No | Tên SQL / Mục đích | Loại | API sử dụng | Ghi chú |
-|---:|---|---|---|---|
-| E-01 | Lấy danh sách hồ sơ có filter | SELECT | E-01 | JOIN jobs, users; phân trang |
-| E-02 | Lấy chi tiết hồ sơ ứng tuyển | SELECT | E-02 | Multiple JOIN + includes |
-| E-03 | Cập nhật trạng thái hồ sơ | UPDATE + INSERT | E-03 | Transaction: update + log |
-| E-04 | Ghi email log | INSERT + UPDATE | E-04 | Tạo log, cập nhật status sau gửi |
-| E-05 | Tạo lịch phỏng vấn | INSERT | E-05 | INSERT interviews |
-| E-06 | Lấy nhật ký email của hồ sơ | SELECT | E-06 | Filter by application_id |
-
-### 2. SQL No. E-01 - Lấy danh sách hồ sơ có filter
-
-#### 2.1. Mục đích
-Lấy danh sách applications có filter theo job, trạng thái, nguồn; JOIN thông tin ứng viên và job; phân trang.
-
-#### 2.3. Table sử dụng
-| No | Table name | Alias | Create | Read | Update | Delete |
-|---:|---|---|---|---|---|---|
-| 1 | applications | a | - | x | - | - |
-| 2 | users | u | - | x | - | - |
-| 3 | jobs | j | - | x | - | - |
-
-#### 2.5. SQL
 ```sql
--- Prisma ORM tương đương:
--- prisma.application.findMany({
---   where: { job_id: jobId, status: status, source_channel: source },
---   include: { candidate: true, job: true },
---   orderBy: { applied_at: 'desc' },
---   skip: (page - 1) * limit,
---   take: limit
--- })
-
-SELECT a.id, a.status, a.applied_at, a.source_channel, a.cv_filename,
-       u.id AS candidate_id, u.full_name, u.email, u.phone,
-       j.id AS job_id, j.title, j.department
+SELECT
+  a.id, a.status, a.source_channel, a.applied_at,
+  u.id AS user_id, u.full_name, u.email,
+  j.id AS job_id, j.title
 FROM applications a
-JOIN users u ON a.candidate_id = u.id
-JOIN jobs j ON a.job_id = j.id
-WHERE (a.job_id = :jobId OR :jobId IS NULL)
-  AND (a.status = :status OR :status IS NULL)
-  AND (a.source_channel = :source OR :source IS NULL)
-ORDER BY a.applied_at DESC
-LIMIT :limit OFFSET :offset;
+  JOIN users u ON u.id = a.candidate_id
+  JOIN jobs  j ON j.id = a.job_id
+WHERE
+  (:jobId    IS NULL OR a.job_id         = :jobId)
+  AND (:status IS NULL OR a.status        = :status)
+  AND (:source IS NULL OR a.source_channel = :source)
+ORDER BY a.applied_at DESC;
 ```
 
-#### 2.7. Ghi chú xử lý
-| Nội dung | Ghi chú |
-|---|---|
-| Transaction | Không |
-| Performance note | Index trên `job_id`, `status`, `applied_at` trong applications |
+### Chi tiết đơn (main query)
 
----
-
-### 3. SQL No. E-02 - Lấy chi tiết hồ sơ ứng tuyển
-
-#### 2.5. SQL
 ```sql
--- Prisma ORM tương đương:
--- prisma.application.findUnique({
---   where: { id },
---   include: {
---     job: true,
---     candidate: true,
---     statusHistory: { orderBy: { changed_at: 'desc' }, include: { changedBy: true } },
---     interviews: { include: { interviewer: true, scores: true } },
---     emailLogs: { orderBy: { sent_at: 'desc' }, include: { sender: true } }
---   }
--- })
-
-SELECT a.*, 
-       j.title AS job_title, j.department,
-       u.full_name, u.email, u.phone
+SELECT a.*, u.*, j.*
 FROM applications a
-JOIN jobs j ON a.job_id = j.id
-JOIN users u ON a.candidate_id = u.id
-WHERE a.id = :id;
-
--- Riêng biệt:
-SELECT * FROM application_status_history WHERE application_id = :id ORDER BY changed_at DESC;
-SELECT i.*, ui.full_name AS interviewer_name FROM interviews i JOIN users ui ON i.interviewer_id = ui.id WHERE i.application_id = :id;
-SELECT el.*, us.full_name AS sender_name FROM email_logs el LEFT JOIN users us ON el.sender_id = us.id WHERE el.application_id = :id ORDER BY el.sent_at DESC;
+  JOIN users u ON u.id = a.candidate_id
+  JOIN jobs  j ON j.id = a.job_id
+WHERE a.id = :applicationId;
 ```
 
----
+### Lịch sử trạng thái
 
-### 4. SQL No. E-03 - Cập nhật trạng thái + ghi log
-
-#### 2.5. SQL
 ```sql
--- Transaction:
--- prisma.$transaction([
---   prisma.application.update({ where: { id }, data: { status: toStatus } }),
---   prisma.applicationStatusHistory.create({ data: { application_id: id, changed_by, from_status, to_status, note } })
--- ])
-
-START TRANSACTION;
-
-UPDATE applications SET status = :toStatus WHERE id = :id;
-
-INSERT INTO application_status_history (id, application_id, changed_by, from_status, to_status, note, changed_at)
-VALUES (UUID(), :id, :changedById, :fromStatus, :toStatus, :note, NOW());
-
-COMMIT;
+SELECT h.*, u.full_name, u.email
+FROM application_status_history h
+  JOIN users u ON u.id = h.changed_by
+WHERE h.application_id = :applicationId
+ORDER BY h.changed_at DESC;
 ```
 
-#### 2.7. Ghi chú xử lý
-| Nội dung | Ghi chú |
-|---|---|
-| Transaction | Có — đảm bảo cả 2 thao tác thành công hoặc rollback |
-| Rollback | Nếu bất kỳ câu lệnh nào lỗi |
+### Cập nhật trạng thái (transaction)
 
----
-
-### 5. SQL No. E-04 - Ghi email log
-
-#### 2.5. SQL
 ```sql
--- INSERT log với status pending, sau đó UPDATE sau khi gọi Resend API
-INSERT INTO email_logs (id, application_id, recipient_id, sender_id, subject, type, status)
-VALUES (UUID(), :applicationId, :recipientId, :senderId, :subject, :type, 'pending');
+-- 1. Lưu trạng thái cũ trước khi UPDATE
+UPDATE applications
+SET status = :to_status, updated_at = NOW()
+WHERE id = :applicationId;
 
--- Sau khi gửi thành công:
-UPDATE email_logs SET status = 'sent', sent_at = NOW() WHERE id = :emailLogId;
-
--- Nếu lỗi:
-UPDATE email_logs SET status = 'failed', error_message = :errorMsg WHERE id = :emailLogId;
+-- 2. Ghi audit log
+INSERT INTO application_status_history
+  (id, application_id, changed_by, from_status, to_status, note)
+VALUES
+  (UUID(), :applicationId, :userId, :fromStatus, :toStatus, :note);
 ```
 
----
+### Tạo lịch phỏng vấn (transaction)
 
-### 6. SQL No. E-05 - Tạo lịch phỏng vấn
-
-#### 2.5. SQL
 ```sql
--- prisma.interview.create({ data: { ... } })
+-- 1. Tạo interview
+INSERT INTO interviews
+  (id, application_id, interviewer_id, scheduled_at, duration_minutes, type, meeting_link, location, notes)
+VALUES
+  (UUID(), :appId, :interviewerId, :scheduledAt, :duration, :type, :link, :location, :notes);
 
-INSERT INTO interviews (id, application_id, interviewer_id, scheduled_at, duration_minutes, type, status, meeting_link, location, notes)
-VALUES (UUID(), :applicationId, :interviewerId, :scheduledAt, :durationMinutes, :type, 'scheduled', :meetingLink, :location, :notes);
+-- 2. Ghi email log invite
+INSERT INTO email_logs
+  (id, application_id, recipient_id, sender_id, subject, type, status, sent_at)
+VALUES
+  (UUID(), :appId, :candidateId, :senderId, :subject, 'invite', 'sent', NOW());
+```
+
+### Ghi email log (standalone send)
+
+```sql
+INSERT INTO email_logs
+  (id, application_id, recipient_id, sender_id, subject, type, status, sent_at)
+VALUES
+  (UUID(), :appId, :recipientId, :senderId, :subject, :type, 'sent', NOW());
 ```
 
 ---
@@ -824,6 +716,7 @@ VALUES (UUID(), :applicationId, :interviewerId, :scheduledAt, :durationMinutes, 
 <a id="lich-su-thay-doi"></a>
 ## 11. Lịch sử thay đổi
 
-| Ngày | Nội dung thay đổi | Ghi chú |
-|---|---|---|
-| 2026-05-17 | Khởi tạo tài liệu | Tạo mới toàn bộ 10 sheet cho Module E - Applications |
+| Phiên bản | Ngày | Người thay đổi | Nội dung |
+|---|---|---|---|
+| 1.0 | 2026-05-17 | AI Agent | Khởi tạo tài liệu lần đầu (generate từ prompt template) |
+| 1.1 | 2026-05-17 | AI Agent | Viết lại hoàn toàn theo source code thực tế: 3 màn hình (danh sách / chi tiết 3-tab / status standalone); cập nhật chi tiết dialog StatusUpdateDialog + CreateInterviewForm + SendEmailForm; API signature chính xác (body fields, transaction logic, Resend flow); bổ sung màn hình `/[id]/emails` |

@@ -1,5 +1,6 @@
-# DETAIL DESIGN DOCUMENT
 # Module B - Xác thực (Authentication)
+
+**Người phụ trách:** Lê Huỳnh Huy
 
 ## Mục lục
 
@@ -336,6 +337,8 @@
 
 ### 2. Màn hình 1 - Đăng nhập `/(auth)/login`
 
+![Trang Đăng nhập](./images/B/1.png)
+
 | Field | Nội dung |
 |---|---|
 | Route / URL | `/(auth)/login` (URL thực tế: `/login`) |
@@ -375,6 +378,8 @@
 
 ### 5. Màn hình 2 - Đăng ký `/(auth)/register`
 
+![Trang Đăng ký](./images/B/2.png)
+
 | Field | Nội dung |
 |---|---|
 | Route / URL | `/(auth)/register` (URL: `/register`) |
@@ -406,6 +411,12 @@
 ---
 
 ### 7. Màn hình 3 - Quên mật khẩu `/(auth)/forgot-password`
+
+![Bước 1 - Quên mất khẩu](./images/B/3.png)
+
+![Bước 1 - Gửi email](./images/B/4.png)
+
+![Bước 2 - Quên mất khẩu](./images/B/5.png)
 
 | Field | Nội dung |
 |---|---|

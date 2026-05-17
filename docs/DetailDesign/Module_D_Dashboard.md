@@ -1,5 +1,6 @@
-# DETAIL DESIGN DOCUMENT
 # Module D - Dashboard
+
+**Người phụ trách:** Trương Minh Nguyên
 
 ## Mục lục
 
@@ -207,6 +208,8 @@
 
 ### 3. Màn hình 1 - /dashboard
 
+![Trang Dashboard](./images/D/1.png)
+
 | Field | Nội dung |
 |---|---|
 | Route / URL | /dashboard |
@@ -242,6 +245,8 @@
 | 1 | Bộ lọc thời gian | Phải là 7d/30d/90d | - | Reset về 30d nếu giá trị không hợp lệ |
 
 ### 6. Màn hình 2 - /dashboard/emails
+
+![Trang Quản lý Emails](./images/D/2.png)
 
 | Field | Nội dung |
 |---|---|
