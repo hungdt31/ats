@@ -4,9 +4,10 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import type { ApplicationResponseItem } from "@/hooks/use-candidate";
 
 type Props = {
-  applications: any[] | undefined;
+  applications: ApplicationResponseItem[] | undefined;
   isLoading: boolean;
 };
 
@@ -52,7 +53,11 @@ export function CandidateApplications({ applications, isLoading }: Props) {
             <CardHeader className="flex flex-row items-center justify-between gap-4">
               <div className="space-y-2">
                 <CardTitle className="text-lg font-semibold leading-none hover:underline">
-                  <Link href={`/jobs/${app.job_id}`}>{app.jobs?.title}</Link>
+                  {app.jobs?.slug ? (
+                    <Link href={`/jobs/${app.jobs.slug}`}>{app.jobs.title}</Link>
+                  ) : (
+                    <span>{app.jobs?.title ?? "—"}</span>
+                  )}
                 </CardTitle>
                 <CardDescription>
                   Ứng tuyển ngày {new Date(app.applied_at).toLocaleDateString("vi-VN")}

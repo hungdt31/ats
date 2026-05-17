@@ -58,7 +58,7 @@ export default function ApplicationStatusPage(props: PageProps) {
           href={`/dashboard/applications/${appId}`}
           className="inline-flex h-9 items-center justify-center rounded-2xl border border-input/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-muted hover:text-foreground transition-all gap-1.5"
         >
-          <HugeiconsIcon icon={ArrowLeft01FreeIcons} className="size-4" /> Quay lại hồ sơ 360°
+          <HugeiconsIcon icon={ArrowLeft01FreeIcons} className="size-4" /> Quay lại hồ sơ ứng tuyển
         </Link>
       </div>
 

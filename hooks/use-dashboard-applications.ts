@@ -110,7 +110,7 @@ export function useDashboardApplications(filters?: {
   });
 }
 
-/** Chi tiết 360° một đơn ứng tuyển, kèm danh sách interviewer. */
+/** Chi tiết một đơn ứng tuyển, kèm danh sách interviewer. */
 export function useDashboardApplicationDetail(appId: string) {
   return useQuery({
     queryKey: queryKeys.dashboard.applications.detail(appId),
@@ -176,11 +176,38 @@ export function useCreateDashboardApplicationInterview(appId: string) {
   });
 }
 
+/** Shape đầy đủ của một email log (dùng cho trang /emails). */
+export type ApplicationEmailLog = {
+  id: string;
+  application_id: string;
+  recipient_id: string;
+  sender_id: string | null;
+  subject: string;
+  type: "invite" | "result" | "reminder" | "rejection" | "offer";
+  status: "pending" | "sent" | "failed";
+  sent_at: string | null;
+  error_message: string | null;
+  created_at: string;
+  users_email_logs_recipient_idTousers: {
+    id: string;
+    fullName: string;
+    email: string;
+  } | null;
+};
+
+export type ApplicationEmailsData = {
+  emailLogs: ApplicationEmailLog[];
+  application: {
+    users: { fullName: string } | null;
+    jobs: { title: string } | null;
+  } | null;
+};
+
 export function useDashboardApplicationEmails(appId: string) {
   return useQuery({
-    queryKey: ["dashboard", "applications", appId, "emails"],
+    queryKey: queryKeys.dashboard.applications.emails(appId),
     queryFn: async () => {
-      const res = await apiGet<{ data: EmailLog[] }>(
+      const res = await apiGet<{ data: ApplicationEmailsData }>(
         `/api/dashboard/applications/${appId}/emails`,
       );
       return res.data;

@@ -24,6 +24,7 @@ import { ApiError } from "@/lib/api-client";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import type { CandidateProfileData, useUpdateCandidateProfile } from "@/hooks/use-candidate";
 import { useCandidateFiles } from "@/hooks/use-candidate-files";
+import { MAX_CANDIDATE_FILE_SIZE_MB } from "@/lib/file-upload-limits";
 import { useChangePassword } from "@/hooks/use-change-password";
 
 type Msg = { type: "success" | "error"; text: string };
@@ -263,7 +264,8 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                     Quản lý tệp cá nhân
                   </span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
-                    Upload CV, Portfolio hay chứng chỉ của bạn.
+                    Upload CV, portfolio hoặc chứng chỉ (PDF, Word). Dung lượng mỗi file tối đa{" "}
+                    {MAX_CANDIDATE_FILE_SIZE_MB} MB.
                   </span>
                 </div>
 

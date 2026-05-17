@@ -15,6 +15,7 @@ import {
   type NewFileInfo,
   type CandidatePersonalFile,
 } from "@/hooks/use-cv-upload";
+import { MAX_CANDIDATE_FILE_SIZE_MB } from "@/lib/file-upload-limits";
 
 export type { NewFileInfo, CandidatePersonalFile };
 
@@ -44,7 +45,7 @@ export function CVUpload({ value, onChange, onFileNameChange, onNewFileUpload }:
         <span className="text-xs font-medium text-foreground">
           {mode === "personal"
             ? "Chọn CV từ file cá nhân của bạn"
-            : "Tải file CV mới lên Appwrite"}{" "}
+            : "Tải file CV mới lên hệ thống"}{" "}
           <span className="text-destructive">*</span>
         </span>
         <div className="flex items-center gap-2">
@@ -106,6 +107,9 @@ export function CVUpload({ value, onChange, onFileNameChange, onNewFileUpload }:
             disabled={isUploading}
             className="flex w-full rounded-2xl border border-dashed border-border bg-input/20 px-4 py-3 text-sm transition-all focus:border-ring focus:outline-none file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-3 file:py-1 file:text-xs file:font-semibold file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
           />
+          <p className="text-xs text-muted-foreground">
+            PDF hoặc Word, tối đa {MAX_CANDIDATE_FILE_SIZE_MB} MB.
+          </p>
           {isUploading && (
             <p className="text-xs text-muted-foreground animate-pulse">Đang tải file lên Appwrite...</p>
           )}

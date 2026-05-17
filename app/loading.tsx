@@ -25,7 +25,7 @@ export default function GlobalLoading() {
     <div className="flex h-[50vh] w-full flex-col items-center justify-center gap-4 px-4">
       <div className="flex w-full max-w-xs flex-col items-center gap-3">
         <div className="text-sm font-medium text-muted-foreground animate-pulse">
-          Đang tải trang ...
+          Đang tải trang...
         </div>
         <Progress value={progress} className="h-1.5 w-full bg-muted/60" />
       </div>

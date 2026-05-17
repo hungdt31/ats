@@ -13,6 +13,7 @@ export type ApplicationResponseItem = {
   applied_at: string;
   jobs: {
     id: string;
+    slug: string;
     title: string;
     location: string | null;
     department: string | null;
@@ -120,6 +121,7 @@ export type CandidateInterviewItem = {
   applications: {
     jobs: {
       id: string;
+      slug: string;
       title: string;
     };
   };

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { storage, BUCKET_ID, ID } from "@/lib/appwrite";
+import { validateCandidateFileSize } from "@/lib/file-upload-limits";
 
 export type CandidateFile = {
   id: string;
@@ -71,6 +72,12 @@ export function useCandidateFiles(): UseCandidateFilesReturn {
 
   /** Upload tệp lên Appwrite rồi lưu vào DB. */
   async function uploadFile(fileObj: File) {
+    const sizeError = validateCandidateFileSize(fileObj);
+    if (sizeError) {
+      setMsg({ type: "error", text: sizeError });
+      return;
+    }
+
     const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
     const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
     if (!endpoint || !project || !BUCKET_ID) {

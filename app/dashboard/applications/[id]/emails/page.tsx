@@ -1,13 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01FreeIcons } from "@hugeicons/core-free-icons";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
+import { useDashboardApplicationEmails, type ApplicationEmailLog } from "@/hooks/use-dashboard-applications";
 
 const TYPE_OPTIONS = [
   { value: "invite", label: "Mời phỏng vấn" },
@@ -29,21 +29,10 @@ export default function ApplicationEmailsPage(props: { params: Params }) {
   const params = React.use(props.params);
   const applicationId = params.id;
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["dashboard", "applications", applicationId, "emails"],
-    queryFn: async () => {
-      const res = await fetch(`/api/dashboard/applications/${applicationId}/emails`);
-      if (!res.ok) throw new Error("Không thể tải thông tin.");
-      const json = await res.json();
-      return json.data as {
-        emailLogs: any[];
-        application: any;
-      };
-    },
-  });
+  const { data, isLoading } = useDashboardApplicationEmails(applicationId);
 
-  const emailLogs = data?.emailLogs || [];
-  const application = data?.application || {};
+  const emailLogs = data?.emailLogs ?? [];
+  const application = data?.application ?? null;
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
@@ -53,7 +42,7 @@ export default function ApplicationEmailsPage(props: { params: Params }) {
             href={`/dashboard/applications/${applicationId}`}
             className="inline-flex h-9 items-center justify-center rounded-2xl border border-input/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-muted transition-all gap-1.5"
           >
-            <HugeiconsIcon icon={ArrowLeft01FreeIcons} className="size-4" /> Quay lại hồ sơ 360°
+            <HugeiconsIcon icon={ArrowLeft01FreeIcons} className="size-4" /> Quay lại hồ sơ ứng tuyển
           </Link>
         </div>
       </div>
@@ -94,7 +83,7 @@ export default function ApplicationEmailsPage(props: { params: Params }) {
                   </TableCell>
                 </TableRow>
               ) : (
-                emailLogs.map((log: any) => {
+                emailLogs.map((log: ApplicationEmailLog) => {
                   const statusConfig =
                     STATUS_OPTIONS.find((s) => s.value === log.status) || STATUS_OPTIONS[0];
                   const typeLabel = TYPE_OPTIONS.find((t) => t.value === log.type)?.label || log.type;

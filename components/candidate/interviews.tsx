@@ -4,9 +4,10 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import type { CandidateInterviewItem } from "@/hooks/use-candidate";
 
 type Props = {
-  interviews: any[] | undefined;
+  interviews: CandidateInterviewItem[] | undefined;
   isLoading: boolean;
 };
 
@@ -68,9 +69,13 @@ export function CandidateInterviews({ interviews, isLoading }: Props) {
               <div className="space-y-2">
                 <CardTitle className="text-lg font-semibold leading-none hover:underline">
                   Phỏng vấn vị trí:{" "}
-                  <Link href={`/jobs/${iv.applications?.jobs?.id}`}>
-                    {iv.applications?.jobs?.title}
-                  </Link>
+                  {iv.applications?.jobs?.slug ? (
+                    <Link href={`/jobs/${iv.applications.jobs.slug}`}>
+                      {iv.applications.jobs.title}
+                    </Link>
+                  ) : (
+                    <span>{iv.applications?.jobs?.title ?? "—"}</span>
+                  )}
                 </CardTitle>
                 <CardDescription className="text-primary font-medium">
                   {scheduledTime}

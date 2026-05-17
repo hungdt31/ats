@@ -57,7 +57,11 @@ export default async function HomePage() {
             <div>
               <h2 className="font-heading text-2xl font-semibold tracking-tight">Việc làm nổi bật</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Một số vị trí đang mở — cập nhật theo dữ liệu thật từ hệ thống.
+                {
+                  featuredJobs.length > 0
+                    ? "Khám phá các vị trí tuyển dụng mới nhất, ứng tuyển và theo dõi hồ sơ ngay trên nền tảng."
+                    : "Các vị trí tuyển dụng nổi bật sẽ hiển thị tại đây khi doanh nghiệp bắt đầu tuyển dụng."
+                }
               </p>
             </div>
             <Button variant="outline" asChild>
@@ -69,7 +73,7 @@ export default async function HomePage() {
 
           {featuredJobs.length === 0 ? (
             <p className="rounded-xl border border-dashed bg-card px-6 py-12 text-center text-muted-foreground">
-              Chưa có tin tuyển dụng đang hoạt động. HR có thể thêm tin trong dashboard sau khi module được bật.
+              Hiện chưa có tin tuyển dụng công khai. Vui lòng quay lại sau hoặc xem toàn bộ danh sách việc làm — đội tuyển dụng sẽ cập nhật khi có vị trí mới.
             </p>
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

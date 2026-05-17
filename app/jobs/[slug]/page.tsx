@@ -63,7 +63,6 @@ export default function JobDetailPage() {
   if (!job) return null;
 
   const salary = formatSalaryRange(job.salary_min, job.salary_max);
-  const meta = [job.department, job.category, job.location].filter(Boolean).join(" · ");
   const publishedDate = job.published_at ? new Date(job.published_at).toLocaleDateString("vi-VN") : null;
   /** Chỉ ứng viên được nộp đơn qua cổng công khai — đồng ý với `/api/jobs/[slug]/apply`. */
   const isCandidate = user?.role === "candidate";
@@ -126,10 +125,7 @@ export default function JobDetailPage() {
             <Card>
               <CardHeader className="gap-2">
                 <CardTitle className="font-heading text-2xl font-bold">{job.title}</CardTitle>
-                {meta ? (
-                  <p className="text-sm text-muted-foreground">{meta}</p>
-                ) : null}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <CardDescription>
                     Ngày đăng tuyển: {publishedDate ?? "Đang tuyển"}
                   </CardDescription>

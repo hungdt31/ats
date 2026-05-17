@@ -53,7 +53,7 @@ Tài liệu liệt kê các trang nên làm, **bảng dữ liệu** liên quan v
 | Đường dẫn | Bảng | Mục đích |
 |-----------|------|----------|
 | `/dashboard/applications` | `applications`, `jobs`, `users` | Kanban/list pipeline; lọc job / status / `source_channel`. |
-| `/dashboard/applications/[id]` | `applications`, `application_status_history`, `interviews`, `interview_scores`, `email_logs` | Hồ sơ 360° một đơn. |
+| `/dashboard/applications/[id]` | `applications`, `application_status_history`, `interviews`, `interview_scores`, `email_logs` | Hồ sơ đơn ứng tuyển. |
 | `/dashboard/applications/[id]/status` (modal hoặc tab) | `applications`, `application_status_history` | Đổi trạng thái + ghi chú audit. |
 
 ---

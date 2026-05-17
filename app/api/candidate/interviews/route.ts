@@ -26,6 +26,7 @@ export async function GET() {
             jobs: {
               select: {
                 id: true,
+                slug: true,
                 title: true,
               },
             },

@@ -28,6 +28,7 @@ export const queryKeys = {
   dashboard: {
     applications: {
       detail: (id: string) => ["dashboard", "applications", "detail", id] as const,
+      emails: (id: string) => ["dashboard", "applications", id, "emails"] as const,
     },
     interviews: {
       /** Danh sách phỏng vấn, có thêm segment `status` để cache theo lọc */

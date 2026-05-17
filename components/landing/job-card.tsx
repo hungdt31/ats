@@ -38,9 +38,10 @@ export function JobCardPreview({
     <Link href={`/jobs/${slug}`} className="group block h-full transition-opacity hover:opacity-95">
       <Card className="h-full min-h-44 border-border/80 shadow-md transition-shadow group-hover:shadow-lg flex flex-col justify-between">
         <CardHeader className="gap-2 pb-3">
-          <CardTitle className="line-clamp-2 min-h-[2.75rem] text-base leading-snug group-hover:underline">
+          <CardTitle className="line-clamp-2 text-base leading-snug">
             {title}
           </CardTitle>
+          <div className="w-10 h-1 bg-primary"></div>
           <CardDescription className="text-xs flex flex-wrap items-center justify-between gap-1 text-muted-foreground mt-0.5">
             <span>Hạn nộp: <span className="font-medium text-foreground">{expiresDate ? expiresDate : "Không có"}</span></span>
           </CardDescription>

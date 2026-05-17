@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { storage, BUCKET_ID, ID } from "@/lib/appwrite";
+import { validateCandidateFileSize } from "@/lib/file-upload-limits";
 
 export type NewFileInfo = {
   fileName: string;
@@ -98,6 +99,13 @@ export function useCVUpload({
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
+
+      const sizeError = validateCandidateFileSize(file);
+      if (sizeError) {
+        setUploadError(sizeError);
+        e.target.value = "";
+        return;
+      }
 
       const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
       const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
