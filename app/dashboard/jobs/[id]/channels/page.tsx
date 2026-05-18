@@ -2,8 +2,6 @@
 
 import * as React from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -32,10 +30,18 @@ const STATUS_OPTIONS = [
   { value: "removed", label: "Đã gỡ (Removed)", variant: "destructive" as const },
 ];
 
+/** Dòng kênh đăng tin (align với API GET job_channels). */
+type JobChannelRow = {
+  id: string;
+  channel: string;
+  status: string;
+  external_url: string | null;
+  external_id: string | null;
+};
+
 type Params = Promise<{ id: string }>;
 
 export default function JobChannelsPage(props: { params: Params }) {
-  const router = useRouter();
   const params = React.use(props.params);
   const jobId = params.id;
 
@@ -47,8 +53,8 @@ export default function JobChannelsPage(props: { params: Params }) {
   const { data, isLoading } = useDashboardJobChannels(jobId);
   const updateChannelsMutation = useUpdateDashboardJobChannels(jobId);
 
-  const channels = data?.channels || [];
-  const job = data?.job || {};
+  const channels: JobChannelRow[] = data?.channels ?? [];
+  const job = data?.job as { title?: string } | undefined;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,10 +63,16 @@ export default function JobChannelsPage(props: { params: Params }) {
       return;
     }
 
+    const urlTrimmed = externalUrl.trim();
+    if (!urlTrimmed) {
+      toast.error("Vui lòng nhập link bài viết — trường này bắt buộc.");
+      return;
+    }
+
     try {
       await updateChannelsMutation.mutateAsync({
         channel,
-        external_url: externalUrl,
+        external_url: urlTrimmed,
         external_id: externalId,
         status,
       });
@@ -70,8 +82,9 @@ export default function JobChannelsPage(props: { params: Params }) {
       setExternalUrl("");
       setExternalId("");
       setStatus("posted");
-    } catch (err: any) {
-      toast.error(err.message || "Đã xảy ra lỗi.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Đã xảy ra lỗi.";
+      toast.error(message);
     }
   };
 
@@ -109,7 +122,7 @@ export default function JobChannelsPage(props: { params: Params }) {
                 <Field>
                   <FieldLabel className="font-medium text-foreground">Kênh tuyển dụng</FieldLabel>
                   <Select value={channel} onValueChange={(val) => setChannel(val)}>
-                    <SelectTrigger className="w-full h-10 rounded-2xl bg-background border-input/60">
+                    <SelectTrigger className="w-full h-10">
                       <SelectValue placeholder="Chọn kênh" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
@@ -125,7 +138,7 @@ export default function JobChannelsPage(props: { params: Params }) {
                 <Field>
                   <FieldLabel className="font-medium text-foreground">Trạng thái đăng tuyển</FieldLabel>
                   <Select value={status} onValueChange={(val) => setStatus(val)}>
-                    <SelectTrigger className="w-full h-10 rounded-2xl bg-background border-input/60">
+                    <SelectTrigger className="w-full h-10">
                       <SelectValue placeholder="Chọn trạng thái" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
@@ -139,13 +152,17 @@ export default function JobChannelsPage(props: { params: Params }) {
                 </Field>
 
                 <Field>
-                  <FieldLabel className="font-medium text-foreground">Link bài viết (External URL)</FieldLabel>
+                  <FieldLabel className="font-medium text-foreground">
+                    Link bài viết (External URL) <span className="text-destructive">*</span>
+                  </FieldLabel>
                   <Input
-                    type="url"
-                    placeholder="https://..."
+                    type="text"
+                    placeholder="https://... hoặc /jobs/ten-tin (bắt buộc)"
                     value={externalUrl}
                     onChange={(e) => setExternalUrl(e.target.value)}
                     className="h-10"
+                    required
+                    autoComplete="off"
                   />
                 </Field>
 
@@ -181,7 +198,7 @@ export default function JobChannelsPage(props: { params: Params }) {
               <div>
                 <CardTitle className="text-lg">Danh sách các kênh đăng tin</CardTitle>
                 <CardDescription className="text-xs">
-                  Vị trí: <strong>{job?.title || "—"}</strong>
+                  Vị trí: <strong>{job?.title ?? "—"}</strong>
                 </CardDescription>
               </div>
               <Badge variant="outline" className="font-normal text-xs px-2.5 py-0.5">
@@ -205,7 +222,7 @@ export default function JobChannelsPage(props: { params: Params }) {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    channels.map((ch: any) => {
+                    channels.map((ch) => {
                       const statusConfig =
                         STATUS_OPTIONS.find((s) => s.value === ch.status) || STATUS_OPTIONS[0];
                       const channelLabel =

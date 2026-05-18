@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/http/json-response";
 import { job_channels_channel, job_channels_status } from "@prisma/client";
+import { upsertJobChannelSchema } from "@/lib/validators/job-channels";
 
 export async function GET(
   request: Request,
@@ -51,12 +52,13 @@ export async function POST(
     const params = await props.params;
     const jobId = params.id;
     const body = await request.json();
-
-    const { channel, external_url, external_id, status } = body;
-
-    if (!channel || !status) {
-      return jsonError(400, "Vui lòng nhập đầy đủ channel và trạng thái.");
+    const parsed = upsertJobChannelSchema.safeParse(body);
+    if (!parsed.success) {
+      const first = parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ";
+      return jsonError(422, first, parsed.error.flatten().fieldErrors);
     }
+
+    const { channel, status, external_url, external_id } = parsed.data;
 
     const jobChannel = await prisma.job_channels.upsert({
       where: {
@@ -66,15 +68,15 @@ export async function POST(
         },
       },
       update: {
-        external_url: external_url || null,
-        external_id: external_id || null,
+        external_url,
+        external_id,
         status: status as job_channels_status,
       },
       create: {
         job_id: jobId,
         channel: channel as job_channels_channel,
-        external_url: external_url || null,
-        external_id: external_id || null,
+        external_url,
+        external_id,
         status: status as job_channels_status,
       },
     });
