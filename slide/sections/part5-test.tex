@@ -1,0 +1,20 @@
+\section{Kiểm định chất lượng}
+\sectiondivider{5}
+\begin{frame}{Chiến lược kiểm thử}
+  \small
+  \begin{itemize}
+    \item \textbf{Unit / API:} endpoint độc lập --- thành công, lỗi validation, lỗi auth.
+    \item \textbf{Integration:} luồng E2E (đăng ký $\rightarrow$ OTP $\rightarrow$ đăng nhập $\rightarrow$ nộp đơn\dots).
+    \item \textbf{Manual:} kịch bản UI theo UTC và màn hình Detail Design.
+  \end{itemize}
+  \vspace{0.35cm}
+  {\footnotesize Bộ chứng cứ: UTE, ITC, ITE theo tài liệu nhóm (báo cáo mục Kiểm định).}
+\end{frame}
+
+\begin{frame}{Ví dụ phạm vi test (Module A \& ITC)}
+  \footnotesize
+  \begin{itemize}
+    \item \textbf{Public:} xem trang chủ, tìm kiếm/lọc job, chi tiết, nộp đơn (có/không đăng nhập).
+    \item \textbf{ITC:} luồng đăng ký--xác minh--đăng nhập; tuyển dụng đầy đủ; phỏng vấn; quên mật khẩu.
+  \end{itemize}
+\end{frame}

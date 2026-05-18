@@ -1,0 +1,72 @@
+\documentclass[aspectratio=169,12pt]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage{mathptmx}
+\usepackage[vietnamese]{babel}
+\usepackage{amsmath,amssymb,amsfonts,bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multicol}
+\usepackage[table]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{tcolorbox}
+
+\usetheme{Madrid}
+\usefonttheme{serif}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\definecolor{hcmutblue}{RGB}{0,76,153}
+\definecolor{hcmutlight}{RGB}{232,242,252}
+\setbeamercolor{structure}{fg=hcmutblue}
+\setbeamercolor{frametitle}{bg=hcmutlight,fg=hcmutblue}
+\setbeamercolor{title}{fg=hcmutblue}
+
+\title{Đạo hàm riêng của hàm nhiều biến\\và ứng dụng của nó}
+\subtitle{Slide thuyết trình dựa trên báo cáo môn Giải tích 2 (MT1005)}
+\author{Nhóm 01}
+\institute{Trường Đại học Bách khoa -- ĐHQG TP.HCM\\Khoa Khoa học Ứng dụng}
+\date{Tháng 4 năm 2026}
+
+\newcommand{\divideritem}[3]{%
+  \ifnum#1=#2
+    \def\itemfill{hcmutblue}%
+    \def\itemtext{hcmutblue}%
+  \else
+    \def\itemfill{gray!25}%
+    \def\itemtext{gray!45}%
+  \fi
+  \noindent
+  \tikz[baseline=-0.6ex]\node[circle,fill=\itemfill,text=white,minimum size=2.1em,inner sep=0pt,font=\bfseries\small]{#1};%
+  \hspace{0.6em}{\color{\itemtext}\Large #3}\par\vspace{0.45cm}%
+}
+
+\newcommand{\sectiondivider}[1]{%
+\begin{frame}[plain]
+\vspace{0.35cm}
+\divideritem{1}{#1}{Mở đầu}
+\divideritem{2}{#1}{Công nghệ sử dụng}
+\divideritem{3}{#1}{Kiến trúc hệ thống}
+\divideritem{4}{#1}{Thiết kế chức năng \& giao diện}
+\divideritem{5}{#1}{Kiểm định chất lượng}
+\divideritem{6}{#1}{Tổng kết}
+\end{frame}
+}
+
+\begin{document}
+
+\input{sections/cover}
+\input{sections/members}
+\input{sections/toc.tex}
+\input{sections/part1-intro}
+\input{sections/part2-tech}
+\input{sections/part3-arch}
+\input{sections/part4-ui}
+\input{sections/part5-test}
+\input{sections/part6-end}
+
+\end{document}

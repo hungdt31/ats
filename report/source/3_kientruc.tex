@@ -1,0 +1,254 @@
+\subsection{Sơ đồ kiến trúc hệ thống}
+Hình~\ref{fig:ats-architecture} mô tả kiến trúc đa tầng của ATS: một ứng dụng Next.js~16 mono-repo làm điểm vào duy nhất cho giao diện và REST API; trạng thái phiên nằm trong cookie JWT (không lưu session DB); lưu trữ nghiệp vụ vào MariaDB qua Prisma; tích hợp các dịch vụ ngoài khi không cần trùng giá trị với lõi ATS.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      node distance=8mm,
+      font=\footnotesize,
+      >=Latex,
+      box/.style={draw, rounded corners=3pt, inner sep=6pt,
+        text width=0.86\linewidth, align=left},
+      arr/.style={->, thick},
+    ]
+    % Ghi chu: nhan ky thuat trong node dung tieng Anh (tranh loi ma hoa font TikZ voi T5 khi viet tieng Viet trong node).
+    \node[box] (L1) {\textbf{(1) Client (browser)}\\[1mm]
+      React~19 --- Server + Client Components; Tailwind \& shadcn/ui; TanStack Query (REST cache/sync).};
+    \node[box, below=of L1] (L2) {\textbf{(2) Next.js App Router --- same repository}\\[1mm]
+      \texttt{app/*}: public jobs, dashboard, candidate, auth route-group;\\
+      \texttt{app/api/**/*}: REST handlers (JSON envelope, Zod, bcrypt);\\
+      \texttt{middleware.ts}: early RBAC gates; JWT in httpOnly cookie (\texttt{jose}, HS256).};
+    \node[box, below=of L2] (L3) {\textbf{(3) Persistence}\\[1mm]
+      Prisma~7 + MariaDB adapter --- schema-first ORM; transactions for invariant writes (applications + files metadata).};
+    \node[box, below=of L3] (L4) {\textbf{(4) External adapters}\\[1mm]
+      Appwrite Storage --- CV/binary blobs; Resend --- verification, invitations, transactional mail.};
+    \draw[arr] (L1) -- (L2);
+    \draw[arr] (L2) -- (L3);
+    \draw[arr] (L3) -- (L4);
+    % Outbound HTTPS from API tier to integrations (conceptual lateral hop)
+    \draw[arr, dashed] (L2.east) to[bend left=25] (L4.east);
+  \end{tikzpicture}
+  \caption{\textit{Sơ đồ kiến trúc tổng thể ATS --- luồng yêu cầu và phân lớp trách nhiệm}}
+  \label{fig:ats-architecture}
+\end{figure}
+
+\subsubsection*{Mô hình thiết kế:}
+\begin{itemize}
+    \item \textbf{Đơn codebase Next.js làm hai vai trò (UI + API):}
+    Route Handlers cùng project với giao diện giảm độ trễ triển khai, chia sẻ kiểu TypeScript và tái dùng thư viện auth/validation; không buộc tách một service backend riêng --- phù hợp phạm vi dự án và nhóm phát triển nhỏ.
+
+    \item \textbf{JWT trong cookie httpOnly + SameSite=Lax:}
+    Tránh để token rơi vào JavaScript (giảm rủi ro XSS đọc trộm session); phía server chỉ đọc cookie và \texttt{verifySessionToken()}, không giữ phiên trong bảng \texttt{sessions} --- ít chỗ nhất quán phải ghi vào DB, dễ scale ngang và phù hợp SSR/Route Handlers.
+
+    \item \textbf{MariaDB là nguồn sự thật duy nhất cho dữ liệu nghiệp vụ:}
+    ATS xử lý quan hệ ứng viên--đơn--PV--tin tuyển dụng; Prisma đảm bảo migrate/schema rõ và truy vấn an toàn kiểu, phù hợp báo cáo và báo KPI.
+
+    \item \textbf{Appwrite và Resend không lưu thay thế dữ liệu lõi:}
+    File và email là các concern xâm nhập và tuân luật nhanh đổi; tách ra dịch vụ chuyên biệt cho phép giữ codebase HR mỏng, đổi nhà cung cấp mà không phải tái kiến trúc bảng ứng dụng.
+
+    \item \textbf{TanStack Query ở client:}
+    Chuẩn hóa cache, tái fetch và trạng thái đang tải cho các bảng long-poll không cần; Server Components dùng nơi ít interaction để SEO và giảm JS gửi trình duyệt.
+
+\end{itemize}
+
+\subsection{Cấu trúc thư mục dự án}
+Hệ thống theo chuẩn App Router của Next.js, phân tách rõ vai trò từng thư mục:
+
+\begin{itemize}
+    \item \textbf{\texttt{app/}}: Chứa toàn bộ trang và API routes theo cấu trúc file-based routing.
+    \begin{itemize}
+        \item \textbf{\texttt{(auth)/}}: Route group cho đăng nhập, đăng ký, quên mật khẩu, xác minh email (không thêm segment vào URL).
+        \item \textbf{\texttt{jobs/}}: Job portal công khai --- danh sách và chi tiết công việc.
+        \item \textbf{\texttt{dashboard/}}: Khu vực nội bộ dành cho Admin, HR, Interviewer.
+        \item \textbf{\texttt{candidate/}}: Khu vực riêng của ứng viên.
+        \item \textbf{\texttt{api/}}: Toàn bộ Route Handlers (REST API).
+    \end{itemize}
+    \item \textbf{\texttt{components/}}: Các thành phần UI tái sử dụng (auth, landing, providers, shadcn/ui).
+    \item \textbf{\texttt{hooks/}}: Custom hooks tích hợp React Query cho mọi endpoint.
+    \item \textbf{\texttt{lib/}}: Các tiện ích dùng chung --- cấu hình DB, xử lý HTTP, JWT, validators.
+    \item \textbf{\texttt{prisma/}}: Schema mô hình dữ liệu và seed data mẫu.
+    \item \textbf{\texttt{types/}}: Các kiểu TypeScript dùng chung (ApiSuccess, ApiErrorBody, PublicUser).
+\end{itemize}
+
+\subsection{Phân quyền theo Role (RBAC)}
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabular}{|l|p{9cm}|}
+        \hline
+        \textbf{Route} & \textbf{Quyền truy cập} \\ \hline
+        \texttt{/} · \texttt{/jobs} · \texttt{/jobs/[slug]} & Tất cả (public, không cần đăng nhập) \\ \hline
+        \texttt{/login} · \texttt{/register} & Chỉ khách chưa đăng nhập \\ \hline
+        \texttt{/candidate} & Role: \texttt{candidate} \\ \hline
+        \texttt{/dashboard} và sub-routes & Role: \texttt{admin}, \texttt{hr}, \texttt{interviewer} \\ \hline
+        \texttt{/unauthorized} & Fallback khi truy cập sai role \\ \hline
+    \end{tabular}
+    \caption{\textit{Bảng phân quyền theo route}}
+    \label{tab:rbac}
+\end{table}
+
+\subsection{Mô hình dữ liệu (Data Model)}
+Cơ sở dữ liệu của hệ thống ATS bao gồm 11 bảng chính:
+
+\subsubsection*{1. Bảng \texttt{users} (Tài khoản người dùng)}
+\begin{itemize}
+    \item \textbf{\texttt{id}}: Khóa chính (UUID).
+    \item \textbf{\texttt{email}}: Email đăng nhập (Unique).
+    \item \textbf{\texttt{password\_hash}}: Mật khẩu đã mã hóa bcrypt (null nếu OAuth).
+    \item \textbf{\texttt{full\_name}, \texttt{phone}, \texttt{avatar\_url}}: Thông tin cá nhân.
+    \item \textbf{\texttt{role}}: Phân quyền --- \texttt{candidate | admin | hr | interviewer}.
+    \item \textbf{\texttt{provider}}: Phương thức đăng nhập (\texttt{local} hoặc OAuth provider).
+    \item \textbf{\texttt{is\_active}}: Cờ kích hoạt tài khoản (boolean).
+    \item \textbf{\texttt{email\_verified}}: Trạng thái xác minh email (boolean).
+    \item \textbf{\texttt{last\_login\_at}, \texttt{created\_at}, \texttt{updated\_at}}: Các mốc thời gian.
+\end{itemize}
+
+\subsubsection*{2. Bảng \texttt{otp\_tokens} (Mã xác thực OTP)}
+\begin{itemize}
+    \item \textbf{\texttt{id}, \texttt{email}}: Khóa chính (UUID) và email nhận mã.
+    \item \textbf{\texttt{code}}: Chuỗi OTP 6 ký tự số (có thể được hash).
+    \item \textbf{\texttt{type}}: Loại OTP --- \texttt{email\_verify} hoặc \texttt{password\_reset}.
+    \item \textbf{\texttt{attempts}}: Số lần nhập sai (tối đa giới hạn trước khi vô hiệu).
+    \item \textbf{\texttt{expires\_at}}: Thời điểm hết hạn (15 phút kể từ khi tạo).
+    \item \textbf{\texttt{used\_at}}: Thời điểm đã sử dụng (null = chưa dùng).
+\end{itemize}
+
+\subsubsection*{3. Bảng \texttt{candidate\_profiles} (Hồ sơ ứng viên)}
+Quan hệ 1-1 với \texttt{users}, chứa thông tin nghề nghiệp chi tiết:
+\begin{itemize}
+    \item \textbf{\texttt{user\_id}}: Khóa ngoại (Unique) liên kết tới \texttt{users}.
+    \item \textbf{\texttt{title}, \texttt{bio}, \texttt{location}}: Chức danh, giới thiệu, địa điểm.
+    \item \textbf{\texttt{years\_experience}}: Số năm kinh nghiệm.
+    \item \textbf{\texttt{skills}, \texttt{education}}: Kỹ năng và học vấn (lưu dạng JSON array).
+    \item \textbf{\texttt{linkedin\_url}, \texttt{github\_url}}: Liên kết mạng xã hội nghề nghiệp.
+\end{itemize}
+
+\subsubsection*{4. Bảng \texttt{files} (Tệp tin đính kèm)}
+\begin{itemize}
+    \item \textbf{\texttt{user\_id}}: Khóa ngoại tới chủ sở hữu file.
+    \item \textbf{\texttt{file\_name}, \texttt{file\_url}}: Tên gốc và URL lưu trữ (Appwrite).
+    \item \textbf{\texttt{file\_type}}: Phân loại --- \texttt{cv}, \texttt{portfolio}, \texttt{certificate}.
+    \item \textbf{\texttt{appwrite\_id}}: ID file trên Appwrite Storage.
+\end{itemize}
+
+\subsubsection*{5. Bảng \texttt{jobs} (Tin tuyển dụng)}
+\begin{itemize}
+    \item \textbf{\texttt{created\_by}}: Khóa ngoại tới HR/Admin tạo tin.
+    \item \textbf{\texttt{title}, \texttt{slug}}: Tiêu đề và định danh URL (đều Unique).
+    \item \textbf{\texttt{description}, \texttt{requirements}, \texttt{benefits}}: Nội dung mô tả việc làm.
+    \item \textbf{\texttt{location}, \texttt{department}, \texttt{category}}: Phân loại công việc.
+    \item \textbf{\texttt{salary\_min}, \texttt{salary\_max}}: Khoảng lương (VND).
+    \item \textbf{\texttt{employment\_type}}: Loại hợp đồng --- \texttt{full\_time | part\_time | contract}.
+    \item \textbf{\texttt{required\_skills}}: Mảng kỹ năng yêu cầu (JSON).
+    \item \textbf{\texttt{headcount}}: Số lượng vị trí cần tuyển.
+    \item \textbf{\texttt{status}}: Trạng thái --- \texttt{draft | active | closed | archived}.
+    \item \textbf{\texttt{expires\_at}, \texttt{published\_at}}: Thời hạn và ngày đăng công khai.
+\end{itemize}
+
+\subsubsection*{6. Bảng \texttt{job\_channels} (Kênh phân phối tin)}
+\begin{itemize}
+    \item \textbf{\texttt{job\_id}}: Khóa ngoại tới \texttt{jobs}.
+    \item \textbf{\texttt{channel}}: Nền tảng đăng tin --- \texttt{linkedin | itviec | topcv | vietnamworks | website}.
+    \item \textbf{\texttt{external\_url}, \texttt{external\_id}}: URL bài đăng ngoài và ID trên kênh đó.
+    \item \textbf{\texttt{status}}: Trạng thái --- \texttt{pending | posted | failed | expired | removed}.
+    \item \textbf{\texttt{posted\_at}, \texttt{expires\_at}, \texttt{error\_message}}: Thông tin đăng và lỗi (nếu có).
+\end{itemize}
+\textit{Ràng buộc Unique: \texttt{(job\_id, channel)} --- mỗi kênh chỉ đăng một lần cho mỗi tin.}
+
+\subsubsection*{7. Bảng \texttt{applications} (Đơn ứng tuyển)}
+\begin{itemize}
+    \item \textbf{\texttt{job\_id}, \texttt{candidate\_id}}: Khóa ngoại tới công việc và ứng viên.
+    \item \textbf{\texttt{cv\_file\_url}, \texttt{cv\_filename}}: Đường dẫn và tên file CV.
+    \item \textbf{\texttt{cover\_letter}}: Thư giới thiệu (tùy chọn).
+    \item \textbf{\texttt{status}}: Vòng đời --- \texttt{applied} $\to$ \texttt{screening} $\to$ \texttt{interviewing} $\to$ \texttt{offered} $\to$ \texttt{hired} hoặc \texttt{rejected}.
+    \item \textbf{\texttt{source\_channel}}: Nguồn nhận đơn (VD: từ linkedin, website...).
+    \item \textbf{\texttt{applied\_at}}: Thời điểm nộp đơn.
+\end{itemize}
+\textit{Ràng buộc Unique: \texttt{(job\_id, candidate\_id)} --- mỗi ứng viên chỉ nộp một đơn cho mỗi job.}
+
+\subsubsection*{8. Bảng \texttt{application\_status\_history} (Lịch sử trạng thái)}
+\begin{itemize}
+    \item \textbf{\texttt{application\_id}, \texttt{changed\_by}}: Tham chiếu đơn và người thay đổi (HR/Admin).
+    \item \textbf{\texttt{from\_status}, \texttt{to\_status}}: Trạng thái cũ và mới.
+    \item \textbf{\texttt{note}}: Ghi chú lý do thay đổi.
+    \item \textbf{\texttt{changed\_at}}: Thời điểm thay đổi.
+\end{itemize}
+
+\subsubsection*{9. Bảng \texttt{email\_logs} (Nhật ký email)}
+\begin{itemize}
+    \item \textbf{\texttt{application\_id}, \texttt{recipient\_id}, \texttt{sender\_id}}: Các tham chiếu liên quan.
+    \item \textbf{\texttt{subject}}: Tiêu đề email.
+    \item \textbf{\texttt{type}}: Phân loại --- \texttt{invite | result | reminder | rejection | offer}.
+    \item \textbf{\texttt{status}}: Kết quả gửi --- \texttt{pending | sent | failed}.
+    \item \textbf{\texttt{sent\_at}, \texttt{error\_message}}: Thời điểm gửi và thông báo lỗi nếu có.
+\end{itemize}
+
+\subsubsection*{10. Bảng \texttt{interviews} (Lịch phỏng vấn)}
+\begin{itemize}
+    \item \textbf{\texttt{application\_id}, \texttt{interviewer\_id}}: Tham chiếu đơn và người phỏng vấn.
+    \item \textbf{\texttt{scheduled\_at}}: Ngày giờ phỏng vấn.
+    \item \textbf{\texttt{duration\_minutes}}: Thời lượng (mặc định 60 phút).
+    \item \textbf{\texttt{type}}: Hình thức --- \texttt{phone | video | onsite | technical}.
+    \item \textbf{\texttt{status}}: Trạng thái --- \texttt{scheduled | completed | cancelled | rescheduled}.
+    \item \textbf{\texttt{meeting\_link}}: Link họp video (Zoom, Google Meet...).
+    \item \textbf{\texttt{location}}: Địa điểm (cho phỏng vấn trực tiếp).
+    \item \textbf{\texttt{notes}}: Ghi chú hướng dẫn cho ứng viên.
+\end{itemize}
+
+\subsubsection*{11. Bảng \texttt{interview\_scores} (Điểm đánh giá phỏng vấn)}
+\begin{itemize}
+    \item \textbf{\texttt{interview\_id}, \texttt{evaluator\_id}}: Tham chiếu buổi phỏng vấn và người chấm điểm.
+    \item \textbf{\texttt{technical\_score}}: Điểm kỹ thuật (thang 1--10).
+    \item \textbf{\texttt{communication\_score}}: Điểm giao tiếp (thang 1--10).
+    \item \textbf{\texttt{cultural\_fit\_score}}: Điểm phù hợp văn hóa (thang 1--10).
+    \item \textbf{\texttt{overall\_score}}: Điểm tổng thể (thang 1--10).
+    \item \textbf{\texttt{strengths}, \texttt{weaknesses}, \texttt{feedback}}: Nhận xét tự luận.
+    \item \textbf{\texttt{result}}: Quyết định cuối --- \texttt{pass | fail | hold}.
+    \item \textbf{\texttt{is\_final}}: Cờ chốt điểm, khi \texttt{true} sẽ cập nhật trạng thái interview thành \texttt{completed}.
+\end{itemize}
+\textit{Dùng pattern UPSERT theo \texttt{(interview\_id, evaluator\_id)} --- cập nhật thay vì tạo mới khi chấm lại.}
+
+\subsection{Sơ đồ quan hệ thực thể (ERD)}
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabular}{|l|c|l|l|}
+        \hline
+        \textbf{Bảng cha} & \textbf{Quan hệ} & \textbf{Bảng con} & \textbf{Khóa ngoại} \\ \hline
+        \texttt{users} & 1 -- 1 & \texttt{candidate\_profiles} & \texttt{user\_id} \\ \hline
+        \texttt{users} & 1 -- N & \texttt{files} & \texttt{user\_id} \\ \hline
+        \texttt{users} & 1 -- N & \texttt{jobs} & \texttt{created\_by} \\ \hline
+        \texttt{users} & 1 -- N & \texttt{applications} & \texttt{candidate\_id} \\ \hline
+        \texttt{users} & 1 -- N & \texttt{email\_logs} & \texttt{recipient\_id / sender\_id} \\ \hline
+        \texttt{users} & 1 -- N & \texttt{interviews} & \texttt{interviewer\_id} \\ \hline
+        \texttt{users} & 1 -- N & \texttt{interview\_scores} & \texttt{evaluator\_id} \\ \hline
+        \texttt{jobs} & 1 -- N & \texttt{job\_channels} & \texttt{job\_id} \\ \hline
+        \texttt{jobs} & 1 -- N & \texttt{applications} & \texttt{job\_id} \\ \hline
+        \texttt{applications} & 1 -- N & \texttt{application\_status\_history} & \texttt{application\_id} \\ \hline
+        \texttt{applications} & 1 -- N & \texttt{email\_logs} & \texttt{application\_id} \\ \hline
+        \texttt{applications} & 1 -- N & \texttt{interviews} & \texttt{application\_id} \\ \hline
+        \texttt{interviews} & 1 -- N & \texttt{interview\_scores} & \texttt{interview\_id} \\ \hline
+    \end{tabular}
+    \caption{\textit{Sơ đồ quan hệ giữa các bảng trong hệ thống ATS}}
+    \label{tab:erd}
+\end{table}
+
+\subsection{Chiến lược Caching với React Query}
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabular}{|l|l|l|l|}
+        \hline
+        \textbf{Hook} & \textbf{Endpoint} & \textbf{staleTime} & \textbf{Retry} \\ \hline
+        \texttt{useMe()} & \texttt{GET /api/auth/me} & 5 phút & false (không retry 401) \\ \hline
+        \texttt{useJobs()} & \texttt{GET /api/jobs} & 2 phút & Mặc định \\ \hline
+        \texttt{useJob(slug)} & \texttt{GET /api/jobs/[slug]} & 5 phút & false khi 404/401 \\ \hline
+    \end{tabular}
+    \caption{\textit{Chiến lược caching của React Query}}
+    \label{tab:caching}
+\end{table}
+
+Cấu hình \texttt{refetchOnWindowFocus: false} được áp dụng toàn cục để tắt tính năng refetch tự động khi người dùng chuyển tab, tránh các request thừa không cần thiết.

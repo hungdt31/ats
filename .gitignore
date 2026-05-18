@@ -41,3 +41,42 @@ yarn-error.log*
 next-env.d.ts
 
 /lib/generated/prisma
+
+# ---------------------------------------------------------------------------
+# LaTeX / Beamer — artefact build trong report/ \& slide/ (không commit)
+# Giữ: *.tex, source/, image/, references.bib (nếu có), latexmkrc
+# ---------------------------------------------------------------------------
+# Báo cáo (report/)
+/report/*.aux
+/report/*.log
+/report/*.out
+/report/*.toc
+/report/*.lof
+/report/*.lot
+/report/*.fls
+/report/*.fdb_latexmk
+/report/*.synctex.gz
+/report/*.bbl
+/report/*.blg
+/report/*.bcf
+/report/*.run.xml
+/report/*.pdf
+/report/*.xdv
+# Slide (slide/) — thêm nav/snm (Beamer)
+/slide/*.aux
+/slide/*.log
+/slide/*.out
+/slide/*.toc
+/slide/*.lof
+/slide/*.lot
+/slide/*.fls
+/slide/*.fdb_latexmk
+/slide/*.synctex.gz
+/slide/*.nav
+/slide/*.snm
+/slide/*.vrb
+/slide/*.bbl
+/slide/*.blg
+/slide/*.pdf
+/slide/*.xdv
+

@@ -1,0 +1,3 @@
+# Chạy: latexmk -pdf main.tex  (hoặc mở main.tex và Build trong IDE)
+$pdf_mode = 1;
+$interaction = 'nonstopmode';

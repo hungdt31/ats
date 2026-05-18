@@ -1,0 +1,332 @@
+% =============================================================
+%  REPORT - HỆ THỐNG ATS
+% =============================================================
+
+% !TEX synctex = 1
+\documentclass[12pt]{article}
+
+% --- Encoding tiếng Việt ---
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage{mathptmx}
+
+% --- Gói chung (theo form OS-Lab + cần cho nội dung) ---
+\usepackage{a4wide,amssymb,epsfig,latexsym,multicol,array,hhline,fancyhdr}
+\usepackage{amsmath, amsfonts}
+\usepackage{lastpage}
+\usepackage[lined,boxed,commentsnumbered]{algorithm2e}
+\usepackage{enumerate}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{graphicx}
+% Ảnh minh họa trong báo cáo: thư mục report/image/ (A/, B/, … và logo HCMUT_official_logo.png)
+\graphicspath{{./image/}}
+\usepackage{float}
+\usepackage{array}
+\usepackage{tabularx, caption}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{rotating}
+\usepackage{graphics}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{tikz}
+\usepackage{xfrac}
+\usepackage{bm}
+\usepackage{booktabs} % cho \toprule \midrule \bottomrule
+% hyperref tải ở cuối preamble (sau mọi gói khác) — xem dòng trước \begin{document}
+\usepackage{amsthm}
+\newtheorem{remark}{Nhận xét}
+
+% --------- Nếu cần code + box giải thích ----------
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{listings, skins, breakable}
+\definecolor{codebg}{RGB}{250,250,250}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% --- Cấu hình hiển thị code Python ---
+\lstset{
+    language=Python,                    % Đặt ngôn ngữ mặc định là Python
+    backgroundcolor=\color{codebg},     % Màu nền
+    commentstyle=\color{codegreen}\itshape, % Màu và kiểu cho comment (Xanh lá, in nghiêng)
+    keywordstyle=\color{blue}\bfseries,     % Màu cho từ khóa (Xanh dương, in đậm)
+    numberstyle=\tiny\color{codegray},      % Màu cho đánh số dòng
+    stringstyle=\color{codepurple},         % Màu cho chuỗi (Tím)
+    basicstyle=\ttfamily\footnotesize,      % Font chữ cơ bản
+    breakatwhitespace=false,         
+    breaklines=true,                        % Tự động ngắt dòng
+    captionpos=b,                           % Vị trí caption (dưới)
+    keepspaces=true,                 
+    numbers=left,                           % Đánh số dòng bên trái
+    numbersep=8pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=4,                              % Kích thước tab
+    frame=single,                           % Đóng khung đoạn code
+    rulecolor=\color{black!30}              % Màu của khung
+}
+\tcbset{
+    explainstyle/.style={
+        colback=yellow!5!white,
+        colframe=blue!40!black,
+        fonttitle=\bfseries,
+        title={Giải thích chi tiết},
+        breakable
+    }
+}
+% --------------------------------------------------------
+
+% --- Một số gói thêm (an toàn) ---
+\usepackage{subcaption}
+\usepackage{fancyvrb}
+\usepackage{anyfontsize}
+\usepackage{needspace}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta, angles, quotes}
+
+% Thiết lập trang
+\geometry{a4paper, left=3cm, right=2cm, top=2cm, bottom=2cm}
+\setlength{\headheight}{35pt}
+\setlength{\headsep}{18pt}
+\setlength{\footskip}{28pt}
+\usetikzlibrary{arrows,backgrounds,positioning}
+\definecolor{mathblue}{RGB}{0,114,188}
+
+% Giãn dòng và thụt đầu dòng
+\makeatletter
+\renewcommand\normalsize{\@setfontsize\normalsize{12pt}{17.5pt}}
+\renewcommand\footnotesize{\@setfontsize\footnotesize{12pt}{13pt}}
+\renewcommand\scriptsize{\@setfontsize\scriptsize{11pt}{12pt}}
+\makeatother
+\setstretch{1.05}
+\setlength{\parindent}{0.5cm}
+\setlength{\parskip}{5pt}
+\usepackage{indentfirst}
+\setlist[itemize]{itemsep=2pt, topsep=4pt, parsep=0pt, partopsep=0pt}
+\setlist[enumerate]{itemsep=2pt, topsep=4pt, parsep=0pt, partopsep=0pt}
+
+% Khoảng cách paragraph
+\makeatletter
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+                                     {0pt}%
+                                     {6pt}%
+                                     {\normalfont\normalsize\bfseries}}
+\makeatother
+
+% Caption giống form trên (in nghiêng, nhỏ)
+\captionsetup[table]{
+  font={small, it},
+  skip=7pt
+}
+\captionsetup[figure]{
+  font={small, it},
+  skip=7pt
+}
+
+% Đổi tên tiếng Việt
+\renewcommand{\figurename}{\selectfont \bfseries Hình}
+\renewcommand{\tablename}{\selectfont \bfseries Bảng}
+\renewcommand{\refname}{Tài liệu tham khảo}
+\renewcommand{\contentsname}{Mục lục}
+\renewcommand{\listfigurename}{Danh mục hình vẽ}
+\renewcommand{\listtablename}{Danh mục bảng biểu}
+
+% Header / footer – kiểu OS-Lab
+\fancyhead{} 
+\fancyhead[L]{
+ \begin{tabular}{rl}
+    \begin{picture}(22,15)(0,0)
+      \put(0,-8){\includegraphics[width=8.5mm, height=8.5mm]{image/HCMUT_official_logo.png}}
+   \end{picture}\hspace{-2.5mm}&
+	\begin{tabular}{l}
+		\textbf{\textit{Trường Đại học Bách khoa - ĐHQG TP. HCM}}\\[0.5pt]
+		\textbf{\textit{Khoa Khoa học và Kỹ thuật Máy tính}}\\[3pt]
+	\end{tabular} 	
+ \end{tabular}
+}
+\fancyhead[R]{}
+\fancyfoot{} 
+\fancyfoot[L]{\fontsize{9.5pt}{11pt}\selectfont\textit{Báo cáo dự án Hệ thống ATS - Nhóm 02}}
+\fancyfoot[R]{\fontsize{9.5pt}{11pt}\selectfont Trang {\thepage}/\pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0.3pt}
+\pagestyle{fancy}
+
+% Khoảng cách section
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+                                     {-3.2ex \@plus -1.2ex \@minus -.2ex}%
+                                     {0.7ex \@plus .2ex}%
+                                     {\normalfont\Large\bfseries}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+                                        {-1.8ex \@plus -0.6ex \@minus -.2ex}%
+                                        {0.5ex \@plus .2ex}%
+                                        {\normalfont\large\bfseries}}
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+                                           {-1.5ex \@plus -0.6ex \@minus -.2ex}%
+                                           {0.4ex \@plus .2ex}%
+                                           {\normalfont\normalsize\bfseries}}
+\makeatother
+
+% Nếu cần subsubsubsection giống form cũ
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+\makeatletter
+\newcounter{subsubsubsection}[subsubsection]
+\renewcommand\thesubsubsubsection{\thesubsubsection.\@alph\c@subsubsubsection}
+\newcommand\subsubsubsection{\@startsection{subsubsubsection}{4}{\z@}%
+                                     {-3.25ex\@plus -1ex \@minus -.2ex}%
+                                     {1.5ex \@plus .2ex}%
+                                     {\normalfont\normalsize\bfseries}}
+\newcommand*\l@subsubsubsection{\@dottedtocline{3}{10.0em}{4.1em}}
+\newcommand*{\subsubsubsectionmark}[1]{}
+\makeatother
+
+% hyperref phải gần cuối preamble (sau geometry, caption, fancyhdr, listings, pgfplots, …)
+\usepackage[colorlinks,pdfpagelabels=true,plainpages=false]{hyperref}
+\hypersetup{urlcolor=blue,linkcolor=black,citecolor=black,colorlinks=true}
+
+% =========================================================
+\begin{document}
+\hypersetup{pageanchor=false}
+% ---------------------- TRANG BÌA -----------------------
+\begin{titlepage}
+\thispagestyle{empty}
+\begingroup
+\setstretch{1}
+\setlength{\parskip}{0pt}
+
+\begin{center}
+    {\large\bfseries ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH}\\[2pt]
+    {\large\bfseries TRƯỜNG ĐẠI HỌC BÁCH KHOA}\\[2pt]
+    {\large\bfseries KHOA KHOA HỌC VÀ KỸ THUẬT MÁY TÍNH}
+\end{center}
+
+\vspace{1cm}
+
+\begin{center}
+\includegraphics[width=3.5cm]{image/HCMUT_official_logo.png}
+\end{center}
+
+\vspace{1cm}
+
+\begin{center}
+
+{\LARGE\bfseries BÁO CÁO KẾT QUẢ TRAINING}\\[4pt]
+{\LARGE\bfseries Chương trình Đào tạo IVS x RD-SEAI: Software Project Lifecycle}\\[4pt]
+\rule{12cm}{0.5pt}\\[17pt]
+
+{\Huge\bfseries XÂY DỰNG HỆ THỐNG ỨNG TUYỂN VIỆC LÀM}\\[1.5pt]
+\rule{12cm}{0.5pt}
+\end{center}
+
+\vspace{1cm}
+
+\begin{center}
+\begin{tabular}{rl}
+\textbf{\large Hướng dẫn:} & \large Công ty IVS \\[7pt]
+\textbf{\large Nhóm:} & \large 02
+\end{tabular}
+\end{center}
+
+\vfill
+
+\begin{center}
+{\footnotesize Thành phố Hồ Chí Minh, tháng 5 năm 2026}
+\end{center}
+
+\endgroup
+\end{titlepage}
+% ---------------------- HẾT TRANG BÌA -----------------------
+
+
+% ---------------------- DANH SÁCH THÀNH VIÊN -----------------------
+\clearpage
+\pagenumbering{roman}
+
+\section*{DANH SÁCH THÀNH VIÊN}
+\addcontentsline{toc}{section}{Danh sách thành viên}
+
+\begin{table}[h]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{|c|c|l|l|}
+        \hline
+        \textbf{STT} & \textbf{MSSV} & \textbf{Họ và tên} & \textbf{Email} \\ \hline
+        1 & 2211322 & Đoàn Trí Hùng & hung.doantrymybest@hcmut.edu.vn \\ \hline
+        2 & 2211190 & Lê Huỳnh Huy & huy.lehuynh2004@hcmut.edu.vn \\ \hline
+        3 & 2211562 & Vương Quang Khải & khai.vuongquang@hcmut.edu.vn \\ \hline
+        4 & 2211670 & Bùi Minh Khôi & khoi.buibachkhoa22@hcmut.edu.vn \\ \hline
+        5 & 2252377 & Nguyễn Minh Khôi & khoi.nguyenminhcs22@hcmut.edu.vn \\ \hline
+        6 & 2213772 & Lê Đức Anh Tuấn & tuan.leqn04@hcmut.edu.vn \\ \hline
+        7 & 2212331 & Trương Minh Nguyên & nguyen.truongpythonai@hcmut.edu.vn \\ \hline
+        8 & 2212922 & Nguyễn Quang Sáng & sang.nguyennqs@hcmut.edu.vn \\ \hline
+    \end{tabular}
+\end{table}
+
+\newpage
+
+% ---------------------- MỤC LỤC, DANH MỤC HÌNH/BẢNG -----------------------
+\clearpage
+\begingroup
+\setstretch{1}
+\setlength{\parskip}{0pt}
+\thispagestyle{empty}      % Mục lục không in số trang
+\tableofcontents
+\endgroup
+\clearpage
+
+\begingroup
+\setstretch{1}
+\setlength{\parskip}{0pt}
+\thispagestyle{empty}      % Danh mục hình vẽ không in số trang
+\listoffigures
+\endgroup
+\addcontentsline{toc}{section}{Danh mục hình vẽ}
+\clearpage
+
+\begingroup
+\setstretch{1}
+\setlength{\parskip}{0pt}
+\thispagestyle{empty}      % Danh mục bảng biểu không in số trang
+\listoftables
+\endgroup
+\addcontentsline{toc}{section}{Danh mục bảng biểu}
+\clearpage
+
+\pagenumbering{arabic}
+\hypersetup{pageanchor=true}
+
+% ========================= NỘI DUNG BÁO CÁO =========================
+
+\section{GIỚI THIỆU ĐỀ TÀI}
+    \input{source/1_gioithieu}
+
+\section{CÔNG NGHỆ SỬ DỤNG}
+    \input{source/2_congnghe}
+
+\section{KIẾN TRÚC HỆ THỐNG VÀ MÔ HÌNH DỮ LIỆU}
+    \input{source/3_kientruc}
+
+\section{THIẾT KẾ CHỨC NĂNG THEO MODULE}
+    \input{source/4_thietke}
+
+\section{KIỂM ĐỊNH CHẤT LƯỢNG HỆ THỐNG}
+    \input{source/5_kiemdinhchatluong}
+
+\section{TỔNG KẾT VÀ HƯỚNG PHÁT TRIỂN}
+    \input{source/6_tongket}
+
+\newpage
+
+\addcontentsline{toc}{section}{Tài liệu tham khảo}
+    \input{source/references}
+
+% =========================================================
+\end{document}

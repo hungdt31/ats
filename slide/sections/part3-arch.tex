@@ -1,0 +1,35 @@
+\section{Kiến trúc hệ thống}
+\sectiondivider{3}
+\begin{frame}{Kiến trúc tổng quan}
+  \small
+  \begin{itemize}
+    \item \textbf{Client:} React~19, Tailwind \& shadcn/ui, TanStack Query đồng bộ REST.
+    \item \textbf{Next.js (cùng repo):} \texttt{app/*} UI; \texttt{app/api/**/*} REST; \texttt{middleware.ts} RBAC sớm.
+    \item \textbf{Persistence:} Prisma~7 + MariaDB --- giao dịch cho đơn \& metadata file.
+    \item \textbf{Ngoài hệ:} Appwrite (blob CV), Resend (email giao dịch).
+    \item \textbf{Phiên:} JWT trong cookie \texttt{httpOnly}, không lưu session DB.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Phân quyền RBAC (theo route)}
+  \footnotesize
+  \begin{tabular}{@{}p{0.36\textwidth}p{0.58\textwidth}@{}}
+    \toprule
+    \textbf{Vùng} & \textbf{Ai được truy cập?} \\
+    \midrule
+    \texttt{/}, \texttt{/jobs}, \texttt{/jobs/[slug]} & Mọi người (public) \\
+    \texttt{/login}, \texttt{/register} & Khách (chưa đăng nhập) \\
+    \texttt{/candidate} & Role \texttt{candidate} \\
+    \texttt{/dashboard/*} & \texttt{admin}, \texttt{hr}, \texttt{interviewer} \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+\begin{frame}{Cấu trúc thư mục dự án (App Router)}
+  \footnotesize
+  \begin{itemize}
+    \item \texttt{app/} --- trang \& API theo file-based routing (\texttt{(auth)/}, \texttt{jobs/}, \texttt{dashboard/}, \texttt{candidate/}, \texttt{api/}).
+    \item \texttt{components/}, \texttt{hooks/}, \texttt{lib/} --- UI tái sử dụng, React Query, JWT, Zod.
+    \item \texttt{prisma/} --- \texttt{schema.prisma}, migration, seed.
+  \end{itemize}
+\end{frame}

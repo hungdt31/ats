@@ -1,0 +1,110 @@
+Trong bối cảnh nền kinh tế số đang phát triển mạnh mẽ, thị trường lao động ngày càng trở nên năng động với khối lượng lớn ứng viên và vị trí tuyển dụng. Các doanh nghiệp hiện đại đang phải đối mặt với thách thức quản lý hàng trăm, thậm chí hàng nghìn hồ sơ ứng tuyển đến từ nhiều nguồn khác nhau chỉ trong một đợt tuyển dụng. Phương pháp quản lý thủ công truyền thống thông qua email, bảng tính Excel hay giấy tờ không còn đủ khả năng đáp ứng quy mô và tốc độ của hoạt động tuyển dụng hiện đại.
+
+Hệ thống ATS (Applicant Tracking System) ra đời nhằm giải quyết vấn đề cấp bách này. Đây là một giải pháp phần mềm chuyên biệt để số hóa và tự động hóa toàn bộ quy trình tuyển dụng — từ khâu đăng tin, tiếp nhận hồ sơ, sàng lọc ứng viên, lên lịch phỏng vấn, đánh giá cho đến khi ra quyết định tuyển dụng cuối cùng. Dự án này được thực hiện trong khuôn khổ Chương trình Đào tạo IVS x RD-SEAI: Software Project Lifecycle, giúp nhóm sinh viên trải nghiệm toàn bộ vòng đời phát triển phần mềm thực tế.
+
+\subsection{Tổng quan về hệ thống ATS}
+Hệ thống ATS được xây dựng là một ứng dụng web toàn diện, kết hợp hai thành phần chính:
+
+\begin{itemize}
+    \item \textbf{Job Portal công khai (Public Portal):} Cổng thông tin việc làm dành cho ứng viên, nơi họ có thể tìm kiếm, xem chi tiết và nộp đơn vào các vị trí đang tuyển dụng. Khu vực này được thiết kế thân thiện với người dùng và tối ưu hóa SEO để tăng khả năng tiếp cận.
+    \item \textbf{Hệ thống quản trị nội bộ (Internal Dashboard):} Khu vực dành riêng cho nhân sự nội bộ (HR, Admin, Interviewer) để quản lý toàn bộ quy trình tuyển dụng, từ tạo tin tuyển dụng đến quyết định cuối cùng.
+\end{itemize}
+
+\subsection{Mục tiêu của dự án}
+Hệ thống ATS được xây dựng với các mục tiêu cụ thể sau:
+
+\begin{itemize}
+    \item \textbf{Đối với Ứng viên (Candidate):} Cung cấp nền tảng thân thiện để tìm kiếm việc làm, quản lý hồ sơ cá nhân một cách chuyên nghiệp, nộp đơn ứng tuyển nhanh chóng với CV và thư xin việc, và theo dõi tiến trình của các đơn ứng tuyển một cách minh bạch, cập nhật theo thời gian thực.
+    \item \textbf{Đối với Nhân sự (HR) và Ban quản trị (Admin):} Đơn giản hóa toàn bộ quy trình từ việc tạo và đăng tải tin tuyển dụng đa kênh (LinkedIn, ITviec, TopCV...) cho đến quản lý đường ống (pipeline) ứng tuyển dạng Kanban trực quan, đồng thời theo dõi các chỉ số hiệu suất và báo cáo tuyển dụng.
+    \item \textbf{Đối với Người phỏng vấn (Interviewer):} Cung cấp giao diện đơn giản để xem lịch phỏng vấn được phân công, truy cập hồ sơ ứng viên dễ dàng, ghi nhận đánh giá (scorecard) với điểm số theo nhiều tiêu chí và cập nhật kết quả phỏng vấn nhanh chóng.
+    \item \textbf{Đối với đội ngũ phát triển:} Xây dựng hệ thống theo các tiêu chuẩn kỹ thuật hiện đại, đảm bảo tính bảo mật, khả năng mở rộng và dễ bảo trì trong tương lai.
+\end{itemize}
+
+\subsection{Phạm vi dự án}
+Hệ thống ATS bao gồm bảy phân hệ (module) chính, được phân chia theo chức năng và đối tượng sử dụng:
+
+\begin{enumerate}
+    \item \textbf{Module A - Khu vực Công khai (Public \& Landing):} Trang chủ giới thiệu hệ thống, danh sách việc làm đang tuyển, trang chi tiết công việc và chức năng nộp đơn ứng tuyển.
+    \item \textbf{Module B - Xác thực (Authentication):} Đăng nhập, đăng ký, xác minh email qua OTP, quên mật khẩu và đổi mật khẩu.
+    \item \textbf{Module C - Khu vực Ứng viên (Candidate Area):} Dashboard cá nhân, quản lý hồ sơ, theo dõi đơn ứng tuyển và lịch phỏng vấn.
+    \item \textbf{Module D - Quản trị nội bộ (Dashboard):} Tổng quan KPI, báo cáo, quản lý người dùng hệ thống.
+    \item \textbf{Module E - Quản lý Đơn ứng tuyển (Applications):} Pipeline tuyển dụng, cập nhật trạng thái đơn và lịch sử audit.
+    \item \textbf{Module F - Quản lý Phỏng vấn (Interviews):} Tạo và quản lý lịch phỏng vấn, chấm điểm đánh giá ứng viên.
+    \item \textbf{Module G - Quản lý Công việc (Jobs):} Tạo, chỉnh sửa tin tuyển dụng và quản lý phân phối đa kênh.
+\end{enumerate}
+
+\subsection{Kế hoạch thực hiện theo chương trình đào tạo và phân công nhóm}
+
+\textit{Nhóm trưởng --- Đoàn Trí Hùng:} chủ trì họp định kỳ với mentor; theo dõi mốc báo cáo theo bảng tiến độ; thống nhất quy ước Git, cấu trúc tài liệu và review tổng thể; là đầu mối báo cáo trạng thái dự án. \textit{Phân hệ trụ cột} (theo thiết kế trong báo cáo): Vương Quang Khải (A), Lê Huỳnh Huy (B), Nguyễn Quang Sáng (C), Nguyễn Minh Khôi (D), Lê Đức Anh Tuấn (E), Bùi Minh Khôi (F), Đoàn Trí Hùng \& Trương Minh Nguyên (G).
+
+\textbf{Kho tài liệu \& bảng làm việc nhóm trên Google Drive.} Thư mục IVS nhóm~2 trên Google Drive tập trung file Excel/Google Sheets và tài liệu phụ trợ của dự án (task, BA, BD/DD, link tổng hợp\ldots). Liên kết thư mục:
+
+\href{https://drive.google.com/drive/folders/19RqFQ15AYTVuCf3T6rAutZEISa5WmDU7}{\texttt{https://drive.google.com/drive/folders/19RqFQ15AYTVuCf3T6rAutZEISa5WmDU7}}.\footnote{Đường dẫn chia sẻ theo nhóm; các file nằm trong các thư mục con (VD~\texttt{ALL\_FOR\_ONE}, \texttt{DETAIL\_DESIGN}, \texttt{REPORTS}) và các bảng tính \texttt{FINAL\_TASK}, \texttt{ATS\_BA\_Document}, Google Sheet~\texttt{BD-DD}.}
+
+\subsubsection*{Bảng tiến độ chương trình (Training time / Plan mới / Thực tế)}
+Bảng~\ref{tab:plan-ivs-seai} được tổng hợp theo kế hoạch của chương trình IVS\,\(\times\)\,RD--SEAI và được điều chỉnh sau ngày~\texttt{05/05}; cột ``Thực tế'' ghi thời điểm nhóm phải nộp báo cáo theo lịch học (có thể lệch một tuần so với ô kế hoạch gốc).
+
+\begin{table}[H]
+    \centering
+    \scriptsize
+    \setlength{\tabcolsep}{2.5pt}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{|c|p{2.7cm}|p{3.85cm}|p{1.95cm}|p{1.95cm}|p{1.95cm}|}
+        \hline
+        \textbf{Tuần} & \textbf{Chủ đề} & \textbf{Nội dung chính} & \textbf{Training plan} & \textbf{Plan mới (5\texttt{/}05)} & \textbf{Thực tế} \\
+        \hline
+        1 & Quy trình + kỹ năng hearing & Quy trình thực tế; workshop listening & \texttt{03/10} & --- & \texttt{03/10} \\
+        \hline
+        2 & Hearing + hoàn FR & FR + NFR nhóm; hoàn tất phiên hearing; tài liệu use case sơ bộ & \texttt{03/17} & --- & \texttt{03/24} \\
+        \hline
+        3 & Basic Design & Use case, luồng, phác UI; viết Basic Design & \texttt{03/24} & --- & \texttt{03/31} \\
+        \hline
+        4 & Detail Design & Class/API/DB schema trong DD; thực hành viết DD & \texttt{03/31} & --- & \texttt{04/14} \\
+        \hline
+        5 & Review + môi trường & Rà logic, chốt BD/DD; setup môi trường; feedback mentor & \texttt{04/07} & --- & \texttt{04/21} \\
+        \hline
+        6 & UTC, ITC \& kỹ năng test & Quy trình test; viết UTC/ITC (biên, phân vùng) & \texttt{04/14} & --- & \texttt{05/05}\textsuperscript{*} \\
+        \hline
+        7--9 & Mini Project Sprint & Coding\,\(\rightarrow\)\,test\,\(\rightarrow\)\,demo nhỏ; cập nhật tài liệu theo chức năng Tuần~2 & \texttt{04/21}--\texttt{05/12} & \texttt{05/12}, \texttt{05/19}\textsuperscript{**} & Sprint \\
+        \hline
+        10 & Final demo + Retro & Demo toàn bộ; retrospective; feedback mentor/khách doanh nghiệp & \texttt{05/19} & \texttt{05/26}\textsuperscript{***} & Theo mốc giao \\
+        \hline
+    \end{tabular}\\[4pt]
+    {\scriptsize \textit{Ghi chú:} (\textsuperscript{*}) Theo bảng gốc của chương trình, ô \emph{Thực tế} của Tuần~6 ghi ngày~\texttt{05/05} (ghi chú màu nhấn). (\textsuperscript{**}) Sprint qua kỳ nghỉ~\texttt{30/04}---\texttt{01/05}; ``Plan mới'' dời các mốc về~\texttt{05/12} và~\texttt{05/19}. (\textsuperscript{***}) Demo cuối: plan gốc~\texttt{05/19}, plan chỉnh~\texttt{05/26}.}\\[4pt]
+    \caption{\textit{Lịch các tuần của chương trình và thời điểm thực tế của nhóm}}
+    \label{tab:plan-ivs-seai}
+\end{table}
+
+\subsubsection*{Bảng phân công chi tiết cho từng thành viên}
+Bảng~\ref{tab:phan-cong-nhom} là kế hoạch \textbf{phối hợp} theo các giai đoạn trên: cột ``Chủ điểm'' là người dẫn nhánh công việc; ``Cả nhóm'' nghĩa là mọi người có nghĩa vụ tham dự workshop/review (không miễn trừ).
+
+\begin{table}[H]
+    \centering
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabular}{|c|p{4.3cm}|p{3.75cm}|p{3.9cm}|}
+        \hline
+        \textbf{Tuần / giai đoạn} & \textbf{Sản phẩm cần chốt} & \textbf{Chủ điểm} & \textbf{Thành viên hỗ trợ / nhận việc cụ thể} \\
+        \hline
+        1---2 & Phiên hearing, FR/NFR, khung use case & Đoàn Trí Hùng & Cả nhóm; V.~Quang Khải hỗ trợ tổng hợp luồng nghiệp vụ công khai ứng viên \\
+        \hline
+        3 & Basic Design theo màn hình & Đoàn Trí Hùng & Mỗi thành viên chịu trách BD phần chức năng tương ứng Tuần~4 (Module A--G) \\
+        \hline
+        4 & Detail Design (diagram, API, DB) & Theo module & A: V.~Quang Khải; B: L.~Huỳnh Huy; C: N.~Quang Sáng; D: N.~Minh Khôi; E: L.~Đức Anh Tuấn; F: B.~Minh Khôi; G: Đ.~Trí Hùng + T.~Minh Nguyên; Hùng rà tính thống nhất template \\
+        \hline
+        5 & Rà soát BD/DD, chốt môi trường & Đoàn Trí Hùng & Nguyễn Minh Khôi \& Bùi Minh Khôi: build/migration/seed; cả nhóm sửa backlog review mentor \\
+        \hline
+        6 & UTC, ITC, test data (ITE) & Nguyễn Minh Khôi & Mỗi thành viên chịu UTC phần module mình; L.~Huỳnh Huy + N.~Minh Khôi: luồng ITC auth + dashboard; L.~Đức Anh Tuấn + B.~Minh Khôi: ITC nghiệp vụ đơn \& phỏng vấn \\
+        \hline
+        7---9 & Sprint lập trình + tích hợp & Đoàn Trí Hùng & Phát triển theo chủ sở hữu Tuần~4; Hùng \& Nguyên merge luồng Job; review chéo tuần \\
+        \hline
+        10 & Chuẩn bị demo \& tài liệu nộp & Đoàn Trí Hùng & Demo theo kịch bản: landing (Khải)\,\(\rightarrow\) auth (Huy)\,\(\rightarrow\) HR (Jobs/Apps/IV) (Hùng/Nguyên/Tuấn/Bùi Minh Khôi/Khôi D.)\,\(\rightarrow\) ứng viên (Sáng); Hùng cố định thời gian luyện tập \\
+        \hline
+    \end{tabular}
+    \caption{\textit{Phân công công việc theo các tuần của chương trình và theo phân hệ trong dự án ATS}}
+    \label{tab:phan-cong-nhom}
+\end{table}
+
+\subsection{Bối cảnh và yêu cầu thực tiễn}
+Dự án được thực hiện trong môi trường thực tế của chương trình đào tạo, với yêu cầu áp dụng đầy đủ quy trình phát triển phần mềm chuyên nghiệp bao gồm: lập kế hoạch dự án, thiết kế chi tiết (Detail Design), xây dựng hệ thống kiểm thử (Test Cases, Test Evidence), kiểm soát phiên bản qua Git và tài liệu hóa đầy đủ. Đây là cơ hội để nhóm không chỉ rèn luyện kỹ năng lập trình mà còn học cách làm việc nhóm, phân chia công việc và giao tiếp hiệu quả trong một dự án phần mềm thực tế.

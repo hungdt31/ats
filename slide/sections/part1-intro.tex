@@ -1,0 +1,85 @@
+\section{Giới thiệu đề tài}
+\sectiondivider{1}
+\begin{frame}{Bối cảnh \& vấn đề}
+  \begin{itemize}
+    \item Thị trường lao động số: khối lượng hồ sơ và vị trí tuyển lớn, cập nhật nhanh.
+    \item Quản lý thủ công (email, Excel, giấy tờ) \textbf{không đủ} quy mô và tốc độ tuyển dụng hiện đại.
+    \item Cần \textbf{một nền tảng thống nhất} để theo dõi ứng viên từ đăng tin đến quyết định.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{ATS là gì?}
+  \begin{block}{Định nghĩa}
+    \textbf{ATS (Applicant Tracking System)} --- phần mềm số hóa và tự động hóa quy trình tuyển dụng:
+    đăng tin, tiếp nhận hồ sơ, sàng lọc, lịch phỏng vấn, đánh giá, ra quyết định.
+  \end{block}
+  \vspace{0.3cm}
+  \begin{itemize}
+    \item Dự án trong khuôn khổ \textbf{IVS $\times$ RD--SEAI: Software Project Lifecycle}.
+    \item Nhóm trải nghiệm trọn vòng đời phát triển phần mềm thực tế.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Hai thành phần chính của hệ thống}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+    \begin{block}{Job Portal (công khai)}
+      \small
+      \begin{itemize}
+        \item Tìm kiếm, xem chi tiết việc làm
+        \item Nộp đơn ứng tuyển
+        \item Tối ưu SEO, thân thiện người dùng
+      \end{itemize}
+    \end{block}
+    \column{0.48\textwidth}
+    \begin{block}{Dashboard nội bộ}
+      \small
+      \begin{itemize}
+        \item HR, Admin, Interviewer
+        \item Pipeline tuyển dụng, KPI
+        \item Quản lý tin, đơn, phỏng vấn
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Mục tiêu theo đối tượng}
+  \small
+  \begin{itemize}
+    \item \textbf{Ứng viên:} tìm việc, quản lý hồ sơ, nộp đơn, theo dõi trạng thái minh bạch.
+    \item \textbf{HR / Admin:} tin đa kênh, pipeline Kanban, báo cáo hiệu suất.
+    \item \textbf{Interviewer:} lịch PV, hồ sơ ứng viên, scorecard, cập nhật kết quả.
+    \item \textbf{Đội phát triển:} chuẩn kỹ thuật hiện đại, bảo mật, mở rộng và bảo trì.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Phạm vi: bảy module chức năng (A--G)}
+  \footnotesize
+  \begin{enumerate}
+    \item \textbf{A -- Public \& Landing:} trang chủ, danh sách/chi tiết job, nộp đơn.
+    \item \textbf{B -- Authentication:} đăng nhập, đăng ký, OTP, quên/đổi mật khẩu.
+    \item \textbf{C -- Candidate:} dashboard ứng viên, hồ sơ, đơn, lịch PV.
+    \item \textbf{D -- Dashboard nội bộ:} KPI, báo cáo, quản trị người dùng.
+    \item \textbf{E -- Applications:} pipeline đơn, trạng thái, lịch sử thay đổi.
+    \item \textbf{F -- Interviews:} lịch PV, đánh giá ứng viên.
+    \item \textbf{G -- Jobs:} tạo/sửa tin, đa kênh đăng tuyển.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Quy mô triển khai (theo báo cáo)}
+  \begin{itemize}
+    \item Khoảng \textbf{22 màn hình} và \textbf{hơn 30 API} REST (envelope JSON thống nhất).
+    \item Tài liệu \textbf{Detail Design} theo từng module; bộ \textbf{UTC / UTE / ITC / ITE}.
+    \item Phân quyền \textbf{RBAC bốn role} vận hành ổn định trên toàn route.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Phân công nhóm (trụ cột thiết kế)}
+  \small
+  \begin{itemize}
+    \item \textbf{Nhóm trưởng:} Đoàn Trí Hùng --- điều phối, quy ước Git, báo cáo tiến độ.
+    \item \textbf{Module -- chủ điểm:} Khải (A), Huy (B), Sáng (C), Khôi D. (D), Tuấn (E), Khôi B. (F), Hùng \& Nguyên (G).
+  \end{itemize}
+  \vspace{0.35cm}
+  {\footnotesize Mỗi thành viên phụ trách phân hệ từ thiết kế đến triển khai theo báo cáo chi tiết.}
+\end{frame}

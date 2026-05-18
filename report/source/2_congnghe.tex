@@ -1,0 +1,178 @@
+Hệ thống ATS được xây dựng trên nền tảng các công nghệ web hiện đại nhất, được lựa chọn kỹ lưỡng dựa trên tiêu chí hiệu năng, bảo mật và khả năng mở rộng. Mỗi công nghệ đều có vai trò cụ thể và phối hợp chặt chẽ với nhau để tạo thành một hệ thống hoàn chỉnh.
+
+\subsection{Ngôn ngữ và Framework cốt lõi}
+
+\subsubsection*{Next.js 16 (App Router)}
+Next.js là framework React fullstack được sử dụng làm nền tảng chính của toàn bộ ứng dụng. Phiên bản 16 với kiến trúc App Router mang lại nhiều cải tiến quan trọng:
+\begin{itemize}
+    \item \textbf{Server Components:} Các component chạy hoàn toàn trên server, render HTML trực tiếp mà không cần gửi JavaScript xuống client, giảm kích thước bundle và cải thiện hiệu suất.
+    \item \textbf{Client Components:} Được đánh dấu bằng chỉ thị \texttt{"use client"}, xử lý tương tác người dùng, state management và các tác vụ cần JavaScript phía client.
+    \item \textbf{Route Handlers:} Thay thế cho API Routes cũ, cho phép xây dựng RESTful API trực tiếp trong cùng dự án Next.js mà không cần server riêng biệt.
+    \item \textbf{Metadata API:} Hỗ trợ SEO mạnh mẽ thông qua việc khai báo metadata (title, description, OpenGraph) cho từng route.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.68\textwidth,height=3.6cm,keepaspectratio]{technology/nextjs.jpeg}
+    \caption{\textit{Next.js --- framework React full-stack (App Router, Route Handlers)}}
+    \label{fig:logo-nextjs}
+\end{figure}
+
+\subsubsection*{TypeScript 5}
+TypeScript được sử dụng xuyên suốt dự án ở chế độ strict mode, mang lại các lợi ích:
+\begin{itemize}
+    \item Phát hiện lỗi tại thời điểm biên dịch thay vì runtime, giảm thiểu các lỗi khó debug.
+    \item Hỗ trợ IntelliSense và tự động hoàn thành code trong IDE, tăng tốc độ phát triển.
+    \item Kiểm tra kiểu dữ liệu end-to-end từ API response đến component props, đảm bảo tính nhất quán.
+    \item Dễ dàng refactor code lớn nhờ hệ thống kiểu dữ liệu tường minh.
+\end{itemize}
+
+\subsection{Giao diện và UI Components}
+
+\subsubsection*{Tailwind CSS 4}
+Tailwind CSS là framework CSS theo phương pháp utility-first, cho phép xây dựng giao diện trực tiếp trong JSX/TSX thông qua các class tiện ích. Phiên bản 4 mang lại hiệu suất build nhanh hơn và hỗ trợ CSS Variables tốt hơn, giúp tùy biến theme dễ dàng.
+
+\subsubsection*{shadcn/ui}
+shadcn/ui là bộ thư viện UI component được xây dựng trên nền Radix UI (headless components) và Tailwind CSS. Đặc điểm nổi bật:
+\begin{itemize}
+    \item Không phải là package npm thông thường mà là tập hợp các component được copy trực tiếp vào dự án, cho phép tùy biến hoàn toàn.
+    \item Đảm bảo khả năng tiếp cận (Accessibility) theo chuẩn WAI-ARIA.
+    \item Cung cấp đa dạng component: Button, Card, Dialog, Select, Table, Chart...
+    \item Hỗ trợ Dark Mode thông qua CSS Variables.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth,height=5.5cm,keepaspectratio]{technology/shadcnui.jpg}
+    \caption{\textit{shadcn/ui --- component UI trên Radix UI và Tailwind CSS}}
+    \label{fig:logo-shadcn}
+\end{figure}
+
+\subsubsection*{HugeIcons}
+Thư viện icon \texttt{@hugeicons/react} cung cấp bộ icon phong phú và nhất quán về mặt thiết kế, được sử dụng xuyên suốt giao diện để cải thiện trải nghiệm người dùng.
+
+\subsubsection*{Recharts và shadcn/chart}
+Thư viện Recharts kết hợp với wrapper shadcn/chart được dùng để vẽ các biểu đồ thống kê trên dashboard nội bộ, bao gồm biểu đồ đường (Line Chart) theo dõi số đơn ứng tuyển, biểu đồ cột (Bar Chart) so sánh hiệu quả tuyển dụng theo kênh.
+
+\subsection{Quản lý State và Data Fetching}
+
+\subsubsection*{TanStack React Query v5}
+React Query là giải pháp quản lý trạng thái dữ liệu bất đồng bộ (asynchronous data state) phía client. Hệ thống sử dụng React Query để:
+\begin{itemize}
+    \item \textbf{Caching thông minh:} Dữ liệu được lưu cache theo key, tránh gọi API trùng lặp. Ví dụ: dữ liệu danh sách jobs được cache 2 phút, thông tin user được cache 5 phút.
+    \item \textbf{Background refetch:} Tự động làm mới dữ liệu khi người dùng quay lại tab.
+    \item \textbf{Optimistic Updates:} Cập nhật UI ngay lập tức trước khi server xác nhận để trải nghiệm mượt mà hơn.
+    \item \textbf{Error Handling:} Quản lý trạng thái loading, success, error một cách thống nhất.
+    \item \textbf{DevTools:} Công cụ debug tích hợp, chỉ hiển thị trong môi trường development.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.72\textwidth,height=3.5cm,keepaspectratio]{technology/tanstack.png}
+    \caption{\textit{TanStack Query --- cache và đồng bộ dữ liệu REST phía client}}
+    \label{fig:logo-tanstack-query}
+\end{figure}
+
+\subsubsection*{TanStack React Table v8}
+React Table (headless) được sử dụng để xây dựng các bảng dữ liệu phức tạp trong dashboard, hỗ trợ sắp xếp, lọc, phân trang và tùy biến hoàn toàn giao diện.
+
+\subsection{Xử lý Form và Validation}
+
+\subsubsection*{React Hook Form}
+Thư viện xây dựng form hiệu suất cao, tránh re-render không cần thiết bằng cách sử dụng uncontrolled components. Kết hợp tốt với Zod để xác thực dữ liệu.
+
+\subsubsection*{Zod}
+Zod là thư viện schema validation cho TypeScript. Mỗi form và API endpoint đều có schema Zod riêng định nghĩa cấu trúc và quy tắc validate dữ liệu. Ưu điểm của Zod:
+\begin{itemize}
+    \item Type inference: Schema Zod tự động suy ra kiểu TypeScript tương ứng.
+    \item Validation messages: Thông báo lỗi tùy biến bằng tiếng Việt.
+    \item Transformations: Tự động chuyển đổi dữ liệu (ví dụ: trim whitespace, parse number).
+\end{itemize}
+
+\subsection{Cơ sở dữ liệu và ORM}
+
+\subsubsection*{MariaDB / MySQL}
+Hệ quản trị cơ sở dữ liệu quan hệ (RDBMS) được lựa chọn vì:
+\begin{itemize}
+    \item Phù hợp với mô hình dữ liệu có quan hệ chặt chẽ giữa các bảng (users, jobs, applications...).
+    \item Hỗ trợ transaction ACID đảm bảo tính toàn vẹn dữ liệu.
+    \item Hiệu suất cao với indexing và query optimization.
+    \item Encoding utf8mb4 hỗ trợ đầy đủ tiếng Việt và emoji.
+\end{itemize}
+
+\subsubsection*{Prisma 7 ORM}
+Prisma là ORM thế hệ mới cho TypeScript/JavaScript, mang lại:
+\begin{itemize}
+    \item \textbf{Type-safe queries:} Mọi query đều được kiểm tra kiểu dữ liệu tại thời điểm biên dịch.
+    \item \textbf{Schema-first:} Cấu trúc database được định nghĩa trong file \texttt{schema.prisma}, từ đó Prisma generate client TypeScript phù hợp.
+    \item \textbf{Migrations:} Quản lý thay đổi schema database có version control.
+    \item \textbf{Driver Adapter:} Sử dụng \texttt{@prisma/adapter-mariadb} bắt buộc với Prisma 7 để kết nối MariaDB.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.62\textwidth,height=3.4cm,keepaspectratio]{technology/prisma.png}
+    \caption{\textit{Prisma ORM --- schema-first, migrations và client kiểu an toàn}}
+    \label{fig:logo-prisma}
+\end{figure}
+
+\subsection{Bảo mật và Xác thực}
+
+\subsubsection*{JSON Web Token (JWT) với thư viện jose}
+Thay vì sử dụng thư viện xác thực có sẵn như NextAuth, nhóm tự implement hệ thống JWT để hiểu sâu hơn về cơ chế bảo mật:
+\begin{itemize}
+    \item \textbf{Thuật toán HS256:} JWT được ký bằng khóa bí mật \texttt{AUTH\_SECRET} lưu trong biến môi trường.
+    \item \textbf{Payload:} Token chứa \texttt{userId}, \texttt{email}, \texttt{fullName}, \texttt{role} để tránh query database mỗi lần cần thông tin user.
+    \item \textbf{httpOnly Cookie:} Token được lưu trong cookie httpOnly, không thể truy cập bằng JavaScript phía client, chống XSS attacks.
+    \item \textbf{SameSite=Lax:} Bảo vệ chống CSRF attacks trong hầu hết trường hợp.
+    \item \textbf{Thời hạn:} Token hết hạn sau 7 ngày, yêu cầu đăng nhập lại.
+\end{itemize}
+
+\subsubsection*{Role-Based Access Control (RBAC)}
+Hệ thống phân quyền dựa trên vai trò với 4 mức quyền hạn:
+\begin{itemize}
+    \item \textbf{candidate:} Truy cập \texttt{/candidate}, nộp đơn, quản lý hồ sơ cá nhân.
+    \item \textbf{hr:} Truy cập \texttt{/dashboard}, quản lý jobs, applications, interviews.
+    \item \textbf{admin:} Full access toàn hệ thống, quản lý tài khoản người dùng.
+    \item \textbf{interviewer:} Xem lịch phỏng vấn được phân công và chấm điểm ứng viên.
+\end{itemize}
+
+\subsubsection*{bcrypt}
+Mật khẩu người dùng được hash bằng thuật toán bcrypt với 12 salt rounds trước khi lưu vào database, đảm bảo an toàn ngay cả khi database bị tấn công.
+
+\subsection{Dịch vụ bên thứ ba}
+
+\begin{itemize}
+    \item \textbf{Appwrite Storage:} Dịch vụ lưu trữ file đám mây dùng để lưu trữ CV và tài liệu của ứng viên, cung cấp URL truy cập an toàn.
+    \item \textbf{Resend:} Dịch vụ gửi email transactional, được dùng để gửi OTP xác thực email và các thông báo cho ứng viên.
+    \item \textbf{Sonner:} Thư viện Toast notification nhẹ, hiển thị thông báo thành công/lỗi cho người dùng.
+\end{itemize}
+
+\subsection{Tổng hợp Stack công nghệ}
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabular}{|l|l|p{7cm}|}
+        \hline
+        \textbf{Lớp} & \textbf{Công nghệ} & \textbf{Ghi chú} \\ \hline
+        Framework & Next.js 16 (App Router) & Server + Client Components \\ \hline
+        Ngôn ngữ & TypeScript 5 & Strict mode \\ \hline
+        Database & MariaDB / MySQL & Hosted riêng \\ \hline
+        ORM & Prisma 7 & Driver adapter MariaDB \\ \hline
+        Styling & Tailwind CSS 4 & Utility-first \\ \hline
+        UI Components & shadcn/ui (Radix UI) & \texttt{components/ui/} \\ \hline
+        Icons & @hugeicons/react & HugeIcons free set \\ \hline
+        Form & React Hook Form + Zod & Schema-first validation \\ \hline
+        Data Fetching & TanStack React Query v5 & Client-side caching \\ \hline
+        Table & TanStack React Table v8 & Headless table \\ \hline
+        Charts & Recharts + shadcn/chart & Biểu đồ dashboard \\ \hline
+        Auth & JWT (HS256) với jose & httpOnly cookie, tự implement \\ \hline
+        File Storage & Appwrite & CV và tài liệu upload \\ \hline
+        Email & Resend & OTP và thông báo \\ \hline
+        Toast & Sonner & Thông báo UX \\ \hline
+        Fonts & Montserrat, Geist & Google Fonts + Vercel Fonts \\ \hline
+    \end{tabular}
+    \caption{\textit{Bảng tổng hợp công nghệ sử dụng trong hệ thống ATS}}
+    \label{tab:tech_stack}
+\end{table}

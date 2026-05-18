@@ -1,0 +1,338 @@
+% Ảnh giao diện: report/image/ (cùng cấu trúc A/1.png … G/4.png); đường tìm trong main.tex qua \graphicspath{{./image/}}
+\providecommand{\FigDDCaption}[3]{%
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth,height=0.88\textheight,keepaspectratio]{#1/#2.png}
+    \caption{\textit{#3}}
+  \end{figure}%
+}
+
+Hệ thống ATS được tổ chức thành 7 module chức năng, mỗi module đảm nhiệm một nhóm nghiệp vụ riêng biệt và phục vụ các đối tượng người dùng khác nhau.
+
+\subsection{Module A --- Khu vực Công khai (Public \& Landing)}
+\textbf{Người phụ trách:} Vương Quang Khải
+
+\subsubsection*{Danh sách chức năng}
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|c|l|l|l|}
+        \hline
+        \textbf{STT} & \textbf{Chức năng} & \textbf{Route} & \textbf{Quyền} \\ \hline
+        1 & Trang chủ (Landing Page) & \texttt{/} & Public \\ \hline
+        2 & Danh sách việc làm & \texttt{/jobs} & Public \\ \hline
+        3 & Chi tiết việc làm & \texttt{/jobs/[slug]} & Public \\ \hline
+        4 & Nộp đơn ứng tuyển & \texttt{POST /api/jobs/[slug]/apply} & Candidate \\ \hline
+    \end{tabular}
+    \caption{\textit{Danh sách chức năng Module A}}
+\end{table}
+
+\subsubsection*{Mô tả chức năng}
+\textbf{Trang chủ (Landing Page)} hiển thị hero section giới thiệu hệ thống, tối đa 6 tin tuyển dụng nổi bật (\texttt{status = active}), sắp xếp theo ngày tạo mới nhất. Khi chưa đăng nhập, hiển thị nút CTA ``Đăng nhập'' và ``Đăng ký''; khi đã đăng nhập hiển thị UserNav với avatar và dropdown menu.
+
+\textbf{Danh sách việc làm} là Client Component sử dụng React Query để fetch và cache dữ liệu. Hỗ trợ tìm kiếm và lọc đa tiêu chí: từ khóa (keyword), địa điểm (location), loại hợp đồng (employment\_type), phòng ban (department). Các tham số lọc được đồng bộ với URL query string để có thể chia sẻ link kết quả tìm kiếm.
+
+\textbf{Chi tiết việc làm} hiển thị đầy đủ thông tin job, danh sách kênh đăng tuyển bên ngoài (job\_channels với status = posted). Kiểm tra trạng thái ứng tuyển của candidate đang đăng nhập: nếu đã nộp $\to$ hiển thị badge ``Đã ứng tuyển'', nếu chưa $\to$ hiển thị nút ``Ứng tuyển ngay''.
+
+\textbf{Form nộp đơn} (modal overlay) yêu cầu candidate upload file CV (PDF/DOC/DOCX, tối đa 5MB) và nhập thư giới thiệu (tùy chọn, tối đa 2000 ký tự). CV được upload lên Appwrite Storage, sau đó tạo record trong bảng \texttt{applications} và \texttt{files} trong một transaction.
+
+\subsubsection*{Các API của Module A}
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|c|l|l|p{5cm}|}
+        \hline
+        \textbf{Method} & \textbf{Endpoint} & \textbf{Auth} & \textbf{Mô tả} \\ \hline
+        GET & \texttt{/api/jobs} & Public & Danh sách jobs active, hỗ trợ filter \\ \hline
+        GET & \texttt{/api/jobs/[slug]} & Public & Chi tiết job + job\_channels \\ \hline
+        POST & \texttt{/api/jobs/[slug]/apply} & Candidate & Tạo đơn ứng tuyển, upload CV \\ \hline
+    \end{tabular}
+    \caption{\textit{Danh sách API Module A}}
+\end{table}
+
+\subsubsection*{Thông báo hệ thống (Module A)}
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|l|p{8cm}|}
+        \hline
+        \textbf{Mã} & \textbf{Loại} & \textbf{Nội dung} \\ \hline
+        MSG-A-001 & Success & Nộp đơn thành công! Chúng tôi sẽ liên hệ với bạn sớm. \\ \hline
+        MSG-A-002 & Error & Không tìm thấy việc làm này hoặc việc làm đã đóng. \\ \hline
+        MSG-A-004 & Warning & Bạn đã nộp đơn cho vị trí này trước đó. \\ \hline
+        MSG-A-006 & Validation & Vui lòng tải lên file CV định dạng PDF, DOC hoặc DOCX. \\ \hline
+        MSG-A-007 & Validation & File CV không được vượt quá 5MB. \\ \hline
+    \end{tabular}
+    \caption{\textit{Danh sách thông báo Module A}}
+\end{table}
+
+\subsubsection*{Minh họa giao diện}
+\FigDDCaption{A}{1}{Module A --- Trang chủ}
+\FigDDCaption{A}{2}{Module A --- Trang danh sách việc làm}
+\FigDDCaption{A}{3}{Module A --- Trang chi tiết việc làm}
+\FigDDCaption{A}{4}{Module A --- Modal nộp đơn ứng tuyển}
+
+\subsection{Module B --- Xác thực (Authentication)}
+\textbf{Người phụ trách:} Lê Huỳnh Huy
+
+\subsubsection*{Danh sách chức năng}
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|c|l|l|}
+        \hline
+        \textbf{STT} & \textbf{Chức năng} & \textbf{Route} \\ \hline
+        1 & Đăng nhập & \texttt{/(auth)/login} \\ \hline
+        2 & Đăng ký & \texttt{/(auth)/register} \\ \hline
+        3 & Quên mật khẩu (gửi OTP reset) & \texttt{/(auth)/forgot-password} \\ \hline
+        4 & Xác minh email bằng OTP & \texttt{/(auth)/verify-email} \\ \hline
+        5 & Đăng xuất & \texttt{POST /api/auth/logout} \\ \hline
+        6 & Lấy thông tin user hiện tại & \texttt{GET /api/auth/me} \\ \hline
+        7 & Đổi mật khẩu & \texttt{POST /api/auth/password} \\ \hline
+    \end{tabular}
+    \caption{\textit{Danh sách chức năng Module B}}
+\end{table}
+
+\subsubsection*{Luồng xử lý Đăng nhập}
+\begin{enumerate}
+    \item Validate Zod schema: email format, password không rỗng.
+    \item Tra cứu user theo email từ database.
+    \item Kiểm tra \texttt{is\_active = true} (nếu false $\to$ 403 tài khoản bị khóa).
+    \item So sánh password với \texttt{bcrypt.compare(password, password\_hash)}.
+    \item Ký JWT HS256 (\texttt{signSessionToken}), hết hạn sau 7 ngày.
+    \item Set httpOnly cookie: \texttt{session=<jwt>; HttpOnly; SameSite=Lax; Max-Age=604800}.
+    \item Cập nhật \texttt{last\_login\_at} (fire-and-forget, không block response).
+    \item Trả về PublicUser (không bao gồm password\_hash).
+    \item Client-side redirect theo role: candidate $\to$ \texttt{/candidate}, admin/hr/interviewer $\to$ \texttt{/dashboard}.
+\end{enumerate}
+
+\subsubsection*{Luồng xử lý Đăng ký}
+\begin{enumerate}
+    \item Validate Zod: email hợp lệ, password $\ge$ 8 ký tự, fullName không rỗng.
+    \item Kiểm tra email trùng lặp (\texttt{findUnique WHERE email}).
+    \item Hash password: \texttt{bcrypt.hash(password, 12)} (12 salt rounds).
+    \item Tạo user với \texttt{role = 'candidate'}, \texttt{email\_verified = false}.
+    \item Tạo OTP 6 số ngẫu nhiên, hết hạn sau 15 phút, type = \texttt{email\_verify}.
+    \item Lưu OTP vào bảng \texttt{otp\_tokens}.
+    \item Gửi email qua Resend API với template xác minh.
+    \item Redirect đến trang \texttt{/verify-email} để nhập OTP.
+\end{enumerate}
+
+\subsubsection*{Quy tắc validation form Đăng ký}
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|c|l|l|l|}
+        \hline
+        \textbf{STT} & \textbf{Trường} & \textbf{Điều kiện} & \textbf{Thông báo lỗi} \\ \hline
+        1 & Họ và tên & Bắt buộc, 2--100 ký tự & MSG-B-008 \\ \hline
+        2 & Email & Bắt buộc, định dạng hợp lệ & MSG-B-005 \\ \hline
+        3 & Số điện thoại & Tùy chọn; 10--15 chữ số & --- \\ \hline
+        4 & Mật khẩu & Bắt buộc, tối thiểu 8 ký tự & MSG-B-006 \\ \hline
+        5 & Xác nhận mật khẩu & Phải khớp với mật khẩu & MSG-B-010 \\ \hline
+    \end{tabular}
+    \caption{\textit{Quy tắc validation form Đăng ký}}
+\end{table}
+
+\subsubsection*{Các API của Module B}
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|c|l|l|l|}
+        \hline
+        \textbf{No} & \textbf{Method} & \textbf{Endpoint} & \textbf{Mô tả} \\ \hline
+        1 & POST & \texttt{/api/auth/login} & Đăng nhập, phát JWT cookie \\ \hline
+        2 & POST & \texttt{/api/auth/register} & Tạo user + gửi OTP xác minh \\ \hline
+        3 & POST & \texttt{/api/auth/logout} & Xóa session cookie \\ \hline
+        4 & POST & \texttt{/api/auth/otp/send} & Gửi OTP (xác minh / reset) \\ \hline
+        5 & POST & \texttt{/api/auth/otp/verify-email} & Kích hoạt tài khoản bằng OTP \\ \hline
+        6 & POST & \texttt{/api/auth/otp/reset-password} & Đặt lại mật khẩu bằng OTP \\ \hline
+        7 & GET & \texttt{/api/auth/me} & Thông tin user đang đăng nhập \\ \hline
+        8 & POST & \texttt{/api/auth/password} & Đổi mật khẩu khi đã đăng nhập \\ \hline
+    \end{tabular}
+    \caption{\textit{Danh sách API Module B}}
+\end{table}
+
+\subsubsection*{Minh họa giao diện}
+\FigDDCaption{B}{1}{Module B --- Trang đăng nhập}
+\FigDDCaption{B}{2}{Module B --- Trang đăng ký}
+\FigDDCaption{B}{3}{Module B --- Quên mật khẩu --- bước 1}
+\FigDDCaption{B}{4}{Module B --- Quên mật khẩu --- gửi email}
+\FigDDCaption{B}{5}{Module B --- Quên mật khẩu --- bước 2}
+
+\subsection{Module C --- Khu vực Ứng viên (Candidate Area)}
+\textbf{Người phụ trách:} Nguyễn Quang Sáng
+
+Module C tập trung toàn bộ chức năng của ứng viên trong \textbf{một trang duy nhất} \texttt{/candidate} với bố cục 3 Tab, không có sub-route.
+
+\subsubsection*{Cấu trúc 3 Tab}
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|c|l|p{9cm}|}
+        \hline
+        \textbf{Tab} & \textbf{Tên hiển thị} & \textbf{Mô tả} \\ \hline
+        1 & Đơn ứng tuyển & Danh sách đơn đã nộp với badge trạng thái, link CV, link đến job \\ \hline
+        2 & Lịch phỏng vấn & Lịch phỏng vấn do HR lên, hiển thị ngày giờ, hình thức, link tham gia \\ \hline
+        3 & Hồ sơ cá nhân & Xem/chỉnh sửa thông tin; đổi mật khẩu; xác minh email; quản lý file CV \\ \hline
+    \end{tabular}
+    \caption{\textit{Cấu trúc 3 Tab của Module C}}
+\end{table}
+
+\subsubsection*{Chức năng Tab Đơn ứng tuyển}
+Hiển thị danh sách tất cả các đơn ứng tuyển của candidate, sắp xếp theo thời gian nộp mới nhất. Mỗi thẻ (card) hiển thị: tên vị trí (link đến /jobs/[slug]), ngày ứng tuyển, badge trạng thái (applied/screening/interviewing/offered/hired/rejected), link tải CV và thư giới thiệu.
+
+\subsubsection*{Chức năng Tab Lịch phỏng vấn}
+Hiển thị tất cả lịch phỏng vấn do HR tạo, liên kết với các đơn của candidate. Thông tin hiển thị bao gồm: vị trí phỏng vấn, thời gian (định dạng tiếng Việt), hình thức (Video/Điện thoại/Trực tiếp/Technical), thời lượng, link họp trực tuyến và ghi chú của HR.
+
+\subsubsection*{Chức năng Tab Hồ sơ cá nhân}
+\begin{itemize}
+    \item \textbf{Xem/Chỉnh sửa hồ sơ:} Cập nhật thông tin cơ bản (họ tên, email, điện thoại), thông tin nghề nghiệp (chức danh, bio, địa điểm, số năm kinh nghiệm), liên kết mạng xã hội (LinkedIn, GitHub).
+    \item \textbf{Đổi mật khẩu:} Xác nhận mật khẩu cũ, nhập và xác nhận mật khẩu mới (tối thiểu 8 ký tự).
+    \item \textbf{Xác minh email OTP:} Gửi OTP qua email, nhập mã 6 số để kích hoạt badge xác minh. Tính năng cooldown 60 giây sau mỗi lần gửi.
+    \item \textbf{Quản lý file CV:} Upload file (PDF/DOC/DOCX, $\le$ 5MB) lên Appwrite, đổi tên, xóa file khỏi hệ thống.
+\end{itemize}
+
+\subsubsection*{Danh sách API Module C}
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|c|l|l|l|}
+        \hline
+        \textbf{No} & \textbf{Method} & \textbf{Endpoint} & \textbf{Mô tả} \\ \hline
+        C-01 & GET & \texttt{/api/candidate/applications} & Danh sách đơn ứng tuyển \\ \hline
+        C-02 & GET & \texttt{/api/candidate/interviews} & Danh sách lịch phỏng vấn \\ \hline
+        C-03 & GET & \texttt{/api/candidate/profile} & Đọc hồ sơ + thông tin user \\ \hline
+        C-04 & POST & \texttt{/api/candidate/profile} & Cập nhật hồ sơ, refresh JWT \\ \hline
+        C-05 & PATCH & \texttt{/api/auth/password} & Đổi mật khẩu \\ \hline
+        C-08 & GET & \texttt{/api/candidate/files} & Danh sách file cá nhân \\ \hline
+        C-09 & POST & \texttt{/api/candidate/files} & Upload metadata file \\ \hline
+        C-10 & PUT & \texttt{/api/candidate/files/[id]} & Đổi tên file \\ \hline
+        C-11 & DELETE & \texttt{/api/candidate/files/[id]} & Xóa file \\ \hline
+    \end{tabular}
+    \caption{\textit{Danh sách API Module C}}
+\end{table}
+
+\subsubsection*{Minh họa giao diện}
+\FigDDCaption{C}{1}{Module C --- Không gian ứng viên, tab đơn ứng tuyển}
+\FigDDCaption{C}{2}{Module C --- Không gian ứng viên, tab lịch phỏng vấn}
+\FigDDCaption{C}{3}{Module C --- Không gian ứng viên, tab hồ sơ cá nhân}
+
+\subsection{Module D --- Quản trị nội bộ (Dashboard)}
+\textbf{Người phụ trách:} Nguyễn Minh Khôi
+
+Dashboard là trang tổng quan dành cho Admin, HR và Interviewer, hiển thị các chỉ số KPI quan trọng:
+\begin{itemize}
+    \item Tổng số tin tuyển dụng đang hoạt động.
+    \item Số đơn ứng tuyển mới trong tuần/tháng.
+    \item Số buổi phỏng vấn sắp diễn ra.
+    \item Biểu đồ đường theo dõi xu hướng ứng tuyển theo thời gian.
+    \item Biểu đồ cột so sánh hiệu quả các kênh đăng tuyển.
+\end{itemize}
+
+Module D cũng bao gồm trang quản lý tài khoản người dùng (\texttt{/admin/users}) dành riêng cho Admin: xem danh sách, lọc theo role, bật/tắt tài khoản, và hỗ trợ reset mật khẩu.
+
+\subsubsection*{Minh họa giao diện}
+\FigDDCaption{D}{1}{Module D --- Trang Dashboard}
+\FigDDCaption{D}{2}{Module D --- Trang quản lý emails}
+
+\subsection{Module E --- Quản lý Đơn ứng tuyển (Applications)}
+\textbf{Người phụ trách:} Lê Đức Anh Tuấn
+
+\subsubsection*{Danh sách chức năng}
+\begin{itemize}
+    \item \textbf{Pipeline tuyển dụng:} Hiển thị tất cả đơn ứng tuyển dưới dạng danh sách hoặc Kanban board, hỗ trợ lọc theo job, trạng thái, nguồn (source\_channel).
+    \item \textbf{Chi tiết đơn ứng tuyển:} Xem đầy đủ hồ sơ ứng viên, lịch sử thay đổi trạng thái, danh sách buổi phỏng vấn và email đã gửi.
+    \item \textbf{Cập nhật trạng thái:} Chuyển trạng thái đơn qua các bước pipeline, ghi chú lý do (lưu vào \texttt{application\_status\_history}).
+    \item \textbf{Xem CV:} Tải xuống hoặc xem trực tiếp file CV của ứng viên.
+\end{itemize}
+
+\subsubsection*{Vòng đời trạng thái đơn ứng tuyển}
+
+Trạng thái của mỗi đơn ứng tuyển tuân theo quy trình tuyến tính với khả năng từ chối ở bất kỳ bước nào:
+
+\begin{center}
+    \texttt{applied} $\to$ \texttt{screening} $\to$ \texttt{interviewing} $\to$ \texttt{offered} $\to$ \texttt{hired}\\
+    \hspace{5cm} \texttt{rejected} (từ bất kỳ bước nào)
+\end{center}
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Trạng thái} & \textbf{Ý nghĩa} & \textbf{Bước tiếp theo} \\ \hline
+        applied & Vừa nộp đơn & screening hoặc rejected \\ \hline
+        screening & Đang sàng lọc hồ sơ & interviewing hoặc rejected \\ \hline
+        interviewing & Đang trong quá trình phỏng vấn & offered hoặc rejected \\ \hline
+        offered & Đã nhận được lời mời & hired hoặc rejected \\ \hline
+        hired & Đã được tuyển dụng & Kết thúc \\ \hline
+        rejected & Bị từ chối & Kết thúc \\ \hline
+    \end{tabular}
+    \caption{\textit{Vòng đời trạng thái đơn ứng tuyển}}
+\end{table}
+
+\subsubsection*{Minh họa giao diện}
+\FigDDCaption{E}{1}{Module E --- Trang quản lý đơn ứng tuyển}
+\FigDDCaption{E}{2}{Module E --- Chi tiết đơn --- tab lịch sử trạng thái}
+\FigDDCaption{E}{3}{Module E --- Chi tiết đơn --- tab phỏng vấn}
+\FigDDCaption{E}{4}{Module E --- Chi tiết đơn --- tab nhật ký email}
+\FigDDCaption{E}{5}{Module E --- Form đổi trạng thái đơn}
+\FigDDCaption{E}{6}{Module E --- Form lên lịch phỏng vấn}
+\FigDDCaption{E}{7}{Module E --- Form gửi email}
+
+\subsection{Module F --- Quản lý Phỏng vấn (Interviews)}
+\textbf{Người phụ trách:} Bùi Minh Khôi
+
+\subsubsection*{Danh sách chức năng}
+\begin{itemize}
+    \item \textbf{Danh sách lịch phỏng vấn:} Xem toàn bộ lịch PV theo ngày/tuần, lọc theo trạng thái (scheduled/completed/cancelled).
+    \item \textbf{Tạo lịch phỏng vấn:} Chọn loại phỏng vấn (phone/video/onsite/technical), ngày giờ, thời lượng, người phỏng vấn, thêm link họp hoặc địa điểm và ghi chú.
+    \item \textbf{Chi tiết buổi phỏng vấn:} Xem đầy đủ thông tin buổi PV và scorecard đánh giá.
+    \item \textbf{Chấm điểm (Scorecard):} Nhập điểm kỹ thuật, giao tiếp, phù hợp văn hóa (thang 1--10), điểm tổng thể, nhận xét điểm mạnh/yếu và quyết định pass/fail/hold.
+\end{itemize}
+
+\subsubsection*{Các loại hình phỏng vấn}
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Loại} & \textbf{Mô tả} & \textbf{Trường bắt buộc} \\ \hline
+        phone & Phỏng vấn qua điện thoại & Không cần link/địa điểm \\ \hline
+        video & Phỏng vấn video (Zoom, Meet...) & meeting\_link \\ \hline
+        onsite & Phỏng vấn trực tiếp & location \\ \hline
+        technical & Bài test kỹ thuật & Tùy trường hợp \\ \hline
+    \end{tabular}
+    \caption{\textit{Các loại hình phỏng vấn}}
+\end{table}
+
+\subsubsection*{Minh họa giao diện}
+\FigDDCaption{F}{1}{Module F --- Trang danh sách phỏng vấn}
+\FigDDCaption{F}{2}{Module F --- Trang tạo mới phỏng vấn}
+\FigDDCaption{F}{3}{Module F --- Trang chi tiết phỏng vấn}
+\FigDDCaption{F}{4}{Module F --- Trang điểm đánh giá phỏng vấn}
+
+\subsection{Module G --- Quản lý Công việc (Jobs)}
+\textbf{Người phụ trách:} Đoàn Trí Hùng và Trương Minh Nguyên
+
+\subsubsection*{Danh sách chức năng}
+\begin{itemize}
+    \item \textbf{Danh sách tin tuyển dụng:} Xem và lọc tất cả tin theo trạng thái (draft/active/closed/archived).
+    \item \textbf{Tạo tin tuyển dụng mới:} Điền đầy đủ thông tin công việc, kỹ năng yêu cầu, mức lương, số lượng tuyển và lưu ở chế độ nháp hoặc xuất bản ngay.
+    \item \textbf{Chỉnh sửa tin:} Cập nhật nội dung, thay đổi trạng thái (publish/đóng/archive).
+    \item \textbf{Quản lý kênh đăng tin (Multi-channel):} Thêm kênh phân phối (LinkedIn, ITviec, TopCV...), nhập URL bài đăng ngoài, theo dõi trạng thái từng kênh.
+\end{itemize}
+
+\subsubsection*{Vòng đời trạng thái tin tuyển dụng}
+\begin{center}
+    \texttt{draft} $\to$ \texttt{active} $\to$ \texttt{closed} $\to$ \texttt{archived}
+\end{center}
+
+Chỉ các tin ở trạng thái \texttt{active} mới được hiển thị trên trang công khai \texttt{/jobs} và có thể nhận đơn ứng tuyển. Trường \texttt{slug} được tự động tạo từ \texttt{title}, thêm suffix UUID nếu bị trùng, đảm bảo URL luôn duy nhất và thân thiện với SEO.
+
+\subsubsection*{Minh họa giao diện}
+\FigDDCaption{G}{1}{Module G --- Trang danh sách việc làm}
+\FigDDCaption{G}{2}{Module G --- Trang tạo mới việc làm}
+\FigDDCaption{G}{3}{Module G --- Trang chỉnh sửa việc làm}
+\FigDDCaption{G}{4}{Module G --- Trang quản lý kênh đăng tin}

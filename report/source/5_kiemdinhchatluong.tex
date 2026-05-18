@@ -1,0 +1,116 @@
+Phần tài liệu kiểm thử tổng hợp các kịch bản kiểm tra (test case) được thiết kế để đảm bảo chất lượng và tính đúng đắn của hệ thống ATS. Tài liệu kiểm thử gồm 4 loại chính: UTC (User Test Case), UTE (Unit Test Evidence), ITC (Integration Test Case) và ITE (Integration Test Evidence).
+
+\subsection{Chiến lược kiểm thử}
+Nhóm áp dụng chiến lược kiểm thử phân tầng (layered testing), bao gồm:
+\begin{itemize}
+    \item \textbf{Unit Testing:} Kiểm thử từng API endpoint độc lập, bao gồm cả trường hợp thành công và thất bại (valid/invalid input, auth errors, business logic errors).
+    \item \textbf{Integration Testing:} Kiểm thử các luồng nghiệp vụ hoàn chỉnh (E2E flows) bao gồm nhiều bước liên tiếp, ví dụ: luồng đăng ký → xác minh email → đăng nhập → nộp đơn.
+    \item \textbf{Manual Testing:} Kiểm thử giao diện thủ công theo các kịch bản người dùng thực tế.
+\end{itemize}
+
+\subsection{Kiểm thử Module A — Khu vực Công khai}
+
+\begin{table}[H]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{2.2cm}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+        \hline
+        \textbf{TC ID} & \textbf{Mô tả} & \textbf{Input} & \textbf{Kết quả mong đợi} \\ \hline
+        A-TC-001 & Xem trang chủ khi chưa đăng nhập & Không có session & Hiển thị CTA Đăng nhập/Đăng ký \\ \hline
+        A-TC-002 & Xem trang chủ khi đã đăng nhập & Session hợp lệ & Hiển thị UserNav, CTA Xem việc làm \\ \hline
+        A-TC-003 & Tìm kiếm job theo keyword & keyword=``frontend'' & Danh sách job có chứa từ ``frontend'' \\ \hline
+        A-TC-004 & Lọc job theo loại hợp đồng & type=``full\_time'' & Chỉ hiển thị job full-time \\ \hline
+        A-TC-005 & Xem chi tiết job tồn tại & slug hợp lệ & Hiển thị đầy đủ thông tin job \\ \hline
+        A-TC-006 & Xem job không tồn tại & slug sai & Thông báo lỗi 404 \\ \hline
+        A-TC-007 & Nộp đơn khi chưa đăng nhập & Không có session & Redirect đến trang đăng nhập \\ \hline
+        A-TC-008 & Nộp đơn hợp lệ & CV hợp lệ + session candidate & 201 Created, MSG-A-001 \\ \hline
+        A-TC-009 & Nộp đơn trùng & Đã nộp đơn trước đó & 409 Conflict, MSG-A-004 \\ \hline
+        A-TC-010 & Upload CV sai định dạng & File .exe & Lỗi validation MSG-A-006 \\ \hline
+        A-TC-011 & Upload CV vượt quá 5MB & File 6MB & Lỗi validation MSG-A-007 \\ \hline
+    \end{tabularx}
+    \caption{\textit{Test Cases Module A}}
+\end{table}
+
+\subsection{Kiểm thử Module B — Xác thực}
+
+\begin{table}[H]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{2.2cm}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+        \hline
+        \textbf{TC ID} & \textbf{Mô tả} & \textbf{Input} & \textbf{Kết quả mong đợi} \\ \hline
+        B-TC-001 & Đăng nhập thành công & Email/pass đúng & 200 + JWT cookie \\ \hline
+        B-TC-002 & Đăng nhập sai mật khẩu & Pass sai & 401 + MSG-B-001 \\ \hline
+        B-TC-003 & Đăng nhập email không tồn tại & Email không có & 401 + MSG-B-001 \\ \hline
+        B-TC-004 & Đăng nhập tài khoản bị khóa & is\_active=false & 403 + MSG-B-004 \\ \hline
+        B-TC-005 & Đăng ký thành công & Thông tin hợp lệ & 201 + gửi OTP email \\ \hline
+        B-TC-006 & Đăng ký email đã tồn tại & Email trùng & 409 + MSG-B-003 \\ \hline
+        B-TC-007 & Đăng ký mật khẩu yếu & Pass < 8 ký tự & 400 + MSG-B-006 \\ \hline
+        B-TC-008 & Xác minh email OTP đúng & OTP hợp lệ & 200 + email\_verified=true \\ \hline
+        B-TC-009 & Xác minh email OTP sai & OTP sai & 400 + MSG-B-007 \\ \hline
+        B-TC-010 & Xác minh email OTP hết hạn & OTP > 15 phút & 400 + MSG-B-007 \\ \hline
+        B-TC-011 & Đặt lại mật khẩu thành công & OTP + pass mới hợp lệ & 200 + MSG-B-011 \\ \hline
+        B-TC-012 & Đổi mật khẩu thành công & Pass cũ đúng + pass mới & 200 + MSG-B-014 \\ \hline
+        B-TC-013 & Đổi mật khẩu sai pass cũ & Pass cũ sai & 401 + MSG-B-009 \\ \hline
+    \end{tabularx}
+    \caption{\textit{Test Cases Module B}}
+\end{table}
+
+\subsection{Kiểm thử Module C — Khu vực Ứng viên}
+
+\begin{table}[H]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{2.2cm}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+        \hline
+        \textbf{TC ID} & \textbf{Mô tả} & \textbf{Điều kiện} & \textbf{Kết quả mong đợi} \\ \hline
+        C-TC-001 & Xem danh sách đơn ứng tuyển & Đăng nhập candidate & Hiển thị tất cả đơn đã nộp \\ \hline
+        C-TC-002 & Xem lịch phỏng vấn & Có lịch PV được tạo & Hiển thị đúng thông tin PV \\ \hline
+        C-TC-003 & Cập nhật hồ sơ thành công & Dữ liệu hợp lệ & 200 + C-SUC-001 \\ \hline
+        C-TC-004 & Upload file CV hợp lệ & PDF $\leq$ 5MB & 201 + C-SUC-005 \\ \hline
+        C-TC-005 & Upload file vượt dung lượng & File > 5MB & Lỗi C-ERR-005 \\ \hline
+        C-TC-006 & Đổi tên file & Tên mới hợp lệ & 200 + C-SUC-006 \\ \hline
+        C-TC-007 & Xóa file & File thuộc user & 200 + C-SUC-007 \\ \hline
+        C-TC-008 & Truy cập khi không phải candidate & role = hr & 401 Unauthorized \\ \hline
+    \end{tabularx}
+    \caption{\textit{Test Cases Module C}}
+\end{table}
+
+\subsection{Kiểm thử Module G — Quản lý Công việc}
+
+\begin{table}[H]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{2.2cm}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+        \hline
+        \textbf{TC ID} & \textbf{Mô tả} & \textbf{Điều kiện} & \textbf{Kết quả mong đợi} \\ \hline
+        G-TC-001 & Tạo tin tuyển dụng mới & HR đăng nhập, dữ liệu hợp lệ & 201 + job status=draft \\ \hline
+        G-TC-002 & Đăng tin lên trạng thái active & HR thay đổi status & Job hiện trên /jobs \\ \hline
+        G-TC-003 & Đóng tin tuyển dụng & HR thay đổi status=closed & Ẩn khỏi /jobs \\ \hline
+        G-TC-004 & Thêm kênh đăng tin & HR thêm LinkedIn & Tạo job\_channel record \\ \hline
+        G-TC-005 & Thêm kênh đã tồn tại & Kênh đã có & 409 (Unique constraint) \\ \hline
+    \end{tabularx}
+    \caption{\textit{Test Cases Module G}}
+\end{table}
+
+\subsection{Kiểm thử tích hợp (Integration Test Cases)}
+Các kịch bản kiểm thử E2E quan trọng bao gồm:
+
+\begin{table}[H]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{2.2cm}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+        \hline
+        \textbf{ITC ID} & \textbf{Tên luồng} & \textbf{Các bước} \\ \hline
+        ITC-001 & Đăng ký → Xác minh → Đăng nhập & Đăng ký tài khoản → Nhận OTP email → Xác minh → Đăng nhập thành công \\ \hline
+        ITC-002 & Tuyển dụng đầy đủ & HR tạo job → Đăng active → Candidate xem job → Nộp đơn → HR cập nhật trạng thái \\ \hline
+        ITC-003 & Phỏng vấn đầy đủ & HR tạo lịch PV → Candidate xem lịch → Interviewer chấm điểm → HR cập nhật kết quả \\ \hline
+        ITC-004 & Quên mật khẩu & Nhập email → Nhận OTP → Đặt lại mật khẩu → Đăng nhập với mật khẩu mới \\ \hline
+    \end{tabularx}
+    \caption{\textit{Integration Test Cases (ITC)}}
+\end{table}

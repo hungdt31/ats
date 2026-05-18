@@ -1,0 +1,50 @@
+\section{Tổng kết}
+\sectiondivider{6}
+\begin{frame}{Kết quả đạt được}
+  \small
+  \begin{itemize}
+    \item \textbf{Kỹ thuật:} Next.js~16 + Prisma~7 + MariaDB; JWT tự triển khai; API REST envelope thống nhất; TypeScript end-to-end.
+    \item \textbf{Nghiệp vụ:} 7 module (A--G), hơn 30 API, tài liệu Detail Design \& test cases đi kèm.
+    \item \textbf{Quy trình:} Git nhánh tính năng, phân công theo module, tài liệu hóa đầy đủ.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Hạn chế \& hướng phát triển}
+  \small
+  \begin{itemize}
+    \item Email production (Resend) \& analytics có thể mở rộng theo ngân sách.
+    \item Refresh token tự động; bổ sung test tự động (Vitest/Jest) khi có thời gian.
+    \item Hoàn thiện báo cáo phân tích nâng cao trên dashboard.
+  \end{itemize}
+\end{frame}
+
+% Slide cảm ơn: nền pastel + hai vòng mờ góc (theo mẫu thuyết trình), logo phía trên, lời chúc căn giữa.
+\begin{frame}[plain]
+  \begin{tikzpicture}[remember picture,overlay]
+    % Nền xanh rất nhạt, gần một màu
+    \fill[hcmutlight!72]
+      (current page.south west) rectangle (current page.north east);
+    % Vòng tròn lớn, mờ, nhô từ góc trên-trái \& dưới-phải
+    \fill[hcmutblue, opacity=0.09]
+      ($(current page.north west) + (-0.12\paperwidth, 0.10\paperheight)$) circle ({0.46\paperwidth});
+    \fill[hcmutblue, opacity=0.09]
+      ($(current page.south east) + (0.11\paperwidth, -0.09\paperheight)$) circle ({0.43\paperwidth});
+  \end{tikzpicture}
+
+  \begin{minipage}[c][0.9\paperheight]{\textwidth}
+    \centering
+    \vspace*{1cm}
+    \includegraphics[width=24mm]{image/HCMUT_official_logo.png}
+
+    \vspace{0.95cm}
+    {\LARGE \bfseries \color{hcmutblue}%
+      Xin cảm ơn công ty IVS và các bạn đã lắng nghe!}
+
+    \vspace{0.65cm}
+    {\large \textbf{Nhóm 02} \quad\textemdash\quad Chương trình IVS $\times$ RD--SEAI}
+
+    \vspace{0.55cm}
+    {\normalsize
+      Kính chúc công ty IVS ngày càng phát triển, gặt hái được nhiều thành công.}
+  \end{minipage}
+\end{frame}

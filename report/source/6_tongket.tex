@@ -1,0 +1,70 @@
+\subsection{Kết quả đạt được}
+Sau quá trình nghiên cứu, thiết kế và xây dựng, nhóm đã hoàn thành hệ thống ATS với các kết quả sau:
+
+\subsubsection*{Về mặt kỹ thuật}
+\begin{itemize}
+    \item \textbf{Kiến trúc hoàn chỉnh:} Xây dựng thành công ứng dụng fullstack với Next.js 16 App Router, tích hợp Prisma ORM với MariaDB, triển khai JWT authentication tự implement không phụ thuộc thư viện bên ngoài.
+    \item \textbf{Type Safety end-to-end:} Sử dụng TypeScript strict mode xuyên suốt, từ database schema (Prisma) đến API types, React Query hooks và component props, giảm thiểu lỗi runtime.
+    \item \textbf{Hệ thống API RESTful chuẩn:} Thiết kế và triển khai hơn 30 API endpoint với response envelope thống nhất (\texttt{\{success, data\}} hoặc \texttt{\{success, error\}}), phân quyền RBAC chặt chẽ.
+    \item \textbf{Giao diện hiện đại và responsive:} Áp dụng Tailwind CSS 4 và shadcn/ui để tạo giao diện nhất quán, hỗ trợ Dark Mode và tương thích đa thiết bị.
+    \item \textbf{Hiệu suất tối ưu:} React Query caching giảm số lần gọi API không cần thiết; Server Components render HTML trên server tối ưu SEO và tốc độ tải trang.
+    \item \textbf{Bảo mật:} JWT lưu trong httpOnly cookie (chống XSS), bcrypt salt 12 rounds (chống brute force), OTP có thời hạn (chống replay attack).
+\end{itemize}
+
+\subsubsection*{Về mặt nghiệp vụ}
+\begin{itemize}
+    \item Hoàn thành 7 module chức năng (A--G) với 22 màn hình và hơn 30 API endpoints.
+    \item Xây dựng đầy đủ tài liệu thiết kế chi tiết (Detail Design) theo 10 Sheet chuẩn cho mỗi module.
+    \item Xây dựng bộ test cases (UTC, UTE, ITC, ITE) bao phủ các tình huống thành công, thất bại và edge cases.
+    \item Hệ thống phân quyền RBAC 4 cấp vận hành ổn định cho tất cả role người dùng.
+\end{itemize}
+
+\subsubsection*{Về mặt quy trình}
+\begin{itemize}
+    \item Thực hành quy trình phát triển phần mềm theo vòng đời thực tế (Software Project Lifecycle).
+    \item Quản lý mã nguồn bằng Git với phân nhánh theo tính năng và code review.
+    \item Phân công công việc rõ ràng theo module, mỗi thành viên chịu trách nhiệm một phân hệ từ đầu đến cuối.
+    \item Tài liệu hóa đầy đủ từ kiến trúc hệ thống, thiết kế database đến chi tiết từng màn hình.
+\end{itemize}
+
+\subsection{Đánh giá và nhìn nhận}
+
+\subsubsection*{Những điểm mạnh}
+\begin{itemize}
+    \item Stack công nghệ hiện đại, phù hợp với xu hướng thị trường và dễ tuyển dụng nhân lực.
+    \item Kiến trúc modular rõ ràng, dễ mở rộng thêm tính năng mà không ảnh hưởng các module khác.
+    \item Tài liệu chi tiết giúp onboard thành viên mới nhanh chóng.
+    \item Hệ thống bảo mật được thiết kế từ đầu (security by design).
+\end{itemize}
+
+\subsubsection*{Những hạn chế còn tồn tại}
+\begin{itemize}
+    \item Chưa tích hợp hệ thống gửi email thực sự (Resend API) trong môi trường production do chi phí.
+    \item Phần báo cáo phân tích (analytics/reports) chưa được hoàn thiện hoàn toàn theo kế hoạch ban đầu.
+    \item Chưa có cơ chế refresh token tự động, người dùng phải đăng nhập lại sau 7 ngày.
+    \item Chưa có unit test tự động (automated testing) bằng Jest/Vitest do giới hạn thời gian.
+\end{itemize}
+
+\subsection{Hướng phát triển trong tương lai}
+Dựa trên nền tảng đã xây dựng, hệ thống ATS có thể được mở rộng theo các hướng sau:
+
+\begin{enumerate}
+    \item \textbf{Tích hợp AI phân tích CV (Resume Parsing):} Sử dụng các API xử lý ngôn ngữ tự nhiên để tự động trích xuất thông tin từ CV ứng viên (kỹ năng, học vấn, kinh nghiệm), tính điểm phù hợp với yêu cầu của job và gợi ý ứng viên tiềm năng cho HR.
+
+    \item \textbf{Hệ thống thông báo realtime:} Tích hợp WebSocket hoặc Server-Sent Events (SSE) để thông báo realtime cho ứng viên khi trạng thái đơn thay đổi, thay vì phải F5 lại trang.
+
+    \item \textbf{Email automation pipeline:} Cấu hình hệ thống gửi email tự động theo trigger (khi status thay đổi, trước buổi phỏng vấn 1 ngày...) thông qua Resend hoặc AWS SES, loại bỏ việc gửi thủ công.
+
+    \item \textbf{Mobile App:} Phát triển ứng dụng di động (React Native hoặc Flutter) cho phép ứng viên nộp đơn và theo dõi tiến trình, HR duyệt hồ sơ mọi lúc mọi nơi.
+
+    \item \textbf{Dashboard Analytics nâng cao:} Bổ sung các biểu đồ phân tích chuyên sâu: tỷ lệ chuyển đổi từng bước pipeline, thời gian trung bình tuyển dụng (time-to-hire), nguồn ứng viên hiệu quả nhất, so sánh hiệu suất theo phòng ban.
+
+    \item \textbf{Tích hợp hệ thống lịch (Google Calendar / Outlook):} Đồng bộ lịch phỏng vấn trực tiếp lên ứng dụng lịch của người phỏng vấn và ứng viên, tự động gửi lời mời tham gia họp.
+
+    \item \textbf{Workflow tự động (Automation):} Cho phép HR thiết lập các quy tắc tự động: tự động chuyển trạng thái sau N ngày, tự động gửi email từ chối nếu không có phản hồi trong thời gian quy định.
+\end{enumerate}
+
+\subsection{Kết luận}
+Dự án xây dựng Hệ thống ATS là một hành trình học tập và thực hành thực sự có giá trị. Nhóm không chỉ nắm vững các công nghệ web hiện đại (Next.js, TypeScript, Prisma, React Query...) mà còn trải nghiệm trọn vẹn vòng đời phát triển phần mềm: từ phân tích yêu cầu, thiết kế kiến trúc, lập trình, kiểm thử đến tài liệu hóa.
+
+Chương trình đào tạo IVS x RD-SEAI đã cung cấp môi trường thực tế quý giá để nhóm áp dụng kiến thức học thuật vào bài toán thực tiễn, rèn luyện kỹ năng làm việc nhóm và khả năng tư duy hệ thống. Sản phẩm ATS hoàn thành không chỉ là một dự án học tập mà còn là nền tảng có thể tiếp tục phát triển thành giải pháp thực dụng phục vụ nhu cầu tuyển dụng của các doanh nghiệp vừa và nhỏ.
