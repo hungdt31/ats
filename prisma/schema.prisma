@@ -198,8 +198,8 @@ model jobs {
   status          jobs_status          @default(draft)
   expires_at      DateTime?            @db.Date
   published_at    DateTime?            @db.DateTime(0)
-  created_at      DateTime             @default(now()) @db.DateTime(0)
-  updated_at      DateTime             @default(now()) @db.DateTime(0)
+  created_at      DateTime             @default(now()) @map("created_at") @db.DateTime(0)
+  updated_at      DateTime             @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
   applications    applications[]
   job_channels    job_channels[]
   users           User                 @relation(fields: [created_by], references: [id], map: "fk_jobs_created_by")
@@ -311,6 +311,7 @@ enum jobs_employment_type {
 
 enum jobs_status {
   draft
+  pending
   active
   closed
   archived

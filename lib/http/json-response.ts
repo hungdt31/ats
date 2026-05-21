@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import type { ApiErrorBody } from "../../types/api";
+import type { ApiErrorBody } from "@/types/api";
 
 export function jsonError(
   status: number,

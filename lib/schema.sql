@@ -85,7 +85,7 @@ CREATE TABLE jobs (
     -- MySQL không có TEXT[] → dùng JSON array
     required_skills JSON         NULL     COMMENT 'Kỹ năng yêu cầu, VD: ["Java","Spring"]',
     headcount       SMALLINT     NOT NULL DEFAULT 1,
-    status          ENUM('draft','active','closed','archived') NOT NULL DEFAULT 'draft',
+    status          ENUM('draft','pending','active','closed','archived') NOT NULL DEFAULT 'draft',
     expires_at      DATE         NULL,
     published_at    DATETIME     NULL,
     created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

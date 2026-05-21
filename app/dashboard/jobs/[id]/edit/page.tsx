@@ -9,22 +9,17 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01FreeIcons } from "@hugeicons/core-free-icons";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { useDashboardJob, useUpdateDashboardJob } from "@/hooks/use-dashboard-jobs";
+import { useMe } from "@/hooks/use-me";
 
 const EMPLOYMENT_TYPES = [
   { value: "full_time", label: "Toàn thời gian (Full-time)" },
   { value: "part_time", label: "Bán thời gian (Part-time)" },
   { value: "contract", label: "Hợp đồng (Contract)" },
-];
-
-const STATUS_OPTIONS = [
-  { value: "draft", label: "Bản nháp (Draft)" },
-  { value: "active", label: "Đăng tuyển (Active)" },
-  { value: "closed", label: "Đã đóng (Closed)" },
-  { value: "archived", label: "Lưu trữ (Archived)" },
 ];
 
 type Params = Promise<{ id: string }>;
@@ -33,6 +28,8 @@ export default function EditJobPage(props: { params: Params }) {
   const router = useRouter();
   const params = React.use(props.params);
   const jobId = params.id;
+  const { data: user, isLoading: isUserLoading } = useMe();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const [title, setTitle] = useState("");
   const [department, setDepartment] = useState("");
@@ -50,6 +47,33 @@ export default function EditJobPage(props: { params: Params }) {
 
   const { data, isLoading } = useDashboardJob(jobId);
   const updateMutation = useUpdateDashboardJob(jobId);
+
+  const statusOptions = React.useMemo(() => {
+    if (user?.role === "admin") {
+      return [
+        { value: "pending", label: "Chờ duyệt (Pending)" },
+        { value: "active", label: "Đăng tuyển (Active)" },
+        { value: "closed", label: "Đã đóng (Closed)" },
+        { value: "archived", label: "Lưu trữ (Archived)" },
+      ];
+    }
+    const options = [
+      { value: "draft", label: "Bản nháp (Draft)" },
+      { value: "pending", label: "Chờ duyệt (Pending)" },
+    ];
+    if (status && !options.some((o) => o.value === status)) {
+      if (status === "active") {
+        options.push({ value: "active", label: "Đăng tuyển (Active)" });
+      } else if (status === "closed") {
+        options.push({ value: "closed", label: "Đã đóng (Closed)" });
+      } else if (status === "archived") {
+        options.push({ value: "archived", label: "Lưu trữ (Archived)" });
+      }
+    }
+    return options;
+  }, [user, status]);
+
+  const isStatusDisabled = user?.role !== "admin" && data?.status !== "draft" && data?.status !== "pending";
 
   useEffect(() => {
     if (data) {
@@ -78,6 +102,7 @@ export default function EditJobPage(props: { params: Params }) {
           setRequiredSkills("");
         }
       }
+      setIsInitialized(true);
     }
   }, [data]);
 
@@ -118,7 +143,7 @@ export default function EditJobPage(props: { params: Params }) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isUserLoading || !isInitialized) {
     return (
       <div className="flex flex-col gap-6 max-w-3xl mx-auto py-12 text-center text-muted-foreground">
         Đang tải thông tin tin tuyển dụng...
@@ -237,7 +262,7 @@ export default function EditJobPage(props: { params: Params }) {
               <Field>
                 <FieldLabel className="font-medium text-foreground">Hình thức làm việc</FieldLabel>
                 <Select value={employmentType} onValueChange={(val) => setEmploymentType(val)}>
-                  <SelectTrigger className="w-full h-10 rounded-2xl bg-background border-input/60">
+                  <SelectTrigger className="w-full h-10">
                     <SelectValue placeholder="Chọn hình thức" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
@@ -252,18 +277,48 @@ export default function EditJobPage(props: { params: Params }) {
 
               <Field>
                 <FieldLabel className="font-medium text-foreground">Trạng thái đăng tuyển</FieldLabel>
-                <Select value={status} onValueChange={(val) => setStatus(val)}>
-                  <SelectTrigger className="w-full h-10 rounded-2xl bg-background border-input/60">
-                    <SelectValue placeholder="Chọn trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl">
-                    {STATUS_OPTIONS.map((st) => (
-                      <SelectItem key={st.value} value={st.value}>
-                        {st.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {isStatusDisabled ? (
+                  <div className="flex h-10 items-center">
+                    {status === "active" && (
+                      <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-4 text-xs rounded-2xl">
+                        Đang tuyển (Active)
+                      </Badge>
+                    )}
+                    {status === "closed" && (
+                      <Badge variant="outline" className="px-3 py-6 text-xs rounded-2xl">
+                        Đã đóng (Closed)
+                      </Badge>
+                    )}
+                    {status === "archived" && (
+                      <Badge variant="destructive" className="px-3 py-1 text-xs rounded-2xl">
+                        Lưu trữ (Archived)
+                      </Badge>
+                    )}
+                    {status === "draft" && (
+                      <Badge variant="secondary" className="px-3 py-1 text-xs rounded-2xl">
+                        Bản nháp (Draft)
+                      </Badge>
+                    )}
+                    {status === "pending" && (
+                      <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-3 py-1 text-xs rounded-2xl">
+                        Chờ duyệt (Pending)
+                      </Badge>
+                    )}
+                  </div>
+                ) : (
+                  <Select value={status} onValueChange={(val) => setStatus(val)}>
+                    <SelectTrigger className="w-full h-10">
+                      <SelectValue placeholder="Chọn trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl">
+                      {statusOptions.map((st) => (
+                        <SelectItem key={st.value} value={st.value}>
+                          {st.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </Field>
             </div>
 

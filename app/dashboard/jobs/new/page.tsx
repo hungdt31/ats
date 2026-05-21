@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { useCreateDashboardJob } from "@/hooks/use-dashboard-jobs";
+import { useMe } from "@/hooks/use-me";
 
 const EMPLOYMENT_TYPES = [
   { value: "full_time", label: "Toàn thời gian (Full-time)" },
@@ -19,13 +20,11 @@ const EMPLOYMENT_TYPES = [
   { value: "contract", label: "Hợp đồng (Contract)" },
 ];
 
-const STATUS_OPTIONS = [
-  { value: "draft", label: "Bản nháp (Draft)" },
-  { value: "active", label: "Đăng tuyển (Active)" },
-];
-
 export default function NewJobPage() {
   const router = useRouter();
+  const { data: user, isLoading } = useMe();
+  const [isInitialized, setIsInitialized] = useState(false);
+
   const [title, setTitle] = useState("");
   const [department, setDepartment] = useState("");
   const [location, setLocation] = useState("");
@@ -39,6 +38,24 @@ export default function NewJobPage() {
   const [description, setDescription] = useState("");
   const [requirements, setRequirements] = useState("");
   const [benefits, setBenefits] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setStatus(user.role === "admin" ? "active" : "draft");
+      setIsInitialized(true);
+    }
+  }, [user]);
+
+  const statusOptions = user?.role === "admin"
+    ? [
+        { value: "active", label: "Đăng tuyển (Active)" },
+        { value: "closed", label: "Đã đóng (Closed)" },
+        { value: "archived", label: "Lưu trữ (Archived)" },
+      ]
+    : [
+        { value: "draft", label: "Bản nháp (Draft)" },
+        { value: "pending", label: "Chờ duyệt (Pending)" },
+      ];
 
   const createMutation = useCreateDashboardJob();
 
@@ -80,6 +97,14 @@ export default function NewJobPage() {
       toast.error(message);
     }
   };
+
+  if (isLoading || !isInitialized) {
+    return (
+      <div className="flex flex-col gap-6 max-w-3xl mx-auto py-12 text-center text-muted-foreground">
+        Đang tải thông tin...
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl mx-auto">
@@ -209,7 +234,7 @@ export default function NewJobPage() {
                     <SelectValue placeholder="Chọn trạng thái" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
-                    {STATUS_OPTIONS.map((st) => (
+                    {statusOptions.map((st) => (
                       <SelectItem key={st.value} value={st.value}>
                         {st.label}
                       </SelectItem>

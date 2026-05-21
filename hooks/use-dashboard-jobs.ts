@@ -83,3 +83,17 @@ export function useUpdateDashboardJobChannels(jobId: string) {
     },
   });
 }
+
+export function useApproveDashboardJob(jobId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      return apiPost<{ success: boolean }>(`/api/dashboard/jobs/${jobId}/approve`, undefined);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "jobs", jobId] });
+    },
+  });
+}
+

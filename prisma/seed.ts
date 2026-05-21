@@ -3,7 +3,7 @@ import "dotenv/config";
 import * as bcrypt from "bcrypt";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@prisma/client";
-import { slugify } from "../lib/utils/slugify";
+import { slugify } from "@/lib/utils/slugify";
 
 /**
  * Prisma 7 yêu cầu driver adapter khi instantiate PrismaClient.

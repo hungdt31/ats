@@ -15,9 +15,17 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "";
-
-    const where: { status?: jobs_status } = {};
-    if (status) where.status = status as jobs_status;
+    const where: any = {};
+    if (status) {
+      where.status = status as jobs_status;
+    }
+    if (session.user.role === "admin") {
+      if (where.status === "draft") {
+        where.status = { in: [] };
+      } else if (!where.status) {
+        where.status = { not: "draft" };
+      }
+    }
 
     const jobs = await prisma.jobs.findMany({
       where,
@@ -41,7 +49,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await getSession();
 
-  if (!session || (session.user.role !== "admin" && session.user.role !== "hr")) {
+  if (!session || (session.user.role !== "admin" && session.user.role !== "hr" && session.user.role !== "interviewer")) {
     return jsonError(401, "Bạn không có quyền tạo tin.");
   }
 
@@ -72,6 +80,14 @@ export async function POST(request: Request) {
       prisma.jobs.findUnique({ where: { slug: s }, select: { id: true } }).then(Boolean),
     );
 
+    // Chỉ Admin mới được chọn các trạng thái khác, HR/Interviewer tạo/sửa chỉ được chọn draft hoặc pending
+    let finalStatus = (status as jobs_status) || "draft";
+    if (session.user.role !== "admin") {
+      if (finalStatus !== "draft" && finalStatus !== "pending") {
+        finalStatus = "pending";
+      }
+    }
+
     const job = await prisma.jobs.create({
       data: {
         created_by: session.user.id,
@@ -87,7 +103,8 @@ export async function POST(request: Request) {
         employment_type: employment_type || "full_time",
         required_skills: required_skills ? (required_skills as string[]) : undefined,
         headcount: headcount ? parseInt(headcount, 10) : 1,
-        status: (status as jobs_status) || "draft",
+        status: finalStatus,
+        published_at: finalStatus === "active" ? new Date() : null,
         expires_at: expires_at ? new Date(expires_at) : null,
       },
     });
