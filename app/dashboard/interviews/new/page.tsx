@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowLeft01FreeIcons } from "@hugeicons/core-free-icons";
+import { ArrowLeft01FreeIcons, Plus } from "@hugeicons/core-free-icons";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
   useDashboardInterviewMetadata,
   useCreateDashboardInterview,
 } from "@/hooks/use-dashboard-interviews";
+import { Button } from "@/components/ui/button";
 
 const INTERVIEW_TYPES = [
   { value: "video", label: "Video Call (Online)" },
@@ -151,13 +152,13 @@ export default function NewInterviewPage(props: {
                 <label className="text-xs font-semibold text-foreground">
                   Hội đồng phỏng vấn <span className="text-destructive">*</span>
                 </label>
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setEvaluators([...evaluators, { user_id: "", role: "evaluator" }])}
-                  className="inline-flex h-8 items-center justify-center rounded-xl border border-input px-3 text-xs font-medium hover:bg-muted transition-colors cursor-pointer"
                 >
-                  + Thêm người phỏng vấn
-                </button>
+                  <HugeiconsIcon icon={Plus} className="size-4" />
+                </Button>
               </div>
 
               {isLoading ? (
@@ -203,9 +204,9 @@ export default function NewInterviewPage(props: {
                             <SelectValue placeholder="Chọn vai trò" />
                           </SelectTrigger>
                           <SelectContent className="rounded-2xl">
-                            <SelectItem value="evaluator">Evaluator (Chấm điểm)</SelectItem>
-                            <SelectItem value="observer">Observer (Quan sát)</SelectItem>
-                            <SelectItem value="final_reviewer">Final Reviewer (Kết luận)</SelectItem>
+                            <SelectItem value="evaluator">Chấm điểm</SelectItem>
+                            <SelectItem value="observer">Quan sát</SelectItem>
+                            <SelectItem value="final_reviewer">Kết luận</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -234,7 +235,7 @@ export default function NewInterviewPage(props: {
                   type="datetime-local"
                   value={scheduledAt}
                   onChange={(e) => setScheduledAt(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="h-10 px-3"
                   required
                 />
               </div>
@@ -248,7 +249,7 @@ export default function NewInterviewPage(props: {
                   step={15}
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="h-10 px-3"
                   required
                 />
               </div>
@@ -278,7 +279,7 @@ export default function NewInterviewPage(props: {
                   placeholder="https://meet.google.com/..."
                   value={meetingLink}
                   onChange={(e) => setMeetingLink(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="h-10 px-3"
                 />
               </div>
             )}
@@ -291,7 +292,7 @@ export default function NewInterviewPage(props: {
                   placeholder="Tầng 5, Phòng họp A..."
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="rounded-2xl h-10 px-3 border border-input/60 bg-background"
+                  className="h-10 px-3"
                 />
               </div>
             )}
@@ -303,18 +304,18 @@ export default function NewInterviewPage(props: {
                 placeholder="Chuẩn bị bài test, ghi chú cho ứng viên..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="rounded-2xl p-3 border border-input/60 bg-background"
+                className="p-3"
               />
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <button
+              <Button
                 type="submit"
+                size="lg"
                 disabled={createMutation.isPending}
-                className="flex h-10 items-center justify-center rounded-2xl bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
               >
                 {createMutation.isPending ? "Đang xử lý..." : "Lên lịch"}
-              </button>
+              </Button>
             </div>
           </form>
         </CardContent>

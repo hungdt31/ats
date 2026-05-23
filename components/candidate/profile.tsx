@@ -18,6 +18,7 @@ import {
   Delete02Icon,
   Mail01Icon,
   CheckmarkCircle01Icon,
+  Edit02FreeIcons,
 } from "@hugeicons/core-free-icons";
 import { useSendOtp, useVerifyEmail } from "@/hooks/use-auth";
 import { ApiError } from "@/lib/api-client";
@@ -26,6 +27,9 @@ import type { CandidateProfileData, useUpdateCandidateProfile } from "@/hooks/us
 import { useCandidateFiles } from "@/hooks/use-candidate-files";
 import { MAX_CANDIDATE_FILE_SIZE_MB } from "@/lib/file-upload-limits";
 import { useChangePassword } from "@/hooks/use-change-password";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useUploadAvatar } from "@/hooks/use-me";
+import { Spinner } from "@/components/ui/spinner";
 
 type Msg = { type: "success" | "error"; text: string };
 
@@ -36,6 +40,15 @@ type Props = {
 };
 
 export function CandidateProfile({ profileData, isLoading, updateProfileMutation }: Props) {
+  const { uploadAvatar, isUploading: isUploadingAvatar } = useUploadAvatar();
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await uploadAvatar(file);
+    }
+  };
+
   // ── Profile edit ──────────────────────────────────────────────────────────
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -170,17 +183,55 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
       <div className="lg:col-span-2">
         {!isEditMode ? (
           <Card className="h-full border-border/80">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <div className="space-y-1">
-                <CardTitle className="text-xl font-bold">
-                  {profileData?.fullName ?? "Chưa cập nhật"}
-                </CardTitle>
-                <span className="font-medium text-foreground">
-                  {profileData?.profile?.title ?? "—"}
-                </span>
+            <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border/30">
+              <div className="flex items-center gap-4">
+                <div className="relative group cursor-pointer size-16 rounded-full overflow-hidden border-2 border-primary/20">
+                  <Avatar className="!size-full">
+                    {profileData?.avatarUrl ? (
+                      <AvatarImage src={profileData.avatarUrl} alt={profileData?.fullName} />
+                    ) : (
+                      <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
+                        {(profileData?.fullName || "T").charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+
+                  {/* Hover Overlay */}
+                  <label htmlFor="candidate-avatar-upload" className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>
+                  </label>
+
+                  {isUploadingAvatar && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <Spinner className="size-5 text-primary" />
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  id="candidate-avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                  disabled={isUploadingAvatar}
+                />
+
+                <div className="space-y-1">
+                  <CardTitle className="text-xl font-bold flex items-center gap-2">
+                    {profileData?.fullName ?? "Chưa cập nhật"}
+                  </CardTitle>
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium text-foreground text-sm">
+                      {profileData?.profile?.title ?? "—"}
+                    </span>
+                  </div>
+                </div>
               </div>
+
               <Button variant="outline" onClick={handleEditInit}>
-                Chỉnh sửa hồ sơ
+                <HugeiconsIcon icon={Edit02FreeIcons} />
+                Chỉnh sửa
               </Button>
             </CardHeader>
 
@@ -517,7 +568,7 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
             <form onSubmit={handleChangePassword} className="space-y-4">
               {pwdMsg && <MsgBox msg={pwdMsg} />}
 
-              <Field className="space-y-1.5">
+              <Field>
                 <FieldLabel className="text-xs font-medium">Mật khẩu hiện tại</FieldLabel>
                 <Input
                   type="password"
@@ -527,7 +578,7 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                 />
               </Field>
 
-              <Field className="space-y-1.5">
+              <Field>
                 <FieldLabel className="text-xs font-medium">Mật khẩu mới</FieldLabel>
                 <Input
                   type="password"
@@ -537,7 +588,7 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
                 />
               </Field>
 
-              <Field className="space-y-1.5">
+              <Field>
                 <FieldLabel className="text-xs font-medium">Xác nhận mật khẩu mới</FieldLabel>
                 <Input
                   type="password"
@@ -654,11 +705,10 @@ export function CandidateProfile({ profileData, isLoading, updateProfileMutation
 function MsgBox({ msg }: { msg: Msg }) {
   return (
     <div
-      className={`rounded-xl border px-4 py-3 text-xs ${
-        msg.type === "success"
-          ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
-          : "border-destructive/30 bg-destructive/5 text-destructive"
-      }`}
+      className={`rounded-xl border px-4 py-3 text-xs ${msg.type === "success"
+        ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
+        : "border-destructive/30 bg-destructive/5 text-destructive"
+        }`}
     >
       {msg.text}
     </div>

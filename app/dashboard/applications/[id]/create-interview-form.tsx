@@ -117,11 +117,10 @@ export function CreateInterviewForm({ applicationId, interviewers, onSuccess }: 
     <form onSubmit={handleSubmit} className="space-y-4 max-h-[calc(100vh-140px)] overflow-y-auto px-1 py-1">
       {msg && (
         <div
-          className={`rounded-xl border px-4 py-3 text-xs ${
-            msg.type === "success"
+          className={`rounded-xl border px-4 py-3 text-xs ${msg.type === "success"
               ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
               : "border-destructive/30 bg-destructive/5 text-destructive"
-          }`}
+            }`}
         >
           {msg.text}
         </div>
@@ -184,9 +183,9 @@ export function CreateInterviewForm({ applicationId, interviewers, onSuccess }: 
                     <SelectValue placeholder="Chọn vai trò" />
                   </SelectTrigger>
                   <SelectContent position="popper">
-                    <SelectItem value="evaluator">Evaluator (Chấm điểm)</SelectItem>
-                    <SelectItem value="observer">Observer (Quan sát)</SelectItem>
-                    <SelectItem value="final_reviewer">Final Reviewer (Kết luận)</SelectItem>
+                    <SelectItem value="evaluator">Chấm điểm</SelectItem>
+                    <SelectItem value="observer">Quan sát</SelectItem>
+                    <SelectItem value="final_reviewer">Kết luận</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -430,7 +430,7 @@ export default function InterviewDetailPage(props: { params: Params }) {
                               </div>
                             )}
                           </div>
-                          <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border/30">
+                          <DialogFooter className="gap-3 sm:gap-2 pt-2 border-t border-border/30">
                             <Button
                               type="button"
                               variant="outline"
@@ -522,12 +522,25 @@ export default function InterviewDetailPage(props: { params: Params }) {
                   Kết quả đánh giá từ phỏng vấn viên.
                 </CardDescription>
               </div>
-              <Link
-                href={`/dashboard/interviews/${interviewId}/score`}
-                className="inline-flex h-9 items-center justify-center rounded-2xl bg-primary px-4 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer"
-              >
-                + Thêm đánh giá / Chấm điểm
-              </Link>
+              {(() => {
+                const hasEvaluated = data.interview_scores?.some(
+                  (score: any) => score.evaluator_id === currentUser?.id
+                );
+                const isEvaluator = data.interview_evaluators?.some(
+                  (ev: any) => ev.user_id === currentUser?.id
+                );
+
+                if (!isEvaluator) return null;
+
+                return (
+                  <Link
+                    href={`/dashboard/interviews/${interviewId}/score`}
+                    className="inline-flex h-9 items-center justify-center rounded-2xl bg-primary px-4 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer"
+                  >
+                    {hasEvaluated ? "Sửa đánh giá của tôi" : "+ Thêm đánh giá / Chấm điểm"}
+                  </Link>
+                );
+              })()}
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Dynamic Average Scores Section */}

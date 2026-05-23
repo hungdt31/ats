@@ -70,7 +70,7 @@ function JobStatusCell({ job }: { job: Job }) {
 
   return (
     <div className="flex flex-col items-start gap-1.5">
-      {status !== "pending" && getBadge()}
+      {getBadge()}
       {isAdmin && status === "pending" && (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
@@ -297,7 +297,6 @@ export default function JobsDashboardPage() {
 
             {adminTab === "managed" && (
               <div className="flex items-center gap-3 self-end sm:self-auto">
-                <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">Trạng thái lọc:</span>
                 <Select value={adminManagedFilter} onValueChange={setAdminManagedFilter}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Tất cả trạng thái" />

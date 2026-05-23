@@ -33,7 +33,7 @@ export function DashboardCharts({
       <CardHeader>
         <CardTitle className="text-lg">Biểu đồ tổng quan</CardTitle>
         <CardDescription className="text-xs">
-          So sánh trực quan các chỉ số KPI hiện tại.
+          So sánh trực quan các chỉ số hiện tại.
         </CardDescription>
       </CardHeader>
       <CardContent>

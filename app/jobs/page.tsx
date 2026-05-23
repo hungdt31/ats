@@ -65,7 +65,22 @@ export default function JobsPage() {
   // Apply filters
   const filteredJobs = useMemo(() => {
     if (!jobs) return [];
-    return jobs.filter((job) => {
+
+    // Sắp xếp mặc định: tin mới xuất bản lên trước, sau đó tới tin mới tạo
+    const sortedJobs = [...jobs].sort((a, b) => {
+      const dateA = a.published_at ? new Date(a.published_at).getTime() : 0;
+      const dateB = b.published_at ? new Date(b.published_at).getTime() : 0;
+      
+      if (dateB !== dateA) {
+        return dateB - dateA;
+      }
+      
+      const createdA = new Date(a.created_at).getTime();
+      const createdB = new Date(b.created_at).getTime();
+      return createdB - createdA;
+    });
+
+    return sortedJobs.filter((job) => {
       const matchesTitle = searchTitle
         ? job.title.toLowerCase().includes(searchTitle.toLowerCase())
         : true;

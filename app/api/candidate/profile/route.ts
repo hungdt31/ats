@@ -35,6 +35,7 @@ export async function GET() {
         email: user.email,
         fullName: user.fullName,
         phone: user.phone,
+        avatarUrl: user.avatarUrl,
         emailVerified: user.emailVerified,
         profile: user.candidate_profiles,
       },

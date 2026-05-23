@@ -14,6 +14,7 @@ import {
   useDashboardInterview,
   useCreateDashboardInterviewScore,
 } from "@/hooks/use-dashboard-interviews";
+import { useMe } from "@/hooks/use-me";
 
 type Params = Promise<{ id: string }>;
 
@@ -30,8 +31,27 @@ export default function InterviewScorePage(props: { params: Params }) {
   const [weaknesses, setWeaknesses] = useState("");
   const [feedback, setFeedback] = useState("");
 
+  const { data: meData } = useMe();
   const { data, isLoading } = useDashboardInterview(interviewId);
   const scoreMutation = useCreateDashboardInterviewScore(interviewId);
+
+  const existingScore = React.useMemo(() => {
+    return data?.interview_scores?.find(
+      (s: any) => s.evaluator_id === meData?.id
+    );
+  }, [data, meData]);
+
+  React.useEffect(() => {
+    if (existingScore) {
+      setTechnicalScore(String(existingScore.technical_score ?? "5"));
+      setCommunicationScore(String(existingScore.communication_score ?? "5"));
+      setCulturalFitScore(String(existingScore.cultural_fit_score ?? "5"));
+      setProblemSolvingScore(String(existingScore.problem_solving_score ?? "5"));
+      setStrengths(existingScore.strengths ?? "");
+      setWeaknesses(existingScore.weaknesses ?? "");
+      setFeedback(existingScore.feedback ?? "");
+    }
+  }, [existingScore]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +105,9 @@ export default function InterviewScorePage(props: { params: Params }) {
 
       <Card className="border-border/80">
         <CardHeader>
-          <CardTitle className="text-xl">Chấm điểm & Đánh giá ứng viên</CardTitle>
+          <CardTitle className="text-xl">
+            {existingScore ? "Chỉnh sửa đánh giá của bạn" : "Chấm điểm & Đánh giá ứng viên"}
+          </CardTitle>
           <CardDescription className="text-sm">
             Ứng viên: <strong>{data.applications?.users?.fullName}</strong> · Vị trí: <strong>{data.applications?.jobs?.title}</strong>
           </CardDescription>
@@ -185,7 +207,11 @@ export default function InterviewScorePage(props: { params: Params }) {
                 disabled={scoreMutation.isPending}
                 className="flex h-10 items-center justify-center rounded-2xl bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
               >
-                {scoreMutation.isPending ? "Đang xử lý..." : "Lưu đánh giá"}
+                {scoreMutation.isPending
+                  ? "Đang xử lý..."
+                  : existingScore
+                    ? "Cập nhật đánh giá"
+                    : "Lưu đánh giá"}
               </button>
             </div>
           </form>

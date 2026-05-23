@@ -557,7 +557,7 @@ function ApplicationView({
                         <DialogHeader>
                           <DialogTitle>Gửi Email mới</DialogTitle>
                           <DialogDescription>
-                            Soạn nội dung và gửi trực tiếp cho ứng viên qua Resend.
+                            Soạn nội dung và gửi trực tiếp cho ứng viên.
                           </DialogDescription>
                         </DialogHeader>
                         <div className="pt-2">
