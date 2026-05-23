@@ -69,6 +69,7 @@ export type DashboardInterviewDetailApplication = {
   id: string;
   job_id?: string;
   candidate_id?: string;
+  status?: string;
   users?: { fullName: string | null; email: string | null } | null;
   jobs?: { title: string | null } | null;
 };
@@ -79,6 +80,31 @@ export type DashboardInterviewDetailInterviewerUser = {
   email: string;
 };
 
+export type DashboardInterviewDetailEvaluator = {
+  id: string;
+  interview_id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+  users?: {
+    id: string;
+    fullName: string | null;
+    email: string;
+  };
+};
+
+export type DashboardInterviewDetailResult = {
+  id: string;
+  interview_id: string;
+  reviewer_id: string;
+  result: string;
+  feedback: string | null;
+  created_at: string;
+  users?: {
+    fullName: string | null;
+  };
+};
+
 /** Một scorecard trong chi tiết. */
 export type DashboardInterviewDetailScore = {
   id: string;
@@ -87,7 +113,7 @@ export type DashboardInterviewDetailScore = {
   technical_score: number | null;
   communication_score: number | null;
   cultural_fit_score: number | null;
-  overall_score: number | null;
+  problem_solving_score: number | null;
   strengths: string | null;
   weaknesses: string | null;
   feedback: string | null;
@@ -113,6 +139,8 @@ export type DashboardInterviewDetail = {
   applications?: DashboardInterviewDetailApplication | null;
   users?: DashboardInterviewDetailInterviewerUser | null;
   interview_scores?: DashboardInterviewDetailScore[];
+  interview_evaluators?: DashboardInterviewDetailEvaluator[];
+  interview_results?: DashboardInterviewDetailResult[];
 };
 
 /** Payload gửi điểm (`POST …/score`). */
@@ -120,7 +148,7 @@ export type CreateInterviewScorePayload = {
   technical_score?: number | null;
   communication_score?: number | null;
   cultural_fit_score?: number | null;
-  overall_score?: number | null;
+  problem_solving_score?: number | null;
   strengths?: string | null;
   weaknesses?: string | null;
   feedback?: string | null;
@@ -217,6 +245,26 @@ export function useCreateDashboardInterviewScore(interviewId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.interviews.detail(interviewId),
       });
+    },
+  });
+}
+
+export function useSubmitDashboardInterviewResult(interviewId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: {
+      result: string;
+      feedback: string;
+      next_status?: string;
+    }) => {
+      return apiPost<{ success: boolean; data?: any }>(
+        `/api/dashboard/interviews/${interviewId}/result`,
+        data,
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "interviews"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.interviews.detail(interviewId) });
     },
   });
 }

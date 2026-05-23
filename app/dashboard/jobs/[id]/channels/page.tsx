@@ -5,7 +5,22 @@ import { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { useDashboardJobChannels, useUpdateDashboardJobChannels } from "@/hooks/use-dashboard-jobs";
+import {
+  useDashboardJobChannels,
+  useUpdateDashboardJobChannels,
+  useDeleteDashboardJobChannel,
+} from "@/hooks/use-dashboard-jobs";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01FreeIcons } from "@hugeicons/core-free-icons";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,6 +28,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+
 
 const CHANNELS_OPTIONS = [
   { value: "linkedin", label: "LinkedIn" },
@@ -38,6 +54,173 @@ type JobChannelRow = {
   external_url: string | null;
   external_id: string | null;
 };
+
+function ChannelActionsCell({ ch, jobId }: { ch: JobChannelRow; jobId: string }) {
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  // Edit form states
+  const [editStatus, setEditStatus] = useState(ch.status);
+  const [editExternalUrl, setEditExternalUrl] = useState(ch.external_url ?? "");
+  const [editExternalId, setEditExternalId] = useState(ch.external_id ?? "");
+
+  const updateMutation = useUpdateDashboardJobChannels(jobId);
+  const deleteMutation = useDeleteDashboardJobChannel(jobId);
+
+  // Sync state if ch changes
+  React.useEffect(() => {
+    setEditStatus(ch.status);
+    setEditExternalUrl(ch.external_url ?? "");
+    setEditExternalId(ch.external_id ?? "");
+  }, [ch]);
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const urlTrimmed = editExternalUrl.trim();
+    if (!urlTrimmed) {
+      toast.error("Vui lòng nhập link bài viết.");
+      return;
+    }
+
+    try {
+      await updateMutation.mutateAsync({
+        channel: ch.channel,
+        status: editStatus,
+        external_url: urlTrimmed,
+        external_id: editExternalId,
+      });
+      toast.success("Cập nhật kênh tuyển dụng thành công!");
+      setIsEditOpen(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Đã xảy ra lỗi.";
+      toast.error(message);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteMutation.mutateAsync(ch.channel);
+      toast.success("Xóa kênh tuyển dụng thành công!");
+      setIsDeleteOpen(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Đã xảy ra lỗi.";
+      toast.error(message);
+    }
+  };
+
+  const channelLabel =
+    CHANNELS_OPTIONS.find((c) => c.value === ch.channel)?.label || ch.channel;
+
+  return (
+    <div className="flex items-center gap-2">
+      {/* Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogTrigger asChild>
+          <button className="inline-flex h-8 items-center justify-center rounded-2xl border border-input/60 bg-background px-3 text-xs font-medium text-foreground hover:bg-muted transition-all cursor-pointer">
+            Chỉnh sửa
+          </button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">Chỉnh sửa kênh {channelLabel}</DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Cập nhật thông tin đăng tuyển cho kênh {channelLabel}.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdate} className="space-y-4 my-2">
+            <Field>
+              <FieldLabel className="font-medium text-foreground">Trạng thái đăng tuyển</FieldLabel>
+              <Select value={editStatus} onValueChange={(val) => setEditStatus(val)}>
+                <SelectTrigger className="w-full h-10">
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl">
+                  {STATUS_OPTIONS.map((st) => (
+                    <SelectItem key={st.value} value={st.value}>
+                      {st.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field>
+              <FieldLabel className="font-medium text-foreground">
+                Link bài viết (External URL) <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Input
+                type="text"
+                placeholder="https://... hoặc /jobs/ten-tin (bắt buộc)"
+                value={editExternalUrl}
+                onChange={(e) => setEditExternalUrl(e.target.value)}
+                className="h-10"
+                required
+                autoComplete="off"
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel className="font-medium text-foreground">ID bài viết bên ngoài (External ID)</FieldLabel>
+              <Input
+                type="text"
+                placeholder="Ví dụ: job-12345..."
+                value={editExternalId}
+                onChange={(e) => setEditExternalId(e.target.value)}
+                className="h-10"
+              />
+            </Field>
+
+            <DialogFooter className="mt-4 gap-2">
+              <DialogClose asChild>
+                <Button variant="outline" type="button" disabled={updateMutation.isPending}>
+                  Hủy
+                </Button>
+              </DialogClose>
+              <Button
+                type="submit"
+                disabled={updateMutation.isPending}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground border-none"
+              >
+                {updateMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogTrigger asChild>
+          <button className="inline-flex h-8 items-center justify-center rounded-2xl border border-red-200 dark:border-red-900/30 bg-red-50/50 dark:bg-red-950/10 px-3 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white dark:hover:bg-red-600 transition-all cursor-pointer">
+            Xóa
+          </button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600 dark:text-red-400 mb-3 font-semibold">Xác nhận xóa kênh</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn gỡ cấu hình kênh đăng tuyển <strong className="text-foreground">{channelLabel}</strong>? Hành động này sẽ xóa dữ liệu cấu hình liên kết hiện tại của kênh.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2">
+            <DialogClose asChild>
+              <Button variant="outline" disabled={deleteMutation.isPending}>
+                Hủy
+              </Button>
+            </DialogClose>
+            <Button
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={handleDelete}
+            >
+              {deleteMutation.isPending ? "Đang xóa..." : "Xóa kênh"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
 
 type Params = Promise<{ id: string }>;
 
@@ -97,7 +280,7 @@ export default function JobChannelsPage(props: { params: Params }) {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+    <div className="flex flex-col gap-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-2">
         <Link
           href="/dashboard/jobs"
@@ -112,9 +295,9 @@ export default function JobChannelsPage(props: { params: Params }) {
         <div className="md:col-span-1 space-y-6">
           <Card className="border-border/80">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Thêm / Sửa Channel</CardTitle>
+              <CardTitle className="text-lg">Biểu mẫu</CardTitle>
               <CardDescription className="text-xs">
-                Cập nhật thông tin đăng tin của từng kênh.
+                Thêm kênh đăng tuyển
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -183,7 +366,7 @@ export default function JobChannelsPage(props: { params: Params }) {
                     disabled={updateChannelsMutation.isPending}
                     className="flex h-10 items-center justify-center rounded-2xl bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer w-full"
                   >
-                    {updateChannelsMutation.isPending ? "Đang lưu..." : "Lưu channel"}
+                    {updateChannelsMutation.isPending ? "Đang thêm kênh..." : "Thêm kênh"}
                   </button>
                 </div>
               </form>
@@ -193,7 +376,7 @@ export default function JobChannelsPage(props: { params: Params }) {
 
         {/* Right Table column */}
         <div className="md:col-span-2 space-y-6">
-          <Card className="border-border/80">
+          <Card className="">
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-lg">Danh sách các kênh đăng tin</CardTitle>
@@ -212,12 +395,13 @@ export default function JobChannelsPage(props: { params: Params }) {
                     <TableHead>Kênh (Channel)</TableHead>
                     <TableHead>Trạng thái</TableHead>
                     <TableHead>Thông tin chi tiết</TableHead>
+                    <TableHead className="text-right">Hành động</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {channels.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center py-6 text-muted-foreground text-xs">
+                      <TableCell colSpan={4} className="text-center py-6 text-muted-foreground text-xs">
                         Chưa đăng tin lên bất kỳ kênh nào.
                       </TableCell>
                     </TableRow>
@@ -254,6 +438,11 @@ export default function JobChannelsPage(props: { params: Params }) {
                                   Xem tin đăng
                                 </a>
                               )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end">
+                              <ChannelActionsCell ch={ch} jobId={jobId} />
                             </div>
                           </TableCell>
                         </TableRow>

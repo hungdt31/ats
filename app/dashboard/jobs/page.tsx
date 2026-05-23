@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+
 import { ColumnDef } from "@tanstack/react-table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Add01FreeIcons } from "@hugeicons/core-free-icons";
 import { useMe } from "@/hooks/use-me";
-import { useApproveDashboardJob, useDeleteDashboardJob } from "@/hooks/use-dashboard-jobs";
+import { useApproveDashboardJob, useDeleteDashboardJob, useDashboardJobsList } from "@/hooks/use-dashboard-jobs";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -155,7 +155,7 @@ function JobActionCell({ job }: { job: Job }) {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="text-red-600 dark:text-red-400">
+              <DialogTitle className="text-red-600 dark:text-red-400 mb-3 font-semibold">
                 Xác nhận xóa tuyển dụng
               </DialogTitle>
               <DialogDescription>
@@ -251,20 +251,7 @@ export default function JobsDashboardPage() {
   const [adminTab, setAdminTab] = useState<string>("pending");
   const [adminManagedFilter, setAdminManagedFilter] = useState<string>("all");
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["dashboard", "jobs", isAdmin ? "admin-all" : status],
-    queryFn: async () => {
-      const sp = new URLSearchParams();
-      if (!isAdmin) {
-        if (status && status !== "all") sp.append("status", status);
-      }
-      const res = await fetch(`/api/dashboard/jobs?${sp.toString()}`);
-      if (!res.ok) throw new Error("Không thể tải tin tuyển dụng.");
-      const json = await res.json();
-      return json.data as Job[];
-    },
-    staleTime: 5000,
-  });
+  const { data, isLoading } = useDashboardJobsList(status, isAdmin);
 
   const jobs = data || [];
 

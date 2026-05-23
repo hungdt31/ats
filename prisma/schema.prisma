@@ -26,7 +26,8 @@ model User {
   email_logs_email_logs_recipient_idTousers email_logs[]                 @relation("email_logs_recipient_idTousers")
   email_logs_email_logs_sender_idTousers    email_logs[]                 @relation("email_logs_sender_idTousers")
   interview_scores                          interview_scores[]
-  interviews                                interviews[]
+  interview_evaluators                      interview_evaluators[]
+  interview_results                         interview_results[]
   jobs                                      jobs[]
   files                                     files[]
 
@@ -123,12 +124,10 @@ model interview_scores {
   technical_score     Int?                    @db.TinyInt
   communication_score Int?                    @db.TinyInt
   cultural_fit_score  Int?                    @db.TinyInt
-  overall_score       Int?                    @db.TinyInt
+  problem_solving_score Int?                  @db.TinyInt
   strengths           String?                 @db.Text
   weaknesses          String?                 @db.Text
   feedback            String?                 @db.Text
-  result              interview_scores_result
-  is_final            Boolean                 @default(false)
   created_at          DateTime                @default(now()) @db.DateTime(0)
   users               User                    @relation(fields: [evaluator_id], references: [id], map: "fk_is_evaluator")
   interviews          interviews              @relation(fields: [interview_id], references: [id], map: "fk_is_interview")
@@ -139,23 +138,22 @@ model interview_scores {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model interviews {
-  id               String             @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  application_id   String             @db.Char(36)
-  interviewer_id   String             @db.Char(36)
-  scheduled_at     DateTime           @db.DateTime(0)
-  duration_minutes Int                @default(60) @db.SmallInt
-  type             interviews_type    @default(video)
-  status           interviews_status  @default(scheduled)
-  meeting_link     String?            @db.Text
-  location         String?            @db.VarChar(255)
-  notes            String?            @db.Text
-  created_at       DateTime           @default(now()) @db.DateTime(0)
-  interview_scores interview_scores[]
-  applications     applications       @relation(fields: [application_id], references: [id], map: "fk_iv_application")
-  users            User               @relation(fields: [interviewer_id], references: [id], map: "fk_iv_interviewer")
+  id                   String                 @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  application_id       String                 @db.Char(36)
+  scheduled_at         DateTime               @db.DateTime(0)
+  duration_minutes     Int                    @default(60) @db.SmallInt
+  type                 interviews_type        @default(video)
+  status               interviews_status      @default(scheduled)
+  meeting_link         String?                @db.Text
+  location             String?                @db.VarChar(255)
+  notes                String?                @db.Text
+  created_at           DateTime               @default(now()) @db.DateTime(0)
+  interview_scores     interview_scores[]
+  interview_evaluators interview_evaluators[]
+  interview_results    interview_results[]
+  applications         applications           @relation(fields: [application_id], references: [id], map: "fk_iv_application")
 
   @@index([application_id], map: "idx_interviews_application_id")
-  @@index([interviewer_id], map: "idx_interviews_interviewer_id")
   @@index([scheduled_at], map: "idx_interviews_scheduled_at")
 }
 
@@ -331,4 +329,41 @@ model files {
   @@index([user_id], map: "idx_files_user_id")
   @@map("files")
 }
+
+model interview_evaluators {
+  id           String         @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  interview_id String         @db.Char(36)
+  user_id      String         @db.Char(36)
+  role         evaluator_role @default(evaluator)
+  created_at   DateTime       @default(now()) @db.DateTime(0)
+
+  interviews   interviews     @relation(fields: [interview_id], references: [id], onDelete: Cascade, map: "fk_ie_interview")
+  users        User           @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_ie_user")
+
+  @@unique([interview_id, user_id], map: "uq_interview_evaluator")
+  @@index([user_id], map: "idx_ie_user_id")
+}
+
+enum evaluator_role {
+  evaluator
+  observer
+  final_reviewer
+}
+
+model interview_results {
+  id           String                  @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  interview_id String                  @db.Char(36)
+  reviewer_id  String                  @db.Char(36)
+  result       interview_scores_result
+  feedback     String?                 @db.Text
+  created_at   DateTime                @default(now()) @db.DateTime(0)
+
+  interviews   interviews              @relation(fields: [interview_id], references: [id], onDelete: Cascade, map: "fk_ir_interview")
+  users        User                    @relation(fields: [reviewer_id], references: [id], onDelete: Cascade, map: "fk_ir_reviewer")
+
+  @@unique([interview_id], map: "uq_interview_result")
+  @@index([reviewer_id], map: "idx_ir_reviewer_id")
+}
+
+
 

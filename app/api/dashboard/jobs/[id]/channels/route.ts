@@ -90,3 +90,43 @@ export async function POST(
     return jsonError(500, "Không thể lưu thông tin channel.");
   }
 }
+
+export async function DELETE(
+  request: Request,
+  props: { params: Promise<{ id: string }> }
+) {
+  const session = await getSession();
+
+  if (!session || (session.user.role !== "admin" && session.user.role !== "hr")) {
+    return jsonError(401, "Bạn không có quyền cập nhật channels.");
+  }
+
+  try {
+    const params = await props.params;
+    const jobId = params.id;
+    const { searchParams } = new URL(request.url);
+    const channel = searchParams.get("channel");
+
+    if (!channel) {
+      return jsonError(400, "Thiếu thông tin kênh cần xóa.");
+    }
+
+    await prisma.job_channels.delete({
+      where: {
+        job_id_channel: {
+          job_id: jobId,
+          channel: channel as job_channels_channel,
+        },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Đã xóa kênh tuyển dụng thành công.",
+    });
+  } catch (error) {
+    console.error("[DELETE /api/dashboard/jobs/[id]/channels] Error:", error);
+    return jsonError(500, "Không thể xóa kênh tuyển dụng.");
+  }
+}
+
