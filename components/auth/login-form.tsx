@@ -16,6 +16,8 @@ import { getPostLoginPath } from "@/lib/auth/redirects";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
 import { useLogin } from "@/hooks/use-auth";
 import { ApiError } from "@/lib/api-client";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ViewIcon, ViewOffIcon } from "@hugeicons/core-free-icons";
 
 function isSafeRelativePath(path: string | null): path is string {
   return Boolean(path && path.startsWith("/") && !path.startsWith("//"));
@@ -25,6 +27,7 @@ function LoginFormFields() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const loginMutation = useLogin();
 
   const form = useForm<LoginInput>({
@@ -99,7 +102,24 @@ function LoginFormFields() {
                 </Link>
               </div>
               <FormControl>
-                <Input type="password" autoComplete="current-password" {...field} />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    className="pr-10"
+                    {...field}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+                  >
+                    <HugeiconsIcon
+                      icon={showPassword ? ViewOffIcon : ViewIcon}
+                      className="size-5"
+                    />
+                  </button>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>

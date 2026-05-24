@@ -14,11 +14,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { registerSchema, type RegisterInput } from "@/lib/validators/auth";
 import { useRegister, useSendOtp } from "@/hooks/use-auth";
 import { ApiError } from "@/lib/api-client";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ViewIcon, ViewOffIcon } from "@hugeicons/core-free-icons";
 
 export function RegisterForm() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [verifyEmail, setVerifyEmail] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const registerMutation = useRegister();
   const sendOtpMutation = useSendOtp();
 
@@ -115,7 +118,24 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>Mật khẩu</FormLabel>
               <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    className="pr-10"
+                    {...field}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+                  >
+                    <HugeiconsIcon
+                      icon={showPassword ? ViewOffIcon : ViewIcon}
+                      className="size-5"
+                    />
+                  </button>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
