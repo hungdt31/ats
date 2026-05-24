@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { apiPost, ApiError } from "@/lib/api-client";
 import { queryKeys } from "./query-keys";
 import type { LoginInput, RegisterInput, SendOtpInput, VerifyEmailInput, ResetPasswordInput } from "@/lib/validators/auth";
@@ -54,5 +55,25 @@ export function useVerifyEmail() {
 export function useResetPassword() {
   return useMutation<unknown, ApiError | Error, ResetPasswordInput>({
     mutationFn: (values) => apiPost("/api/auth/otp/reset-password", values),
+  });
+}
+
+/** Đăng xuất khỏi hệ thống. */
+export function useLogout() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  return useMutation<unknown, ApiError | Error, void>({
+    mutationFn: async () => {
+      return apiPost("/api/auth/logout", undefined, { credentials: "include" });
+    },
+    onSuccess: () => {
+      // Xóa thông tin user khỏi cache ngay lập tức
+      queryClient.setQueryData(queryKeys.auth.me(), null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
+      
+      router.push("/login");
+      router.refresh();
+    },
   });
 }

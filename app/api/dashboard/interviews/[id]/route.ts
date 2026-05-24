@@ -27,10 +27,19 @@ export async function GET(
             jobs: { select: { title: true } },
           },
         },
-        users: { select: { id: true, fullName: true, email: true } },
+        interview_evaluators: {
+          include: {
+            users: { select: { id: true, fullName: true, email: true } },
+          },
+        },
         interview_scores: {
           include: {
-            users: { select: { fullName: true, email: true } },
+            users: { select: { id: true, fullName: true, email: true } },
+          },
+        },
+        interview_results: {
+          include: {
+            users: { select: { id: true, fullName: true, email: true } },
           },
         },
       },

@@ -30,8 +30,12 @@ export async function POST(req: Request) {
     where: { email },
   });
 
-  if (!user?.passwordHash || !user.isActive) {
+  if (!user?.passwordHash) {
     return jsonError(401, "Email hoặc mật khẩu không đúng");
+  }
+
+  if (!user?.isActive) {
+    return jsonError(403, "Tài khoản của bạn dừng hoạt động");
   }
 
   const valid = await bcrypt.compare(password, user.passwordHash);

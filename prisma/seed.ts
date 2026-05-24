@@ -3,7 +3,7 @@ import "dotenv/config";
 import * as bcrypt from "bcrypt";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@prisma/client";
-import { slugify } from "../lib/utils/slugify";
+import { slugify } from "@/lib/utils/slugify";
 
 /**
  * Prisma 7 yêu cầu driver adapter khi instantiate PrismaClient.
@@ -19,6 +19,17 @@ function createPrisma() {
 const prisma = createPrisma();
 
 async function main() {
+  // Clean up existing data to allow re-seeding
+  await prisma.interview_scores.deleteMany({});
+  await prisma.interview_results.deleteMany({});
+  await prisma.interview_evaluators.deleteMany({});
+  await prisma.interviews.deleteMany({});
+  await prisma.email_logs.deleteMany({});
+  await prisma.application_status_history.deleteMany({});
+  await prisma.applications.deleteMany({});
+  await prisma.job_channels.deleteMany({});
+  await prisma.jobs.deleteMany({});
+
   const passwordHash = await bcrypt.hash("Password@123", 12);
 
   // Users (upsert theo email để chạy seed nhiều lần an toàn)
@@ -319,7 +330,6 @@ async function main() {
   const interview = await prisma.interviews.create({
     data: {
       application_id: app.id,
-      interviewer_id: interviewer.id,
       scheduled_at: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
       duration_minutes: 60,
       type: "video",
@@ -329,6 +339,15 @@ async function main() {
     },
   });
 
+  // Assign evaluators
+  await prisma.interview_evaluators.createMany({
+    data: [
+      { interview_id: interview.id, user_id: interviewer.id, role: "evaluator" },
+      { interview_id: interview.id, user_id: hr.id, role: "observer" },
+      { interview_id: interview.id, user_id: admin.id, role: "final_reviewer" },
+    ],
+  });
+
   // Scorecard (demo)
   await prisma.interview_scores.upsert({
     where: { interview_id_evaluator_id: { interview_id: interview.id, evaluator_id: interviewer.id } },
@@ -336,12 +355,10 @@ async function main() {
       technical_score: 4,
       communication_score: 4,
       cultural_fit_score: 4,
-      overall_score: 4,
+      problem_solving_score: 4,
       strengths: "Giải thích rõ ràng, tư duy hệ thống tốt.",
       weaknesses: "Cần cải thiện về tối ưu query phức tạp.",
       feedback: "Ứng viên phù hợp, đề xuất vòng tiếp theo.",
-      result: "hold",
-      is_final: false,
     },
     create: {
       interview_id: interview.id,
@@ -349,12 +366,10 @@ async function main() {
       technical_score: 4,
       communication_score: 4,
       cultural_fit_score: 4,
-      overall_score: 4,
+      problem_solving_score: 4,
       strengths: "Giải thích rõ ràng, tư duy hệ thống tốt.",
       weaknesses: "Cần cải thiện về tối ưu query phức tạp.",
       feedback: "Ứng viên phù hợp, đề xuất vòng tiếp theo.",
-      result: "hold",
-      is_final: false,
     },
   });
 

@@ -14,12 +14,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useMe } from "@/hooks/use-me";
+import { useLogout } from "@/hooks/use-auth";
 
 type UserNavProps = {
   email?: string | null;
   fullName?: string | null;
   role?: UserRole;
+  avatarUrl?: string | null;
 };
 
 const ROLE_LABEL: Record<UserRole, string> = {
@@ -30,34 +33,42 @@ const ROLE_LABEL: Record<UserRole, string> = {
 };
 
 /** Menu tài khoản — đăng xuất qua API (xoá cookie JWT). */
-export function UserNav({ email, fullName, role }: UserNavProps) {
+export function UserNav({ email, fullName, role, avatarUrl }: UserNavProps) {
   const router = useRouter();
-  const label = fullName || email || "Tài khoản";
+  const { data: currentUser } = useMe();
+
+  const activeEmail = currentUser?.email ?? email;
+  const activeFullName = currentUser?.fullName ?? fullName;
+  const activeRole = currentUser?.role ?? role;
+  const activeAvatarUrl = currentUser?.avatarUrl ?? avatarUrl;
+
+  const label = activeFullName || activeEmail || "Tài khoản";
 
   const handleNavSpace = useCallback(() => {
-    if (role === "candidate") {
+    if (activeRole === "candidate") {
       router.push("/candidate");
     } else {
       router.push("/dashboard");
     }
-  }, [role, router]);
+  }, [activeRole, router]);
 
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    router.push("/login");
-    router.refresh();
-  }
+  const { mutate: logout } = useLogout();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative flex items-center gap-2 h-9 rounded-full px-2">
           <Avatar className="h-7 w-7">
-            <AvatarImage
-              src="https://github.com/shadcn.png"
-              alt="@shadcn"
-              className="grayscale"
-            />
+            {activeAvatarUrl ? (
+              <AvatarImage
+                src={activeAvatarUrl}
+                alt={activeFullName || ""}
+              />
+            ) : (
+              <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
+                {(activeFullName || activeEmail || "T").charAt(0).toUpperCase()}
+              </AvatarFallback>
+            )}
           </Avatar>
           <span className="max-w-28 truncate font-normal text-sm hidden md:inline">{label}</span>
         </Button>
@@ -66,9 +77,9 @@ export function UserNav({ email, fullName, role }: UserNavProps) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-medium text-foreground">{label}</span>
-            {email ? <span className="text-xs text-muted-foreground">{email}</span> : null}
-            {role ? (
-              <span className="text-xs text-muted-foreground">Vai trò: {ROLE_LABEL[role]}</span>
+            {activeEmail ? <span className="text-xs text-muted-foreground">{activeEmail}</span> : null}
+            {activeRole ? (
+              <span className="text-xs text-muted-foreground">Vai trò: {ROLE_LABEL[activeRole]}</span>
             ) : null}
           </div>
         </DropdownMenuLabel>
@@ -80,7 +91,7 @@ export function UserNav({ email, fullName, role }: UserNavProps) {
           Không gian cá nhân
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => void handleLogout()}>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => logout()}>
           Đăng xuất
         </DropdownMenuItem>
       </DropdownMenuContent>

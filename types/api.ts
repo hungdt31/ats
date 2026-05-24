@@ -6,6 +6,8 @@ export type PublicUser = {
   email: string;
   fullName: string;
   role: UserRole;
+  phone?: string | null;
+  avatarUrl?: string | null;
 };
 
 export type ApiSuccess<T> = { success: true; data: T };

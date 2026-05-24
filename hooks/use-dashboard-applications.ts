@@ -15,6 +15,19 @@ type StatusHistoryItem = {
   users: { fullName: string | null; email: string | null } | null;
 };
 
+type InterviewEvaluator = {
+  id: string;
+  role: "evaluator" | "observer" | "final_reviewer";
+  users: { fullName: string | null; email: string | null };
+};
+
+type InterviewResult = {
+  id: string;
+  result: "pass" | "fail" | "hold";
+  feedback: string | null;
+  users: { fullName: string | null; email: string | null };
+};
+
 type InterviewScore = {
   id: string;
   overall_score: number | null;
@@ -22,7 +35,6 @@ type InterviewScore = {
   communication_score: number | null;
   cultural_fit_score: number | null;
   feedback: string | null;
-  result: string;
   users: { fullName: string | null; email: string | null } | null;
 };
 
@@ -35,8 +47,9 @@ type Interview = {
   meeting_link: string | null;
   location: string | null;
   notes: string | null;
-  users: { fullName: string | null; email: string | null } | null;
+  interview_evaluators: InterviewEvaluator[];
   interview_scores: InterviewScore[];
+  interview_results: InterviewResult[];
 };
 
 type EmailLog = {

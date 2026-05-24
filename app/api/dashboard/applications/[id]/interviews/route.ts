@@ -20,7 +20,7 @@ export async function POST(
     const body = await request.json();
 
     const {
-      interviewer_id,
+      evaluators, // Array of { user_id: string, role: 'evaluator' | 'observer' | 'final_reviewer' }
       scheduled_at,
       duration_minutes,
       type,
@@ -29,8 +29,13 @@ export async function POST(
       notes,
     } = body;
 
-    if (!interviewer_id || !scheduled_at || !type) {
+    if (!evaluators || !Array.isArray(evaluators) || evaluators.length === 0 || !scheduled_at || !type) {
       return jsonError(400, "Vui lòng nhập đầy đủ thông tin bắt buộc.");
+    }
+
+    const finalReviewerData = evaluators.find((ev) => ev.role === "final_reviewer");
+    if (!finalReviewerData) {
+      return jsonError(400, "Buổi phỏng vấn phải có đúng 1 người đánh giá cuối cùng (final reviewer).");
     }
 
     const application = await prisma.applications.findUnique({
@@ -45,13 +50,13 @@ export async function POST(
       return jsonError(404, "Không tìm thấy đơn ứng tuyển.");
     }
 
-    const interviewer = await prisma.user.findUnique({
-      where: { id: interviewer_id },
+    // Resolve interviewer details for email invitation
+    const evaluatorUsers = await prisma.user.findMany({
+      where: { id: { in: evaluators.map((ev) => ev.user_id) } },
     });
 
-    if (!interviewer) {
-      return jsonError(404, "Không tìm thấy người phỏng vấn.");
-    }
+    const leadInterviewer = evaluatorUsers.find((u) => u.id === finalReviewerData.user_id) || evaluatorUsers[0];
+    const interviewerNames = evaluatorUsers.map((u) => `${u.fullName} (${evaluators.find((ev) => ev.user_id === u.id)?.role.toUpperCase()})`).join(", ");
 
     const recipientEmail = application.users.email;
     const scheduledDate  = new Date(scheduled_at);
@@ -65,8 +70,8 @@ export async function POST(
         scheduledAt:     scheduledDate,
         durationMinutes: durationMins,
         interviewType:   type as string,
-        interviewerName: interviewer.fullName,
-        interviewerEmail: interviewer.email,
+        interviewerName: interviewerNames,
+        interviewerEmail: leadInterviewer.email,
         meetingLink:     meeting_link ?? null,
         location:        location ?? null,
         notes:           notes ?? null,
@@ -76,21 +81,29 @@ export async function POST(
       return jsonError(500, "Không thể tạo lịch phỏng vấn vì gửi email thất bại.");
     }
 
-    // 2. Lưu interview + email log vào DB
-    const [newInterview] = await prisma.$transaction([
-      prisma.interviews.create({
+    // 2. Lưu interview + interview_evaluators + email log vào DB trong transaction
+    const newInterview = await prisma.$transaction(async (tx) => {
+      const iv = await tx.interviews.create({
         data: {
           application_id: applicationId,
-          interviewer_id,
           scheduled_at:     scheduledDate,
           duration_minutes: durationMins,
-          type:             type as "phone" | "video" | "onsite" | "technical",
+          type:             type as any,
           meeting_link:     meeting_link ?? null,
           location:         location ?? null,
           notes:            notes ?? null,
         },
-      }),
-      prisma.email_logs.create({
+      });
+
+      await tx.interview_evaluators.createMany({
+        data: evaluators.map((ev) => ({
+          interview_id: iv.id,
+          user_id: ev.user_id,
+          role: ev.role as any,
+        })),
+      });
+
+      await tx.email_logs.create({
         data: {
           application_id: applicationId,
           recipient_id: application.candidate_id,
@@ -100,8 +113,10 @@ export async function POST(
           status: "sent",
           sent_at: new Date(),
         },
-      }),
-    ]);
+      });
+
+      return iv;
+    });
 
     return NextResponse.json({
       success: true,

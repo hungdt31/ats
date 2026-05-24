@@ -20,7 +20,11 @@ export async function GET(request: Request) {
 
     // Filter by interviewer if they are just an interviewer (not hr or admin)
     if (session.user.role === "interviewer") {
-      where.interviewer_id = session.user.id;
+      where.interview_evaluators = {
+        some: {
+          user_id: session.user.id,
+        },
+      };
     }
 
     const interviews = await prisma.interviews.findMany({
@@ -32,7 +36,11 @@ export async function GET(request: Request) {
             jobs: { select: { title: true } },
           },
         },
-        users: { select: { fullName: true, email: true } },
+        interview_evaluators: {
+          include: {
+            users: { select: { fullName: true, email: true } },
+          },
+        },
       },
       orderBy: { scheduled_at: "asc" },
     });
@@ -58,7 +66,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       application_id,
-      interviewer_id,
+      evaluators, // Array of { user_id: string, role: 'evaluator' | 'observer' | 'final_reviewer' }
       scheduled_at,
       duration_minutes,
       type,
@@ -67,21 +75,37 @@ export async function POST(request: Request) {
       notes,
     } = body;
 
-    if (!application_id || !interviewer_id || !scheduled_at) {
+    if (!application_id || !evaluators || !Array.isArray(evaluators) || evaluators.length === 0 || !scheduled_at) {
       return jsonError(400, "Vui lòng cung cấp đầy đủ thông tin.");
     }
 
-    const interview = await prisma.interviews.create({
-      data: {
-        application_id,
-        interviewer_id,
-        scheduled_at: new Date(scheduled_at),
-        duration_minutes: duration_minutes ? parseInt(duration_minutes, 10) : 60,
-        type: type as interviews_type,
-        meeting_link: meeting_link || null,
-        location: location || null,
-        notes: notes || null,
-      },
+    const finalReviewers = evaluators.filter((ev) => ev.role === "final_reviewer");
+    if (finalReviewers.length !== 1) {
+      return jsonError(400, "Buổi phỏng vấn phải có đúng 1 người đánh giá cuối cùng (final reviewer).");
+    }
+
+    const interview = await prisma.$transaction(async (tx) => {
+      const iv = await tx.interviews.create({
+        data: {
+          application_id,
+          scheduled_at: new Date(scheduled_at),
+          duration_minutes: duration_minutes ? parseInt(duration_minutes, 10) : 60,
+          type: type as interviews_type,
+          meeting_link: meeting_link || null,
+          location: location || null,
+          notes: notes || null,
+        },
+      });
+
+      await tx.interview_evaluators.createMany({
+        data: evaluators.map((ev) => ({
+          interview_id: iv.id,
+          user_id: ev.user_id,
+          role: ev.role as any,
+        })),
+      });
+
+      return iv;
     });
 
     return NextResponse.json({

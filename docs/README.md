@@ -43,6 +43,8 @@ Tất cả tài liệu test đặt dưới **[`./TestDocument/`](./TestDocument/
 | `TestDocument/ITC/` | ITC (Integration Test Case) | Test theo luồng E2E nghiệp vụ | [ITC/README.md](./TestDocument/ITC/README.md) |
 | `TestDocument/ITE/` | ITE (Integration Test Evidence) | Chuẩn bị test data / bằng chứng tích hợp | [ITE/README.md](./TestDocument/ITE/README.md) |
 
+**Chạy smoke test API + ghi log:** [TestDocument/AUTOMATED_API_SMOKE.md](./TestDocument/AUTOMATED_API_SMOKE.md) (`npm run test:api-smoke`).
+
 ### Ánh xạ UTC theo module (A–G)
 
 | Module | Tên module | File UTC |

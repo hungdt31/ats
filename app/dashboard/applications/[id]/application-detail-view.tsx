@@ -384,14 +384,41 @@ function ApplicationView({
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="space-y-3 text-xs">
-                            {iv.users && (
+                            {iv.interview_evaluators && iv.interview_evaluators.length > 0 && (
                               <div className="space-y-1">
                                 <span className="text-muted-foreground block">
-                                  Người phỏng vấn:
+                                  Hội đồng phỏng vấn:
                                 </span>
-                                <span className="font-semibold text-foreground">
-                                  {iv.users.fullName} ({iv.users.email})
-                                </span>
+                                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                  {iv.interview_evaluators.map((evaluator) => {
+                                    let roleLabel = "";
+                                    let badgeVariant: "default" | "secondary" | "outline" = "outline";
+                                    switch (evaluator.role) {
+                                      case "final_reviewer":
+                                        roleLabel = "Final";
+                                        badgeVariant = "default";
+                                        break;
+                                      case "observer":
+                                        roleLabel = "Observer";
+                                        badgeVariant = "outline";
+                                        break;
+                                      default:
+                                        roleLabel = "Evaluator";
+                                        badgeVariant = "secondary";
+                                        break;
+                                    }
+                                    return (
+                                      <div key={evaluator.id} className="inline-flex items-center gap-1 bg-muted/40 px-2 py-0.5 rounded-lg border border-border/20">
+                                        <span className="font-medium text-foreground">
+                                          {evaluator.users?.fullName || "Chưa rõ"}
+                                        </span>
+                                        <Badge variant={badgeVariant} className="text-[9px] px-1 py-0 scale-90 origin-left font-normal uppercase">
+                                          {roleLabel}
+                                        </Badge>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               </div>
                             )}
                             {iv.meeting_link && (
@@ -422,10 +449,40 @@ function ApplicationView({
                               </div>
                             )}
 
+                            {iv.interview_results && iv.interview_results.length > 0 && (
+                              <div className="mt-3 p-3 bg-primary/5 rounded-xl border border-primary/20 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-semibold text-primary text-xs">
+                                    Kết luận cuối cùng:
+                                  </span>
+                                  <Badge
+                                    variant={
+                                      iv.interview_results[0].result === "pass"
+                                        ? "default"
+                                        : iv.interview_results[0].result === "hold"
+                                          ? "secondary"
+                                          : "destructive"
+                                    }
+                                    className="uppercase text-[10px]"
+                                  >
+                                    {iv.interview_results[0].result}
+                                  </Badge>
+                                </div>
+                                {iv.interview_results[0].feedback && (
+                                  <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
+                                    {iv.interview_results[0].feedback}
+                                  </p>
+                                )}
+                                <p className="text-[10px] text-muted-foreground">
+                                  Đánh giá bởi: {iv.interview_results[0].users?.fullName || "Final Reviewer"}
+                                </p>
+                              </div>
+                            )}
+
                             {iv.interview_scores.length > 0 && (
                               <div className="mt-4 pt-3 border-t border-border/40 space-y-3">
                                 <span className="text-muted-foreground block font-semibold">
-                                  Điểm đánh giá từ Interviewer:
+                                  Điểm đánh giá từ các người chấm:
                                 </span>
                                 {iv.interview_scores.map((score) => (
                                   <div
@@ -436,17 +493,6 @@ function ApplicationView({
                                       <span className="font-medium text-foreground">
                                         Đánh giá bởi: {score.users?.fullName || "Người chấm"}
                                       </span>
-                                      <Badge
-                                        variant={
-                                          score.result === "pass"
-                                            ? "default"
-                                            : score.result === "hold"
-                                              ? "secondary"
-                                              : "destructive"
-                                        }
-                                      >
-                                        Kết quả: {score.result.toUpperCase()}
-                                      </Badge>
                                     </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                       {[
@@ -511,7 +557,7 @@ function ApplicationView({
                         <DialogHeader>
                           <DialogTitle>Gửi Email mới</DialogTitle>
                           <DialogDescription>
-                            Soạn nội dung và gửi trực tiếp cho ứng viên qua Resend.
+                            Soạn nội dung và gửi trực tiếp cho ứng viên.
                           </DialogDescription>
                         </DialogHeader>
                         <div className="pt-2">

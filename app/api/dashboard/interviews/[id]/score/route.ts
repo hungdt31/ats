@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/http/json-response";
-import { interview_scores_result } from "@prisma/client";
 
 export async function POST(
   request: Request,
@@ -23,16 +22,24 @@ export async function POST(
       technical_score,
       communication_score,
       cultural_fit_score,
-      overall_score,
+      problem_solving_score,
       strengths,
       weaknesses,
       feedback,
-      result,
-      is_final,
     } = body;
 
-    if (!result) {
-      return jsonError(400, "Vui lòng chọn kết quả đánh giá (pass/fail/hold).");
+    // 1. Kiểm tra phân quyền: Chỉ người được assign trong buổi phỏng vấn mới được chấm điểm
+    const assignment = await prisma.interview_evaluators.findUnique({
+      where: {
+        interview_id_user_id: {
+          interview_id: interviewId,
+          user_id: session.user.id,
+        },
+      },
+    });
+
+    if (!assignment) {
+      return jsonError(403, "Bạn không được phân công đánh giá cho buổi phỏng vấn này.");
     }
 
     // Upsert to handle updates if evaluator already has a score for this interview
@@ -47,12 +54,10 @@ export async function POST(
         technical_score: technical_score ? parseInt(technical_score, 10) : null,
         communication_score: communication_score ? parseInt(communication_score, 10) : null,
         cultural_fit_score: cultural_fit_score ? parseInt(cultural_fit_score, 10) : null,
-        overall_score: overall_score ? parseInt(overall_score, 10) : null,
+        problem_solving_score: problem_solving_score ? parseInt(problem_solving_score, 10) : null,
         strengths: strengths || null,
         weaknesses: weaknesses || null,
         feedback: feedback || null,
-        result: result as interview_scores_result,
-        is_final: is_final || false,
       },
       create: {
         interview_id: interviewId,
@@ -60,12 +65,10 @@ export async function POST(
         technical_score: technical_score ? parseInt(technical_score, 10) : null,
         communication_score: communication_score ? parseInt(communication_score, 10) : null,
         cultural_fit_score: cultural_fit_score ? parseInt(cultural_fit_score, 10) : null,
-        overall_score: overall_score ? parseInt(overall_score, 10) : null,
+        problem_solving_score: problem_solving_score ? parseInt(problem_solving_score, 10) : null,
         strengths: strengths || null,
         weaknesses: weaknesses || null,
         feedback: feedback || null,
-        result: result as interview_scores_result,
-        is_final: is_final || false,
       },
     });
 

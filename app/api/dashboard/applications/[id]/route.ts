@@ -30,8 +30,17 @@ export async function GET(
           },
           interviews: {
             include: {
-              users: { select: { fullName: true, email: true } },
+              interview_evaluators: {
+                include: {
+                  users: { select: { fullName: true, email: true } },
+                },
+              },
               interview_scores: {
+                include: {
+                  users: { select: { fullName: true, email: true } },
+                },
+              },
+              interview_results: {
                 include: {
                   users: { select: { fullName: true, email: true } },
                 },

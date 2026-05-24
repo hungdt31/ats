@@ -45,7 +45,7 @@ export async function POST(
 
     if (error) {
       console.error("[Resend Error]", error);
-      return jsonError(500, error.message || "Không thể gửi email qua Resend.");
+      return jsonError(500, error.message || "Không thể gửi email.");
     }
 
     // Create log only if it's successful!
@@ -63,7 +63,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: "Gửi email qua Resend thành công.",
+      message: "Gửi email thành công.",
       data: newLog,
     });
   } catch (error: any) {
