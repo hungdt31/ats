@@ -10,6 +10,7 @@ Thư mục **`docs/`** tập trung tài liệu kỹ thuật và tài liệu test
 |----------|--------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Kiến trúc, stack, auth, cấu trúc thư mục, API, React Query, RBAC |
 | [DATABASE.md](./DATABASE.md) | Mô tả mô hình dữ liệu (theo Prisma schema) |
+| [CLASS_DIAGRAM.md](./CLASS_DIAGRAM.md) | Thiết kế sơ đồ lớp (Class Diagram) và quan hệ giữa các thực thể |
 | [roadmap-trang-ats.md](./roadmap-trang-ats.md) | Roadmap route, trang, bảng DB theo module |
 
 ---

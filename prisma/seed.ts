@@ -39,16 +39,34 @@ async function main() {
     create: { email: "admin@ats.local", fullName: "Admin", role: "admin", isActive: true, passwordHash, provider: "local" },
   });
 
+  const admin2 = await prisma.user.upsert({
+    where: { email: "admin2@ats.local" },
+    update: { fullName: "Admin 2", role: "admin", isActive: true, passwordHash, provider: "local" },
+    create: { email: "admin2@ats.local", fullName: "Admin 2", role: "admin", isActive: true, passwordHash, provider: "local" },
+  });
+
   const hr = await prisma.user.upsert({
     where: { email: "hr@ats.local" },
     update: { fullName: "HR Manager", role: "hr", isActive: true, passwordHash, provider: "local" },
     create: { email: "hr@ats.local", fullName: "HR Manager", role: "hr", isActive: true, passwordHash, provider: "local" },
   });
 
+  const hr2 = await prisma.user.upsert({
+    where: { email: "hr2@ats.local" },
+    update: { fullName: "HR Manager 2", role: "hr", isActive: true, passwordHash, provider: "local" },
+    create: { email: "hr2@ats.local", fullName: "HR Manager 2", role: "hr", isActive: true, passwordHash, provider: "local" },
+  });
+
   const interviewer = await prisma.user.upsert({
     where: { email: "interviewer@ats.local" },
     update: { fullName: "Interviewer", role: "interviewer", isActive: true, passwordHash, provider: "local" },
     create: { email: "interviewer@ats.local", fullName: "Interviewer", role: "interviewer", isActive: true, passwordHash, provider: "local" },
+  });
+
+  const interviewer2 = await prisma.user.upsert({
+    where: { email: "interviewer2@ats.local" },
+    update: { fullName: "Interviewer 2", role: "interviewer", isActive: true, passwordHash, provider: "local" },
+    create: { email: "interviewer2@ats.local", fullName: "Interviewer 2", role: "interviewer", isActive: true, passwordHash, provider: "local" },
   });
 
   const candidate = await prisma.user.upsert({
@@ -400,8 +418,11 @@ async function main() {
   console.log("Seed done.");
   console.log("Login accounts:");
   console.log(`- admin@ats.local / Password@123 (id=${admin.id})`);
+  console.log(`- admin2@ats.local / Password@123 (id=${admin2.id})`);
   console.log("- hr@ats.local / Password@123");
+  console.log("- hr2@ats.local / Password@123");
   console.log("- interviewer@ats.local / Password@123");
+  console.log("- interviewer2@ats.local / Password@123");
   console.log("- candidate@ats.local / Password@123");
 }
 
